@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Stratification in PISA</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="pisa-app-icon.png">
+
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- External Libraries -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/7.8.0/simple-statistics.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.4/jstat.min.js"></script>
+
+    <!-- Application Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <img src="pisa-app-icon.png" alt="Educational Stratification in PISA">
+                <div class="header-text">
+                    <h1>Educational Stratification in PISA</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Full Width Content Area -->
+        <main class="content-area">
+            <!-- Tabs Navigation -->
+            <div class="tabs">
+                <button class="tab active" data-tab="home">Home</button>
+                <button class="tab" data-tab="data-config">Data</button>
+                <button class="tab" data-tab="overview">Overview</button>
+                <button class="tab" data-tab="distribution">Distribution</button>
+                <button class="tab" data-tab="gap-decomposition">Gap Analysis</button>
+                <button class="tab" data-tab="regression">Regression</button>
+                <button class="tab" data-tab="diagnostics">Diagnostics</button>
+                <button class="tab" data-tab="comparative">Comparative</button>
+                <button class="tab" data-tab="export">Export</button>
+                <button class="tab" data-tab="documentation">Docs</button>
+            </div>
+
+            <!-- Tab Content: Home (Landing Page) -->
+            <div id="home" class="tab-content active">
+                <div style="text-align: center; padding: 2rem 0;">
+                    <p style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary-400); margin-bottom: 1rem;">OECD PISA Data Analysis</p>
+                    <h1 style="font-size: 2.75rem; font-weight: 700; margin-bottom: 1.5rem; background: linear-gradient(135deg, var(--text-primary), var(--primary-300)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2;">Educational Stratification in PISA</h1>
+                    <p style="font-size: 1.125rem; color: var(--text-secondary); max-width: 720px; margin: 0 auto; line-height: 1.7;">
+                        Explore how parental education, occupation, and wealth relate to student achievement at age 15. Analyze outcomes across 101 countries and 8 PISA cycles using survey-weighted methods.
+                    </p>
+                </div>
+
+                <!-- Key Features -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin: 3rem 0;">
+                    <div class="stat-card" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                        <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Rich Data</h3>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">
+                            Country-year microdata with ESCS, achievement scores, and survey weights across 101 countries and 8 PISA cycles (2000-2022)
+                        </p>
+                    </div>
+                    <div class="stat-card" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
+                        <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Advanced Analytics</h3>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">
+                            Survey-weighted regression, ESCS gradients, distributional measures, and variance decomposition aligned with OECD guidance
+                        </p>
+                    </div>
+                    <div class="stat-card" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+                        <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Global Insights</h3>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">
+                            Cross-national maps and time-series views to compare ESCS gradients, achievement gaps, and trends
+                        </p>
+                    </div>
+                    <div class="stat-card" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">💾</div>
+                        <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Publication Ready</h3>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">
+                            Export reproducible tables, charts, and HTML reports with transparent data lineage
+                        </p>
+                    </div>
+                </div>
+
+                <!-- About PISA, ESCS, and Achievement -->
+                <div class="stat-card" style="margin-top: 3rem; padding: 2.5rem;">
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1rem; color: var(--primary-color); text-align: center;">About PISA, ESCS, and Achievement</h2>
+                    <p style="color: var(--text-secondary); line-height: 1.7; max-width: 980px; margin: 0 auto 2rem auto; text-align: center;">
+                        PISA is the OECD's triennial international assessment of 15-year-old students in reading, mathematics, and science.
+                        It measures how well students apply knowledge to real-world problems and supports cross-national comparison.
+                        Official site: <a href="https://www.oecd.org/pisa/" target="_blank" rel="noopener">oecd.org/pisa</a> |
+                        Data portal: <a href="https://www.oecd.org/pisa/data/" target="_blank" rel="noopener">oecd.org/pisa/data</a>
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem;">
+                        <div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">ESCS (Family Background)</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.6;">
+                                ESCS measures family socioeconomic status through three components: parental education (ISCED levels),
+                                parental occupational status (ISEI/HISEI), and home possessions (wealth, books, educational resources).
+                                It captures how strongly parental characteristics predict children's outcomes.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Achievement Outcomes</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.6;">
+                                Achievement refers to PISA test scores in mathematics, reading, and science. The app uses the first plausible value (PV1)
+                                for each domain and applies sampling weights so estimates represent national student populations.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Learningtower Data Pipeline</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.6;">
+                                We use the <em>learningtower</em> R package to access and harmonize OECD PISA microdata. The pipeline generates country-year
+                                JSON chunks that this web app loads on demand for interactive analysis.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Who This Tool Is For -->
+                <div class="stat-card" style="margin-top: 3rem; padding: 2.5rem;">
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1rem; color: var(--primary-color); text-align: center;">Who This Tool Is For</h2>
+                    <p style="color: var(--text-secondary); line-height: 1.7; max-width: 980px; margin: 0 auto 2rem auto; text-align: center;">
+                        Designed for researchers, students, educators, policy analysts, and journalists who need transparent access to PISA-based
+                        analysis of intergenerational transmission without writing bespoke code. It supports open, reproducible workflows by making the data pipeline,
+                        methods, and exports auditable.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem;">
+                        <div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">What You Can Do</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.7;">
+                                Compare ESCS achievement gradients across countries and years. Replicate intergenerational transmission analyses and inspect modeling choices. Generate charts, tables, and reports for publications or teaching.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Open Science Focus</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.7;">
+                                All analyses are based on transparent, open-source code and a documented data pipeline so results can be replicated,
+                                extended, or adapted for specific cases.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Getting Started -->
+                <div class="stat-card" style="margin-top: 3rem; padding: 2.5rem;">
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem; color: var(--primary-color); text-align: center;">Getting Started</h2>
+                    <p style="color: var(--text-secondary); line-height: 1.7; text-align: center; max-width: 980px; margin: 0 auto 2rem auto;">
+                        Start in Data Configuration to choose countries and PISA cycles, select the achievement domain (math, reading, science), and
+                        choose the stratification variable (ESCS or parental education). Data load in country-year chunks and the analysis tabs update
+                        when loading completes.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 2rem;">
+                        <div>
+                            <div style="background: var(--primary-color); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 1rem;">1</div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Configure Data</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.6;">
+                                Choose countries and years, then set the outcome (math, reading, science) and stratification variable (ESCS or parental education)
+                            </p>
+                        </div>
+                        <div>
+                            <div style="background: var(--primary-color); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 1rem;">2</div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Load Data</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.6;">
+                                Load selected data and follow progress as country-year files are fetched and merged in the browser
+                            </p>
+                        </div>
+                        <div>
+                            <div style="background: var(--primary-color); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 1rem;">3</div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Explore & Analyze</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.6;">
+                                Use the Overview, Distribution, Achievement Gap, Regression, Diagnostics, and Comparative tabs to study ESCS gradients and trends
+                            </p>
+                        </div>
+                        <div>
+                            <div style="background: var(--primary-color); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 1rem;">4</div>
+                            <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Export Results</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.6;">
+                                Export reproducible tables, charts, and HTML reports for papers, presentations, or policy briefs
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div style="margin-top: 3rem; text-align: center;">
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--text-primary);">Quick Links</h3>
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="document.querySelector('[data-tab=data-config]').click()" style="min-width: 200px;">
+                            Start Analysis
+                        </button>
+                        <button class="btn btn-secondary" onclick="document.querySelector('[data-tab=documentation]').click()" style="min-width: 200px;">
+                            View Documentation
+                        </button>
+                        <a href="https://www.oecd.org/pisa/" target="_blank" rel="noopener" class="btn btn-secondary" style="min-width: 200px; text-decoration: none; display: inline-block;">
+                            OECD PISA Site
+                        </a>
+                        <a href="https://github.com/kevisc/kevisc.github.io/tree/main/pisa" target="_blank" class="btn btn-secondary" style="min-width: 200px; text-decoration: none; display: inline-block;">
+                            View Source Code
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Data Source Note -->
+                <div class="alert alert-info" style="margin-top: 3rem;">
+                    <strong>OECD PISA:</strong> The Programme for International Student Assessment (PISA) is a triennial assessment of 15-year-olds in reading, mathematics, and science.
+                    Official site: <a href="https://www.oecd.org/pisa/" target="_blank" rel="noopener">oecd.org/pisa</a> | Data portal: <a href="https://www.oecd.org/pisa/data/" target="_blank" rel="noopener">oecd.org/pisa/data</a><br>
+                    <strong>ESCS:</strong> PISA's composite index of socioeconomic background built from parents' education, occupational status, and household resources, standardized across OECD countries<br>
+                    <strong>Data Pipeline:</strong> This tool uses the <em>learningtower</em> R package to harmonize OECD PISA microdata and generate country-year JSON chunks for on-demand analysis in the browser<br>
+                    <strong>Coverage:</strong> 101 countries, 8 PISA cycles (2000-2022), 513 country-year combinations
+                </div>
+            </div>
+
+            <!-- Tab Content: Data Configuration -->
+            <div id="data-config" class="tab-content">
+                <div class="section-title">Data Configuration</div>
+                <p class="description">
+                    Select countries and years, then choose the achievement domain (math, reading, science) and the stratification variable (ESCS or parental education).
+                    Data are sourced from the OECD PISA database via the learningtower R package and loaded on demand as country-year chunks.
+                </p>
+
+                <div class="alert alert-info" id="data-status" style="margin-bottom: 2rem;">
+                    <strong>Welcome!</strong> Select countries and years, choose your outcome and stratification settings, then click "Load Selected Data" below to begin.
+                </div>
+
+                <!-- Data Selection Section -->
+                <div class="stat-card" style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; color: var(--primary-color);">Data Selection</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                        <!-- Years Selection -->
+                        <div class="control-group">
+                            <label style="font-size: 1.1rem; font-weight: 600;">Years</label>
+                            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                <button id="select-all-years-btn" class="btn btn-secondary" style="flex: 1;">Select All</button>
+                                <button id="deselect-all-years-btn" class="btn btn-secondary" style="flex: 1;">Clear</button>
+                            </div>
+                            <div id="year-checkboxes">
+                                <!-- Year checkboxes will be populated dynamically -->
+                            </div>
+                            <div class="weight-info" id="years-selected-count">Loading available years...</div>
+                        </div>
+
+                        <!-- Countries Selection -->
+                        <div class="control-group">
+                            <label for="countries" style="font-size: 1.1rem; font-weight: 600;">Countries</label>
+                            <div style="display:flex; gap:8px; margin-bottom: 8px;">
+                                <button id="select-all-countries-btn" class="btn btn-secondary" style="flex: 1;">Select All</button>
+                                <button id="clear-all-countries-btn" class="btn btn-secondary" style="flex: 1;">Clear</button>
+                            </div>
+                            <div id="country-checkboxes">
+                                <!-- Country checkboxes will be populated dynamically -->
+                            </div>
+                            <div class="weight-info" id="countries-selected-count">Loading available countries...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Parameters Section -->
+                <div class="stat-card" style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; color: var(--primary-color);">⚙️ Analysis Parameters</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                        <!-- Outcome Variable -->
+                        <div class="control-group">
+                            <label for="outcome" style="font-size: 1.05rem; font-weight: 600;">Outcome Variable</label>
+                            <select id="outcome" style="margin-top: 0.75rem;">
+                                <option value="math">Mathematics Scores</option>
+                                <option value="reading">Reading Scores</option>
+                                <option value="science">Science Scores</option>
+                            </select>
+                        </div>
+
+                        <!-- Primary Predictor -->
+                        <div class="control-group">
+                            <label for="predictor" style="font-size: 1.05rem; font-weight: 600;">Stratification Variable</label>
+                            <select id="predictor" style="margin-top: 0.75rem;">
+                                <option value="escs">Socioeconomic Status (ESCS)</option>
+                                <option value="parent_edu">Parental Education</option>
+                            </select>
+                        </div>
+
+                        <!-- Sampling Weights -->
+                        <div class="control-group">
+                            <label for="weight-type" style="font-size: 1.05rem; font-weight: 600;">Sampling Weights</label>
+                            <select id="weight-type" style="margin-top: 0.75rem;">
+                                <option value="student">Student Weight (W_FSTUWT)</option>
+                                <option value="senate">Senate Weight (W_FSENWT)</option>
+                                <option value="replicate">BRR Replicate Weights</option>
+                                <option value="none">No Weights</option>
+                            </select>
+                            <div class="weight-info" style="margin-top: 0.5rem;">Following OECD technical standards</div>
+                        </div>
+
+                        <!-- Control Variables -->
+                        <div class="control-group" style="grid-column: span 2;">
+                            <label style="font-size: 1.05rem; font-weight: 600;">Control Variables (for regression models)</label>
+                            <div class="checkbox-group" style="display: flex; gap: 2rem; margin-top: 0.75rem; flex-wrap: wrap;">
+                                <span style="color: var(--text-secondary); font-size: 0.9rem;">Gender (always included)</span>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" value="year" id="ctrl-year">
+                                    <span>Year</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Load Data Action -->
+                <div class="stat-card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); border: 2px solid var(--primary-color);">
+                    <div style="text-align: center; padding: 1rem;">
+                        <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: var(--primary-color);">🚀 Load Data</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6;">
+                            Click below to load the selected countries and years. Data will be fetched progressively (~5MB per country-year combination).
+                        </p>
+                        <button id="load-data-btn" class="btn btn-primary" style="min-width: 250px; font-size: 1.1rem; padding: 0.75rem 2rem; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+                            <span>Load Selected Data</span>
+                            <span id="loading-spinner" class="spinner-inline" aria-hidden="true" style="display:none;"></span>
+                        </button>
+                        <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                            💡 Tip: Start with 1-3 countries to ensure fast loading
+                        </div>
+
+                        <!-- Loading Progress -->
+                        <div id="loading-progress" class="loading" style="margin-top: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span class="progress-text" id="progress-text">Initializing...</span>
+                                <span id="progress-percentage" style="font-weight: 600; color: var(--primary-600);">0%</span>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+                            </div>
+                            <div style="margin-top: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;" id="progress-details">
+                                Loading data...
+                            </div>
+                        </div>
+                        <div id="loading-complete-message" style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--success-color); display: none;">
+                            Done loading. You can now explore the analysis tabs above.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Overview -->
+            <div id="overview" class="tab-content">
+                <div class="section-title">Intergenerational Transmission Overview</div>
+                <p class="description">
+                    This dashboard examines the intergenerational transmission of educational achievement—how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15.
+                    The analysis framework draws on social stratification theory (Bourdieu & Passeron, 1977; Coleman et al., 1966)
+                    to quantify how strongly family background predicts student outcomes across countries and over time.
+                </p>
+
+                <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+                    <strong>Key Metrics Explained:</strong><br>
+                    <strong>Mean Achievement:</strong> Survey-weighted average of test scores using OECD-recommended student weights (W_FSTUWT). Calculated as: μ = Σ(w_i × score_i) / Σ(w_i)<br>
+                    <strong>Dispersion Index (Gini):</strong> Measures spread of achievement scores from 0 (all students identical) to 1 (maximum dispersion). Higher values indicate greater variation in outcomes.<br>
+                    <strong>ESCS Gradient (β):</strong> The intergenerational transmission coefficient—shows how many score points of achievement are associated with a one-unit increase in family socioeconomic status. Larger values indicate stronger intergenerational transmission.
+                </div>
+
+                <div class="grid-3">
+                    <div class="stat-card">
+                        <div class="stat-value" id="mean-score">--</div>
+                        <div class="stat-label">Mean Achievement Score</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Survey-weighted average</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="inequality-index">--</div>
+                        <div class="stat-label">Dispersion Index (Gini)</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">0 = identical, 1 = max spread</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="predictor-gradient">--</div>
+                        <div class="stat-label" id="gradient-label">ESCS Gradient (β)</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Intergenerational transmission strength</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 3rem;">
+                    <h3 style="margin-bottom: 0.75rem;">Intergenerational Transmission by Country and Year</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Scatter plot of mean achievement scores versus ESCS gradients for each country-year combination.
+                        Each point represents one country in one year, with country labels displayed.<br>
+                        <strong>Interpretation:</strong> Points in the upper-right show high achievement and strong intergenerational transmission (family background strongly predicts outcomes).
+                        Points in the lower-left show lower achievement with weaker intergenerational transmission. This visualization helps identify which education systems show more or less mobility in educational outcomes.<br>
+                        <strong>Calculation:</strong> X-axis = survey-weighted mean score; Y-axis = ESCS gradient (how many score points per unit of family SES)
+                    </p>
+                    <div id="overview-chart"></div>
+                </div>
+
+                <div class="data-source">
+                    Data Source: OECD PISA via learningtower R package | Analysis methodology follows OECD (2023) technical standards
+                </div>
+            </div>
+
+            <!-- Tab Content: Distribution -->
+            <div id="distribution" class="tab-content">
+                <div class="section-title">Score Distribution Analysis</div>
+                <p class="description">
+                    Distribution analysis reveals patterns of educational achievement across selected countries using box plots, percentile analysis, and Lorenz curves.
+                </p>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 0.75rem;">Achievement Score Distributions by Country and Year</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Grouped box plots displaying the distribution of achievement scores for each country-year combination.
+                        Each box shows the interquartile range (IQR, 25th-75th percentiles), with the median marked inside the box. Whiskers extend to 1.5×IQR.<br>
+                        <strong>Interpretation:</strong> Wider boxes indicate greater within-country variation in achievement. Compare box heights (medians) across countries to see performance differences.
+                        Boxes for the same country across different years reveal temporal trends.<br>
+                        <strong>Calculation:</strong> Box plot quartiles computed from raw student-level scores, grouped by country and year.
+                    </p>
+                    <div id="distribution-chart"></div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 3rem;">
+                    <div>
+                        <h3 style="margin-bottom: 0.75rem;">Achievement Percentiles by Country</h3>
+                        <div id="percentile-chart"></div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
+                            <strong>What this shows:</strong> Line chart of score values at the 10th, 25th, 50th (median), 75th, and 90th percentiles for each country.<br>
+                            <strong>Interpretation:</strong> Steeper lines indicate greater within-country variation. Countries with higher lines across all percentiles have higher overall achievement.
+                            The gap between P90 and P10 shows the achievement range.<br>
+                            <strong>Calculation:</strong> Percentiles calculated using quantile function on sorted score distributions.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="margin-bottom: 0.75rem;">Lorenz Curve: Achievement Distribution</h3>
+                        <div id="lorenz-curve"></div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
+                            <strong>What this shows:</strong> Lorenz curves plot cumulative proportion of achievement against cumulative proportion of students (ranked from lowest to highest).
+                            The diagonal dashed line represents perfect equality (all students with identical scores).<br>
+                            <strong>Interpretation:</strong> Curves further from the diagonal indicate greater dispersion in achievement. The area between a country's curve and the diagonal relates to the Gini coefficient.<br>
+                            <strong>Calculation:</strong> Students sorted by score; cumulative sums computed for population and achievement shares.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Gap Decomposition -->
+            <div id="gap-decomposition" class="tab-content">
+                <div class="section-title">Achievement Gap Decomposition</div>
+                <p class="description">
+                    Decomposition of achievement gaps by socioeconomic status across and within countries
+                    (Reardon, 2011; Chmielewski, 2019).
+                </p>
+
+                <div class="alert alert-info">
+                    <strong>Gap Measures Explained:</strong><br>
+                    <strong>Achievement Gap (Q4-Q1):</strong> Difference in mean achievement between students in the top SES quartile (Q4) and bottom SES quartile (Q1).
+                    Calculated as: Gap = μ_Q4 - μ_Q1, using survey-weighted means for each quartile.<br>
+                    <strong>Variance Decomposition:</strong> Partitions total achievement variance into within-country and between-country components using ANOVA:
+                    σ²_total = σ²_within + σ²_between. Shows how much variation exists within vs. across nations.<br>
+                    <strong>Effect Size (Cohen's d):</strong> Standardized gap measure calculated as: d = (μ_Q4 - μ_Q1) / σ_pooled, where σ_pooled is the pooled standard deviation.
+                    Effect sizes: small (d ≈ 0.2), medium (d ≈ 0.5), large (d ≈ 0.8 or higher).
+                </div>
+
+                <div class="controls-section" style="margin-bottom: 1.5rem;">
+                    <label for="gap-granularity" style="font-weight: 600; color: #f1f5f9; margin-right: 0.5rem;">
+                        Gap Analysis Level:
+                    </label>
+                    <select id="gap-granularity" class="select-input" style="min-width: 200px;">
+                        <option value="overall">Overall (All Data)</option>
+                        <option value="by-country">By Country</option>
+                        <option value="by-year">By Year</option>
+                        <option value="by-country-year">By Country × Year</option>
+                    </select>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.75rem;">
+                        Select analysis level to view gap statistics and visualizations at different granularities.
+                    </p>
+                </div>
+
+                <div id="gap-results"></div>
+
+                <div id="gap-plot" style="margin-top: 2rem;"></div>
+            </div>
+
+            <!-- Tab Content: Regression -->
+            <div id="regression" class="tab-content">
+                <div class="section-title">Regression Analysis</div>
+                <p class="description">
+                    OLS, Fixed Effects, and Random Effects regression models examining the relationship between socioeconomic status and achievement,
+                    with survey-weighted estimation following OECD (2023) guidelines.
+                </p>
+
+                <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+                    <strong>Model Specifications:</strong><br>
+                    <strong>OLS (Pooled):</strong> y_i = β₀ + β₁X_i + ε_i. Pools all data, ignoring country clustering. Provides baseline estimate of SES → achievement relationship.<br>
+                    <strong>Fixed Effects (FE):</strong> y_it = α_i + β₁X_it + ε_it. Includes country fixed effects (dummy variables) to control for time-invariant country differences.
+                    Estimates within-country SES effects.<br>
+                    <strong>Random Effects (RE):</strong> y_it = (α + u_i) + β₁X_it + ε_it. Models country effects as random draws from a distribution.
+                    More efficient than FE if country effects are uncorrelated with X.<br>
+                    <strong>Hausman Test:</strong> Tests FE vs. RE. Null hypothesis: RE is consistent and efficient. If p < 0.05, prefer FE (country effects correlated with predictors).
+                </div>
+
+                <div class="controls-section" style="margin-bottom: 1.5rem;">
+                    <label for="regression-country-filter" style="font-weight: 600; color: #f1f5f9; margin-right: 0.5rem;">
+                        Visualization Filter:
+                    </label>
+                    <select id="regression-country-filter" class="select-input" style="min-width: 250px;">
+                        <option value="all">All Countries Combined</option>
+                        <!-- Country options will be populated dynamically -->
+                    </select>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.75rem;">
+                        Select a specific country to view regression scatter plot and coefficient comparison for that country only, or choose "All Countries Combined" for pooled analysis.
+                    </p>
+                </div>
+
+                <div id="regression-results">
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>Regression Tables:</strong> Show coefficients (β), standard errors (SE), t-statistics, p-values, and 95% confidence intervals for each model.
+                        Significance indicators: * p < 0.05, ** p < 0.01, *** p < 0.001.
+                        Model fit statistics include R², adjusted R², AIC, and BIC (lower values indicate better fit).
+                    </p>
+                </div>
+
+                <div id="regression-scatter-container" style="margin-top: 2rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Scatter Plot with Fitted Regression Lines</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Raw data scatter plot overlaid with fitted regression lines from OLS, FE, and RE models.
+                        Each point represents one student's SES (X-axis) and achievement score (Y-axis).<br>
+                        <strong>Interpretation:</strong> Line slopes show the ESCS gradient (intergenerational transmission strength). Steeper slopes indicate stronger transmission (higher family SES → higher achievement).
+                        Compare line slopes across models to see how controlling for country effects changes the estimated relationship.
+                    </p>
+                    <div id="regression-scatter"></div>
+                </div>
+
+                <div id="coefficient-plot-container" style="margin-top: 2rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Coefficient Comparison Across Models</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Bar chart comparing the SES coefficient (β₁) across OLS, FE, and RE models.
+                        Error bars show 95% confidence intervals (±1.96 × SE).<br>
+                        <strong>Interpretation:</strong> If confidence intervals overlap, models produce statistically similar estimates.
+                        Large differences suggest country effects matter. FE typically produces smaller coefficients than OLS if high-SES countries have higher scores.
+                    </p>
+                    <div id="coefficient-plot"></div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Diagnostics -->
+            <div id="diagnostics" class="tab-content">
+                <div class="section-title">Model Diagnostics</div>
+                <p class="description">
+                    Statistical tests and metrics to validate regression assumptions and choose the appropriate model specification.
+                    Select a country below to analyze its data independently.
+                </p>
+
+                <!-- Country Selector for Diagnostics -->
+                <div class="stat-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="diagnostics-country-select" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Select Country</label>
+                            <select id="diagnostics-country-select" style="width: 100%; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface-2); color: var(--text-primary); font-size: 1rem;">
+                                <option value="">-- Select a country --</option>
+                            </select>
+                        </div>
+                        <div id="diagnostics-country-info" style="color: var(--text-secondary); font-size: 0.9rem;">
+                            Select a country to view its regression diagnostics
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assumption Check Summary -->
+                <div style="margin-bottom: 2.5rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">1. Assumption Check Summary</h3>
+                    <div class="alert alert-info" style="margin-bottom: 1rem;">
+                        <strong>Purpose:</strong> Quick overview of key OLS regression assumptions.<br>
+                        <strong>Why it matters:</strong> Violations can lead to biased coefficients, incorrect standard errors, and invalid p-values.<br>
+                        <strong>Interpretation:</strong> <span style="color: #10b981;">Pass</span> = assumption met;
+                        <span style="color: #f59e0b;">Caution</span> = minor concerns, results likely still valid;
+                        <span style="color: #ef4444;">Concern</span> = significant violation, interpret with care.
+                    </div>
+                    <div id="assumption-dashboard"></div>
+                </div>
+
+                <!-- Model Comparison Table -->
+                <div style="margin-bottom: 2.5rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">2. Model Fit Comparison</h3>
+                    <div class="alert alert-info" style="margin-bottom: 1rem;">
+                        <strong>Purpose:</strong> Compare goodness-of-fit across OLS, Fixed Effects, and Random Effects models.<br>
+                        <strong>Key metrics:</strong><br>
+                        • <strong>R²</strong>: Proportion of variance explained (0-1). Higher = better fit.<br>
+                        • <strong>R² Within</strong>: Variance explained within groups (countries). Key for panel models.<br>
+                        • <strong>R² Between</strong>: Variance explained between group means.<br>
+                        • <strong>AIC/BIC</strong>: Information criteria for model selection. Lower = better. BIC penalizes complexity more.<br>
+                        • <strong>ICC (ρ)</strong>: Intraclass correlation. Proportion of variance at country level. High ICC suggests panel methods needed.
+                    </div>
+                    <div id="model-comparison-table"></div>
+                </div>
+
+                <!-- Hausman Test -->
+                <div style="margin-bottom: 2.5rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">3. Hausman Specification Test</h3>
+                    <div class="alert alert-info" style="margin-bottom: 1rem;">
+                        <strong>Purpose:</strong> Determine whether Fixed Effects or Random Effects is more appropriate.<br>
+                        <strong>Null hypothesis (H₀):</strong> Country effects are uncorrelated with predictors (RE is consistent).<br>
+                        <strong>Alternative (H₁):</strong> Country effects correlate with predictors (only FE is consistent).<br>
+                        <strong>Interpretation:</strong><br>
+                        • p < 0.05 → Reject H₀ → Use <strong>Fixed Effects</strong> (systematic differences exist).<br>
+                        • p ≥ 0.05 → Fail to reject → <strong>Random Effects</strong> is acceptable and more efficient.
+                    </div>
+                    <div id="hausman-panel"></div>
+                </div>
+
+                <!-- Residual Diagnostics Table -->
+                <div style="margin-bottom: 2.5rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">4. Residual Diagnostics</h3>
+                    <div class="alert alert-info" style="margin-bottom: 1rem;">
+                        <strong>Purpose:</strong> Assess normality and distributional properties of model residuals.<br>
+                        <strong>Key metrics:</strong><br>
+                        • <strong>Residual Mean</strong>: Should be ≈ 0. Non-zero suggests model misspecification.<br>
+                        • <strong>Skewness</strong>: Measures asymmetry. Should be ≈ 0 (±1 acceptable).<br>
+                        • <strong>Excess Kurtosis</strong>: Measures tail heaviness. Should be ≈ 0 (±2 acceptable).<br>
+                        • <strong>Jarque-Bera Test</strong>: Formal normality test. p < 0.05 rejects normality.<br>
+                        • <strong>Variance Ratio</strong>: Compares residual variance in upper vs lower fitted values. >1.5 suggests heteroscedasticity.<br>
+                        • <strong>Outliers (>3σ)</strong>: Observations with unusually large residuals. Should be <1% of sample.
+                    </div>
+                    <div id="residual-diagnostics-table"></div>
+                </div>
+
+                <!-- Cook's Distance Summary -->
+                <div style="margin-bottom: 2.5rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">5. Influential Observations (Cook's Distance)</h3>
+                    <div class="alert alert-info" style="margin-bottom: 1rem;">
+                        <strong>Purpose:</strong> Identify observations that disproportionately influence regression coefficients.<br>
+                        <strong>What it measures:</strong> Combined effect of an observation's leverage (unusual predictor values) and residual size.<br>
+                        <strong>Threshold:</strong> Cook's D > 4/n indicates potentially influential observations.<br>
+                        <strong>Interpretation:</strong><br>
+                        • <5% influential points = typical, no action needed.<br>
+                        • 5-10% = moderate concern, check for data quality issues.<br>
+                        • >10% = investigate whether outliers are driving results.
+                    </div>
+                    <div id="cooks-distance-summary"></div>
+                </div>
+
+                <!-- Single Residual Plot -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">6. Residual vs Fitted Plot (OLS)</h3>
+                    <div class="alert alert-info" style="margin-bottom: 1rem;">
+                        <strong>Purpose:</strong> Visual check for linearity and homoscedasticity assumptions.<br>
+                        <strong>What to look for:</strong><br>
+                        • <strong>Good:</strong> Random scatter around zero with constant spread.<br>
+                        • <strong>Fan shape:</strong> Variance increases with fitted values → heteroscedasticity.<br>
+                        • <strong>Curved pattern:</strong> Nonlinear relationship not captured by model.<br>
+                        • <strong>Clusters:</strong> May indicate omitted categorical variable.
+                    </div>
+                    <div id="residual-plot-main"></div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Comparative -->
+            <div id="comparative" class="tab-content">
+                <div class="section-title">Comparative Analysis</div>
+                <p class="description">
+                    Cross-country and cross-year comparison of intergenerational transmission metrics, achievement gaps, and distributional measures.
+                </p>
+
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Intergenerational Educational Stratification Map</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Choropleth world map displaying the ESCS gradient (intergenerational transmission strength) for each country.
+                        Colors range from blue (low gradients, higher educational mobility) to red (high gradients, stronger intergenerational transmission).<br>
+                        <strong>Interpretation:</strong> Darker red countries have stronger intergenerational transmission—children's achievement is more tightly linked to family background.
+                        Blue countries show higher educational mobility. Hover over countries to see exact gradient values, R², and sample size.<br>
+                        <strong>Calculation:</strong> For each country, run bivariate OLS: achievement = β₀ + β₁(ESCS) + ε. Map displays β₁ coefficient.
+                    </p>
+                    <div id="world-map"></div>
+                </div>
+
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Temporal Trends: ESCS Gradient Over Time</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Line chart tracking how ESCS gradients (intergenerational transmission strength) change over PISA cycles for each country.
+                        Each line represents one country's trajectory across available years (2000-2022).<br>
+                        <strong>Interpretation:</strong> Rising lines indicate increasing intergenerational transmission (family background effects growing stronger).
+                        Falling lines show weakening transmission (improving educational mobility). Parallel lines suggest stable patterns.
+                        Countries with at least 2 time points are shown.<br>
+                        <strong>Calculation:</strong> Separate regression for each country-year combination. Plot β₁ (ESCS coefficient) over time.
+                    </p>
+                    <div id="temporal-trends"></div>
+                </div>
+
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Cross-National Achievement Trends</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Grouped bar chart showing mean achievement scores by country and year.
+                        Bars are grouped by country with different colors representing different PISA cycles.<br>
+                        <strong>Interpretation:</strong> Compare heights within countries to see temporal changes in achievement.
+                        Compare across countries to identify high and low performers. Look for convergence or divergence patterns.<br>
+                        <strong>Calculation:</strong> Survey-weighted mean achievement for each country-year combination.
+                    </p>
+                    <div id="country-comparison"></div>
+                </div>
+
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">ESCS Achievement Gap Comparison</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Combined bar/line chart comparing Q4–Q1 ESCS achievement gaps across countries.
+                        Bars show raw score gaps (difference between highest and lowest family background quartiles); the line overlays standardized effect sizes (Cohen's d).<br>
+                        <strong>Interpretation:</strong> Larger gaps and higher effect sizes indicate stronger intergenerational transmission of educational achievement.
+                    </p>
+                    <div id="gap-comparison"></div>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Variance Decomposition: Within vs. Between Countries</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Bar chart partitioning total achievement variance into within-country and between-country components.
+                        Displays percentages and the intraclass correlation coefficient (ICC = ρ).<br>
+                        <strong>Interpretation:</strong> High within-country variance suggests more variation in achievement exists within nations than across them.
+                        High between-country variance indicates large cross-national differences in achievement levels.
+                        ICC = σ²_between / (σ²_between + σ²_within) measures the proportion of variance attributable to country differences.<br>
+                        <strong>Calculation:</strong> One-way ANOVA decomposition: σ²_total = σ²_within + σ²_between. Uses country as grouping variable.
+                    </p>
+                    <div id="decomposition-chart"></div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Export -->
+            <div id="export" class="tab-content">
+                <div class="section-title">Export Results</div>
+                <p class="description">
+                    Export analysis results, visualizations, and datasets in various formats for publications, presentations, and further analysis.
+                </p>
+
+                <div class="export-grid">
+                    <!-- Summary Statistics Export -->
+                    <div class="stat-card">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">📊 Summary Statistics</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
+                            Export descriptive statistics, distributional measures, and achievement gaps in CSV format.
+                        </p>
+                        <button id="export-summary-btn" class="btn" style="width: 100%;">
+                            Export Summary (CSV)
+                        </button>
+                        <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            Includes: mean, SD, Gini, gradients, gaps, effect sizes
+                        </p>
+                    </div>
+
+                    <!-- Regression Results Export -->
+                    <div class="stat-card">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">📈 Regression Models</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
+                            Export regression coefficients, standard errors, and fit statistics for all models.
+                        </p>
+                        <button id="export-regression-btn" class="btn" style="width: 100%;">
+                            Export Regressions (CSV)
+                        </button>
+                        <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            Includes: OLS, FE, RE with SE, t-stats, p-values, AIC/BIC
+                        </p>
+                    </div>
+
+                    <!-- Dataset Export -->
+                    <div class="stat-card">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">💾 Dataset</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
+                            Export the currently loaded dataset with all variables included in your analysis.
+                        </p>
+                        <button id="export-data-btn" class="btn" style="width: 100%;">
+                            Export Dataset (CSV)
+                        </button>
+                        <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            Filtered by selected countries/years with survey weights
+                        </p>
+                    </div>
+
+                    <!-- Charts Export -->
+                    <div class="stat-card">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">📸 Visualizations</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
+                            Download all current visualizations as high-resolution PNG images.
+                        </p>
+                        <button id="export-charts-btn" class="btn" style="width: 100%;">
+                            Export All Charts (PNG)
+                        </button>
+                        <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            Individual PNG files for each visualization
+                        </p>
+                    </div>
+
+                    <!-- Full Report Export -->
+                    <div class="stat-card">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">📄 Full Report</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
+                            Generate a comprehensive HTML report with all analyses, tables, and visualizations.
+                        </p>
+                        <button id="export-report-btn" class="btn btn-primary" style="width: 100%;">
+                            Generate Report (HTML)
+                        </button>
+                        <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            Publication-ready report with embedded charts
+                        </p>
+                    </div>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 2rem;">
+                    <strong>💡 Tip:</strong> Load data and run analyses first. Export functions will use the most recent analysis results from each tab.
+                </div>
+            </div>
+
+            <!-- Tab Content: Documentation -->
+            <div id="documentation" class="tab-content">
+                <div class="section-title">Documentation & Resources</div>
+                <p class="description">
+                    Documentation on the PISA program, ESCS construction, methodology, data pipeline, citation guidelines, and open-source code.
+                </p>
+
+                <div class="doc-grid">
+                    <!-- Data Source Card -->
+                    <div class="stat-card doc-card">
+                        <h3>📊 Data Sources</h3>
+                        <div class="doc-card-body">
+                            <p><strong>Primary Source:</strong></p>
+                            <p>
+                                OECD Programme for International Student Assessment (PISA).<br>
+                                <a href="https://www.oecd.org/pisa/" target="_blank" rel="noopener">oecd.org/pisa</a> |
+                                <a href="https://www.oecd.org/pisa/data/" target="_blank" rel="noopener">PISA data portal</a>
+                            </p>
+                            <p><strong>R Package:</strong></p>
+                            <p>
+                                We use <em>learningtower</em> to access and harmonize OECD PISA microdata and generate the country-year files used by this tool.<br>
+                                Vaughan, E., Fung, K., Cook, D., & Wickham, H. (2021).
+                            </p>
+                        </div>
+                        <div class="doc-card-footer">
+                            <a href="docs/data-sources.html" class="btn btn-secondary">
+                                📖 View Full Data Documentation
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Methodology Card -->
+                    <div class="stat-card doc-card">
+                        <h3>📐 Methodology</h3>
+                        <div class="doc-card-body">
+                            <p>Comprehensive documentation of statistical methods, including:</p>
+                            <ul class="doc-list">
+                                <li>Survey-weighted regression (OLS, FE, RE)</li>
+                                <li>Variance decomposition analysis</li>
+                                <li>Achievement gap calculations</li>
+                                <li>Distributional measures (Gini coefficient)</li>
+                                <li>Diagnostic procedures and assumptions</li>
+                            </ul>
+                        </div>
+                        <div class="doc-card-footer">
+                            <a href="docs/methodology.html" class="btn btn-secondary">
+                                📖 View Methodology Guide
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Publication Article Card -->
+                    <div class="stat-card doc-card">
+                        <h3>📰 Publication Article</h3>
+                        <div class="doc-card-body">
+                            <p>Academic article introducing the application, with methodological choices and implementation details.</p>
+                            <ul class="doc-list">
+                                <li>Abstract and research context</li>
+                                <li>Formal model specifications</li>
+                                <li>Validation and limitations</li>
+                            </ul>
+                        </div>
+                        <div class="doc-card-footer">
+                            <a href="docs/publication-paper.html" class="btn btn-secondary">
+                                📖 Read the Article
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Citation Card -->
+                    <div class="stat-card doc-card">
+                        <h3>📝 How to Cite</h3>
+                        <div class="doc-card-body">
+                            <p>Citation guidelines for academic publications, presentations, and reports.</p>
+                            <div class="doc-callout">
+                            Schoenholzer, K. (2026).<br>
+                            Educational Stratification in PISA.<br>
+                            https://kevinschoenholzer.com/edustrat/
+                            </div>
+                        </div>
+                        <div class="doc-card-footer">
+                            <a href="docs/citation.html" class="btn btn-secondary">
+                                📖 View Citation Guidelines
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Source Code Card -->
+                    <div class="stat-card doc-card">
+                        <h3>💻 Source Code</h3>
+                        <div class="doc-card-body">
+                            <p>Full source code is available on GitHub under an open-source license.</p>
+                            <ul class="doc-list">
+                                <li>JavaScript ES6 modules</li>
+                                <li>R data processing scripts</li>
+                                <li>Plotly.js visualizations</li>
+                                <li>Survey-weighted statistical functions</li>
+                            </ul>
+                        </div>
+                        <div class="doc-card-footer">
+                            <a href="https://github.com/kevisc/kevisc.github.io/tree/main/edustrat" target="_blank" class="btn btn-secondary">
+                                🔗 View on GitHub
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Data Pipeline Card -->
+                    <div class="stat-card doc-card">
+                        <h3>🧰 Data Pipeline</h3>
+                        <div class="doc-card-body">
+                            <p>R scripts for generating country-year chunks, metadata, and validation reports.</p>
+                            <ul class="doc-list">
+                                <li>Chunk generation (JSON)</li>
+                                <li>Metadata catalog creation</li>
+                                <li>Quality checks and summaries</li>
+                            </ul>
+                        </div>
+                        <div class="doc-card-footer">
+                            <a href="pipeline/scripts/README.md" class="btn btn-secondary">
+                                📖 View Pipeline Guide
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Key References Card -->
+                    <div class="stat-card doc-card doc-card-wide">
+                        <h3>📚 Key References</h3>
+                        <div class="doc-card-body">
+                            <div class="doc-card-section">
+                                <div class="doc-card-subtitle">Social Stratification Theory</div>
+                                <ul class="doc-list">
+                                    <li>Bourdieu, P., & Passeron, J. C. (1977). <em>Reproduction in Education, Society and Culture</em>.</li>
+                                    <li>Coleman, J. S., et al. (1966). <em>Equality of Educational Opportunity</em>.</li>
+                                </ul>
+                            </div>
+
+                            <div class="doc-card-section">
+                                <div class="doc-card-subtitle">Achievement Gap Analysis</div>
+                                <ul class="doc-list">
+                                    <li>Reardon, S. F. (2011). The widening academic achievement gap between the rich and the poor. <em>Community Investments, 23</em>(2), 19-39.</li>
+                                    <li>Chmielewski, A. K. (2019). The global increase in the socioeconomic achievement gap, 1964 to 2015. <em>American Sociological Review, 84</em>(3), 517-544.</li>
+                                </ul>
+                            </div>
+
+                            <div class="doc-card-section">
+                                <div class="doc-card-subtitle">Technical Standards</div>
+                                <ul class="doc-list">
+                                    <li>OECD (2023). <em>PISA 2022 Technical Report</em>. Paris: OECD Publishing.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer style="background: var(--surface); border-top: 1px solid var(--border); margin-top: 4rem; padding: 2rem 0;">
+        <div class="container" style="text-align: center; color: var(--text-secondary); font-size: 0.875rem;">
+            <p>Educational Stratification in PISA</p>
+            <p style="margin-top: 0.5rem;">Open Source Science. Schoenholzer, 2026.</p>
+        </div>
+    </footer>
+
+    <!-- Application JavaScript Modules -->
+    <script type="module" src="js/app.js?v=3.5.0"></script>
+</body>
+</html>

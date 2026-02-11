@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduStrat: A Browser-Based Tool for Exploratory Analysis of Educational Stratification in PISA Microdata, 2000–2022</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: #1e293b;
+            background: #f8fafc;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 2.1rem;
+            margin-bottom: 1rem;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+        h2 {
+            color: #1e293b;
+            font-size: 1.75rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            color: #334155;
+            font-size: 1.35rem;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        h4 {
+            color: #334155;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            margin-bottom: 1rem;
+            color: #475569;
+            text-align: justify;
+        }
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+            color: #475569;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        .metadata {
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            color: #475569;
+        }
+        .abstract {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .abstract strong {
+            color: #1e40af;
+        }
+        .keywords {
+            font-size: 0.95rem;
+            color: #475569;
+            margin-top: 0.75rem;
+        }
+        .figure {
+            margin: 2rem 0;
+            text-align: center;
+        }
+        .figure img {
+            max-width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+        }
+        .figure-caption {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 0.75rem;
+        }
+        .callout {
+            background: #f8fafc;
+            border-left: 4px solid #64748b;
+            border-radius: 6px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            color: #475569;
+        }
+        .formula {
+            background: #f1f5f9;
+            padding: 1.25rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #3b82f6;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            background: #2563eb;
+        }
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .reference {
+            font-size: 0.92rem;
+            color: #64748b;
+            margin: 0.5rem 0;
+            padding-left: 2rem;
+            text-indent: -2rem;
+        }
+        code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .link-list {
+            margin-top: 0.75rem;
+        }
+        .link-list li {
+            margin-bottom: 0.4rem;
+        }
+        .software-table {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            border-radius: 6px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+        .software-table h4 {
+            color: #166534;
+            margin-top: 0;
+        }
+        .software-table table {
+            margin-top: 0.75rem;
+        }
+        .software-table td:first-child {
+            font-weight: 600;
+            width: 35%;
+            color: #1e293b;
+        }
+        .note {
+            font-size: 0.92rem;
+            color: #64748b;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+        .section-label {
+            color: #64748b;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p class="section-label">Software Metapaper &middot; Journal of Open Research Software</p>
+
+        <h1>EduStrat: A Browser-Based Tool for Exploratory Analysis of Educational Stratification in PISA Microdata, 2000&ndash;2022</h1>
+
+        <div class="metadata">
+            <p><strong>Author:</strong> Kevin Schoenholzer<sup>1</sup></p>
+            <p><strong>Affiliation:</strong> <sup>1</sup> Independent Researcher</p>
+            <p><strong>Correspondence:</strong> <a href="https://kevinschoenholzer.com">kevinschoenholzer.com</a></p>
+        </div>
+
+        <div class="abstract">
+            <p><strong>Abstract.</strong> EduStrat (Educational Stratification in PISA) is a browser-based, open-source tool for exploratory secondary analysis of OECD PISA student microdata across eight assessment cycles (2000&ndash;2022). The application enables researchers, instructors, and students to investigate the intergenerational transmission of educational achievement&mdash;specifically, how parental education, occupational status, and household wealth relate to the academic performance of 15-year-olds in mathematics, reading, and science across more than 100 countries. EduStrat provides survey-weighted descriptive statistics, distributional summaries, ESCS gradients and quartile gaps that quantify how strongly family background predicts student outcomes, pooled and country-panel regression specifications, variance decomposition, and model diagnostics. All computations run client-side; data are stored as pre-generated country&ndash;year JSON subsets loaded on demand. Results are exportable as CSV tables, high-resolution figures (PNG/SVG), and self-contained HTML reports with full analytic metadata. This paper describes the software architecture, statistical functionality, data coverage, and reuse potential. It also documents current limitations, notably the use of a single plausible value per domain and the absence of replicate-weight variance estimation in the interactive layer.</p>
+            <p class="keywords"><strong>Keywords:</strong> PISA, educational inequality, intergenerational transmission, ESCS, survey weighting, regression, variance decomposition, open-source, web application, JavaScript, reproducibility</p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!--  SECTION 1: OVERVIEW                                          -->
+        <!-- ============================================================ -->
+
+        <h2>(1) Overview</h2>
+
+        <h3>Introduction</h3>
+
+        <p>The Programme for International Student Assessment (PISA) is one of the most widely used data sources for cross-national research on educational achievement (1, 2). Conducted triennially by the OECD since 2000, PISA assesses the reading, mathematics, and science proficiency of 15-year-old students alongside extensive background questionnaires capturing family socioeconomic characteristics. This combination of standardised achievement measures and rich contextual data makes PISA particularly well suited for studying the intergenerational transmission of educational advantage&mdash;the extent to which parental education, occupational status, and household resources predict children's academic outcomes (3).</p>
+
+        <p>Despite the public availability of PISA microdata, routine analytic tasks remain implementation-heavy for many potential users. The data arise from a complex, stratified two-stage sampling design requiring appropriate weighting; achievement is released as sets of plausible values rather than single test scores; and descriptive results can be sensitive to choices regarding which weights, cycles, countries, and regression specifications are used (4, 5, 1). These technical requirements create a barrier that is particularly high for graduate students, instructors preparing teaching demonstrations, and researchers seeking a rapid first pass through specifications before investing in code-based replication.</p>
+
+        <p>EduStrat was developed to lower this barrier. It provides a browser-based interface for a set of recurring first-pass operations in large-scale assessment research: computing survey-weighted descriptive statistics, summarising achievement distributions, estimating ESCS gradients that quantify the strength of intergenerational transmission, comparing pooled and country-panel regression specifications, and decomposing variance into within- and between-country components. The application requires no local installation, runs entirely client-side, and exports all results with embedded analytic metadata to support transparent reporting and downstream replication.</p>
+
+        <p>The central substantive question that EduStrat operationalises is: <em>how do parental characteristics&mdash;specifically education, occupational status, and household resources, captured by the PISA ESCS index&mdash;predict children's educational achievement at age 15, and how does this relationship vary across countries and over time?</em></p>
+
+        <div class="figure">
+            <img src="images/pisa-app-screenshot.png" alt="EduStrat application interface">
+            <div class="figure-caption"><strong>Figure 1.</strong> The EduStrat interface showing modular analysis tabs, country and year selectors, and export tools. Users select countries, PISA cycles, and outcome domains, then navigate analysis modules through the tabbed interface.</div>
+        </div>
+
+        <h3>Implementation and architecture</h3>
+
+        <p>EduStrat is implemented as a modular ES6 JavaScript application comprising approximately 7,600 lines of code organised into five functional layers: core infrastructure (state management, data loading, statistical utilities), analysis modules (descriptive statistics, regression, variance decomposition, diagnostics), visualisation modules (built on Plotly.js), an export system (CSV, PNG/SVG, HTML reports), and user-interface components. An R-based preprocessing pipeline (four scripts, approximately 650 lines) generates the data files that the application consumes. All source code is publicly available under the MIT licence.</p>
+
+        <h4>Data architecture</h4>
+
+        <p>Rather than loading a monolithic cross-cycle microdata file, EduStrat stores data as 513 country&ndash;year JSON files (one per country&ndash;cycle combination) and loads only the subsets requested by the user. This reduces typical browser memory consumption to 30&ndash;40 MB for a working selection, compared with approximately 1.25 GB for the full dataset. A metadata catalogue (<code>metadata.json</code>) indexes all available country&ndash;cycle combinations and variable definitions, enabling the interface to present valid selections before any data are loaded.</p>
+
+        <p>The underlying data are sourced from the OECD PISA database through the <code>learningtower</code> R package (6), which provides cleaned and harmonised PISA extracts with standardised variable naming across eight assessment cycles (2000, 2003, 2006, 2009, 2012, 2015, 2018, 2022). The processed dataset encompasses 101 participating countries and economies and approximately 3.5 million student observations.</p>
+
+        <h4>Key variables</h4>
+
+        <p>The primary outcome variables are PISA achievement scores in mathematics, reading, and science. The primary stratification variable is ESCS (Economic, Social, and Cultural Status), a composite index of family background comprising three components: highest parental education (ISCED classifications), highest parental occupational status (HISEI index), and an index of home possessions and educational resources. ESCS is standardised to an OECD-referenced scale (mean 0, SD 1 for OECD countries), making it directly interpretable as a measure of relative socioeconomic advantage (7). Each student record additionally includes demographic variables, home resource indicators, and the final student weight (W_FSTUWT) and senate weight (W_FSENWT) required for design-consistent estimation.</p>
+
+        <h4>Statistical functionality</h4>
+
+        <p>EduStrat implements six analytic modules, each designed as a reusable building block for exploratory analysis of educational stratification:</p>
+
+        <ol>
+            <li><strong>Descriptive statistics.</strong> Survey-weighted means, variances, and quantiles for achievement scores and ESCS, reported at the country&ndash;year level with analytical standard errors.</li>
+            <li><strong>Distributional summaries.</strong> Gini coefficients (with Lorenz curves), coefficients of variation, and inter-percentile ratios (P90/P10, P75/P25) characterising within-country achievement inequality.</li>
+            <li><strong>ESCS gradients.</strong> The slope from a survey-weighted regression of achievement on ESCS&mdash;the core measure of intergenerational transmission, representing the score-point difference in achievement associated with a one-unit increase in family socioeconomic status. Optional controls include gender and parental education.</li>
+            <li><strong>Quartile gaps.</strong> Q4&ndash;Q1 achievement differences (gap between children from the most and least socioeconomically advantaged families) with standardised effect sizes (Cohen's <em>d</em>), providing an intuitive summary of how much family background matters for achievement.</li>
+            <li><strong>Regression models.</strong> Three specifications&mdash;pooled weighted OLS, country fixed effects (with optional year fixed effects), and country random effects (quasi-demeaning transformation)&mdash;with coefficient tables, fit statistics (R&sup2;, AIC, BIC), diagnostic plots (residuals versus fitted, Q&ndash;Q), and Hausman specification tests.</li>
+            <li><strong>Variance decomposition.</strong> Partitioning of total variance into within- and between-country components with intraclass correlation coefficients (ICC), revealing how much variation in the family background&ndash;achievement relationship occurs within versus between education systems.</li>
+        </ol>
+
+        <p>All descriptive and regression computations apply sampling weights. The application defaults to the final student weight (W_FSTUWT) and optionally supports senate weights (W_FSENWT) for equal-country estimands (1).</p>
+
+        <h4>Survey weighting and plausible values</h4>
+
+        <p>Because PISA data arise from a complex sampling design, all of EduStrat's outputs are computed using the appropriate sampling weights. Achievement in PISA is released as plausible values&mdash;multiple draws from the estimated proficiency distribution under a latent regression model&mdash;which are designed to support valid population inference under matrix sampling (4, 8, 5). Standard practice requires repeating computations across all plausible values and combining estimates following Rubin's rules. For interactivity, EduStrat currently uses the first plausible value per domain and flags this constraint explicitly in all outputs. Users requiring publication-grade inference are expected to replicate selected specifications using all plausible values and appropriate replicate-weight variance procedures in a dedicated statistical environment.</p>
+
+        <h4>Export system</h4>
+
+        <p>A practical design priority is that every analysis should be exportable with sufficient metadata to document and reproduce the analytic choices. EduStrat provides four export channels:</p>
+        <ul>
+            <li><strong>CSV:</strong> Summary statistics, regression coefficient tables, and comparative analyses with headers encoding all specification details.</li>
+            <li><strong>Figures:</strong> Publication-quality PNG (1200 &times; 800 px, 2&times; scaling) and SVG vector graphics.</li>
+            <li><strong>HTML reports:</strong> Self-contained documents embedding all tables, figures (as base64 images), and methodology notes.</li>
+            <li><strong>Data subsets:</strong> Filtered microdata with provenance headers documenting the source, selection criteria, and variable definitions.</li>
+        </ul>
+        <p>All exports encode the selected countries, years, outcome domain, predictor variables, control choices, weighting scheme, and estimator family, so that results can be traced to specific specifications. This supports the minimum standard for computational reproducibility in exploratory work: that analytic choices are recorded and can be re-executed in a more formal environment (9).</p>
+
+        <h3>Quality control</h3>
+
+        <p>Data quality is validated at three stages. First, the R preprocessing pipeline (<code>03-validate-chunks.R</code>) checks each country&ndash;year file for structural integrity, variable completeness, plausible ranges, and consistency with the metadata catalogue. Second, the browser-based data loader verifies JSON structure, required fields, and weight availability before admitting any chunk into the analysis workspace. Third, the analysis modules include internal checks: regression routines verify positive-definite design matrices, variance decomposition verifies non-negative components, and all modules flag when effective sample sizes fall below reporting thresholds.</p>
+
+        <p>Statistical outputs have been cross-validated against published OECD country statistics for selected country&ndash;year combinations (e.g. mean mathematics scores and ESCS gradients for OECD countries in 2018 and 2022), with discrepancies documented in the methodology appendix where they arise from the single-plausible-value constraint or differences in missing-data treatment.</p>
+
+        <h3>Current limitations</h3>
+
+        <p>EduStrat's outputs should be interpreted as descriptive associations produced by a transparent, interactive implementation, not as definitive inferential results. Four limitations warrant explicit acknowledgement:</p>
+        <ul>
+            <li><strong>Plausible values:</strong> The web interface uses a single plausible value (PV1) per domain. Point estimates are unbiased but standard errors may understate sampling and measurement uncertainty, particularly for subgroup analyses and regression coefficients (4, 8, 5).</li>
+            <li><strong>Variance estimation:</strong> The interactive layer does not implement replicate-weight (BRR or jackknife) variance procedures, which are a standard requirement for design-consistent standard errors in PISA analyses (1).</li>
+            <li><strong>Missing data:</strong> Required fields are handled via listwise deletion, which can alter effective sample sizes and introduce bias when missingness is systematic.</li>
+            <li><strong>Cross-sectional design:</strong> PISA is cross-sectional within each cycle, and EduStrat is designed for descriptive exploration rather than causal identification. ESCS gradients measure association, not causation.</li>
+        </ul>
+
+        <!-- ============================================================ -->
+        <!--  SECTION 2: AVAILABILITY                                      -->
+        <!-- ============================================================ -->
+
+        <h2>(2) Availability</h2>
+
+        <div class="software-table">
+            <h4>Software metadata</h4>
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Name</td>
+                        <td>EduStrat &mdash; Educational Stratification in PISA</td>
+                    </tr>
+                    <tr>
+                        <td>Operating system</td>
+                        <td>Platform-independent (browser-based)</td>
+                    </tr>
+                    <tr>
+                        <td>Programming language</td>
+                        <td>JavaScript (ES6 modules); R 4.0+ (data preprocessing pipeline)</td>
+                    </tr>
+                    <tr>
+                        <td>Runtime dependencies</td>
+                        <td>Modern web browser (Chrome 90+, Firefox 88+, Safari 15+, Edge 90+). No server-side runtime required.</td>
+                    </tr>
+                    <tr>
+                        <td>JavaScript libraries</td>
+                        <td>Plotly.js 2.35.2, simple-statistics 7.8.0, jStat 1.9.4, D3.js 7.8.5, PapaParse 5.3.0 (loaded via CDN)</td>
+                    </tr>
+                    <tr>
+                        <td>R dependencies (pipeline only)</td>
+                        <td>learningtower &ge; 1.1.0, dplyr, jsonlite, tidyr</td>
+                    </tr>
+                    <tr>
+                        <td>Data source</td>
+                        <td>OECD PISA Database via the learningtower R package (6)</td>
+                    </tr>
+                    <tr>
+                        <td>Licence</td>
+                        <td>MIT</td>
+                    </tr>
+                    <tr>
+                        <td>Code repository</td>
+                        <td><a href="https://github.com/kevisc/kevisc.github.io/tree/main/edustrat" target="_blank">github.com/kevisc/kevisc.github.io/tree/main/edustrat</a></td>
+                    </tr>
+                    <tr>
+                        <td>Archived copy</td>
+                        <td><em>[Zenodo DOI to be assigned upon deposit]</em></td>
+                    </tr>
+                    <tr>
+                        <td>Live deployment</td>
+                        <td><a href="https://kevinschoenholzer.com/edustrat/" target="_blank">kevinschoenholzer.com/edustrat/</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h4>Documentation</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Description</th>
+                    <th>Location</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Methodology</td>
+                    <td>Formal statistical definitions, formulas, and assumptions</td>
+                    <td><a href="methodology.html">docs/methodology.html</a></td>
+                </tr>
+                <tr>
+                    <td>Data sources</td>
+                    <td>Variable provenance, coverage by cycle, and codebook</td>
+                    <td><a href="data-sources.html">docs/data-sources.html</a></td>
+                </tr>
+                <tr>
+                    <td>Citation guide</td>
+                    <td>Recommended citations in APA, Chicago, MLA, and BibTeX formats</td>
+                    <td><a href="citation.html">docs/citation.html</a></td>
+                </tr>
+                <tr>
+                    <td>Pipeline README</td>
+                    <td>Instructions for regenerating data files from source</td>
+                    <td><a href="../pipeline/scripts/README.md">pipeline/scripts/README.md</a></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============================================================ -->
+        <!--  SECTION 3: REUSE POTENTIAL                                   -->
+        <!-- ============================================================ -->
+
+        <h2>(3) Reuse potential</h2>
+
+        <p>EduStrat addresses a recurring need in comparative education research and teaching: rapid, documented, exploratory analysis of PISA microdata without the overhead of configuring a local statistical environment. Its reuse potential spans four domains.</p>
+
+        <h3>Research exploration</h3>
+        <p>Researchers can use EduStrat as a specification-screening tool. By comparing pooled and panel estimators, toggling weight conventions, and varying country selections, users can assess whether descriptive patterns regarding the relationship between family background and achievement are robust to common analytic alternatives before investing in code-based replication with full plausible-value combination and replicate-weight inference. All results are exportable with analytic metadata, supporting integration into larger reproducible workflows.</p>
+
+        <h3>Teaching and instruction</h3>
+        <p>EduStrat provides a zero-installation platform for classroom demonstrations of key concepts in quantitative methods and comparative education: why survey weights matter, what plausible values are, how fixed- and random-effects estimators differ, and how ESCS gradients vary across education systems. Instructors can guide students through live comparisons without requiring them to install specialised software or manage large microdata files (1, 5).</p>
+
+        <h3>Policy briefing and cross-country profiling</h3>
+        <p>The combination of interactive selection, automated computation, and structured export makes EduStrat suitable for producing rapid cross-country profiles of educational stratification. Users can select a year and a set of countries, generate weighted distributional summaries and ESCS gradients, and export compact tables and figures for briefing materials, revealing which education systems show stronger or weaker intergenerational transmission.</p>
+
+        <h3>Extension and modification</h3>
+        <p>The modular ES6 architecture is designed to accommodate extensions. The analysis layer (<code>js/analysis/</code>) and visualisation layer (<code>js/visualization/</code>) are separated from the data-loading infrastructure (<code>js/core/</code>), so new analytic modules or chart types can be added without modifying the data pipeline. The R preprocessing scripts can be adapted to incorporate additional PISA variables or future assessment cycles as they become available through the <code>learningtower</code> package or directly from the OECD. The MIT licence permits unrestricted modification and redistribution.</p>
+
+        <h3>Support</h3>
+        <p>Bug reports, feature requests, and contributions can be submitted through the project's GitHub issue tracker at <a href="https://github.com/kevisc/kevisc.github.io/issues" target="_blank">github.com/kevisc/kevisc.github.io/issues</a>. Documentation covering installation, data regeneration, and statistical methods is maintained alongside the source code.</p>
+
+        <!-- ============================================================ -->
+        <!--  BACK MATTER                                                  -->
+        <!-- ============================================================ -->
+
+        <h2>Acknowledgements</h2>
+        <p>The PISA data used in this application are made available by the OECD. The <code>learningtower</code> R package (6), developed by Kevin Wang, Paul Yacobellis, Erika Siregar, and collaborators, provided the harmonised data extracts that underpin the preprocessing pipeline. The author gratefully acknowledges the developers of the open-source JavaScript libraries on which EduStrat depends: Plotly.js, simple-statistics, jStat, D3.js, and PapaParse.</p>
+
+        <h2>Competing interests</h2>
+        <p>The author declares no competing interests.</p>
+
+        <h2>Author contributions</h2>
+        <p>K.S. designed and implemented the software, processed the data, wrote the documentation, and drafted this paper.</p>
+
+        <!-- ============================================================ -->
+        <!--  REFERENCES (Vancouver numbered style)                        -->
+        <!-- ============================================================ -->
+
+        <h2>References</h2>
+
+        <p class="reference">[1] OECD. PISA data analysis manual: SPSS. 2nd ed. Paris: OECD Publishing; 2009. DOI: <a href="https://doi.org/10.1787/9789264056275-en">10.1787/9789264056275-en</a></p>
+
+        <p class="reference">[2] OECD. PISA 2022 Technical Report. Paris: OECD Publishing; 2024. DOI: <a href="https://doi.org/10.1787/01820d6d-en">10.1787/01820d6d-en</a></p>
+
+        <p class="reference">[3] Sirin SR. Socioeconomic status and academic achievement: A meta-analytic review of research. Review of Educational Research. 2005; 75(3): 417&ndash;453. DOI: <a href="https://doi.org/10.3102/00346543075003417">10.3102/00346543075003417</a></p>
+
+        <p class="reference">[4] Mislevy RJ, Beaton AE, Kaplan B, Sheehan KM. Estimating population characteristics from sparse matrix samples of item responses. Journal of Educational Measurement. 1992; 29(2): 133&ndash;161. DOI: <a href="https://doi.org/10.1111/j.1745-3984.1992.tb00371.x">10.1111/j.1745-3984.1992.tb00371.x</a></p>
+
+        <p class="reference">[5] Wu M. The role of plausible values in large-scale surveys. Studies in Educational Evaluation. 2005; 31(2&ndash;3): 114&ndash;128. DOI: <a href="https://doi.org/10.1016/j.stueduc.2005.05.005">10.1016/j.stueduc.2005.05.005</a></p>
+
+        <p class="reference">[6] Wang K, Yacobellis P, Siregar E, Romanes S, Fitter K, Dalla Riva GV, Cook D, Tierney N, Dingorkar P, Sai Subramanian S, Chen G. learningtower: OECD PISA datasets from 2000&ndash;2022 in an easy-to-use format [R package, version 1.1.0]. 2024. DOI: <a href="https://doi.org/10.32614/CRAN.package.learningtower">10.32614/CRAN.package.learningtower</a></p>
+
+        <p class="reference">[7] Wuyts C. The measurement of socio-economic status in PISA. Paris: OECD; 2024.</p>
+
+        <p class="reference">[8] Rubin DB. Multiple imputation for nonresponse in surveys. New York: John Wiley &amp; Sons; 1987. DOI: <a href="https://doi.org/10.1002/9780470316696">10.1002/9780470316696</a></p>
+
+        <p class="reference">[9] Peng RD. Reproducible research in computational science. Science. 2011; 334(6060): 1226&ndash;1227. DOI: <a href="https://doi.org/10.1126/science.1213847">10.1126/science.1213847</a></p>
+
+        <p class="reference">[10] Hanushek EA, Woessmann L. The economics of international differences in educational achievement. In: Hanushek EA, Machin S, Woessmann L, editors. Handbook of the Economics of Education. Vol. 3. Amsterdam: North-Holland; 2011. p. 89&ndash;200. DOI: <a href="https://doi.org/10.1016/B978-0-444-53429-3.00002-8">10.1016/B978-0-444-53429-3.00002-8</a></p>
+
+        <p class="reference">[11] Reardon SF. The widening academic achievement gap between the rich and the poor: New evidence and possible explanations. In: Duncan GJ, Murnane RJ, editors. Whither Opportunity? Rising Inequality, Schools, and Children's Life Chances. New York: Russell Sage Foundation; 2011. p. 91&ndash;116.</p>
+
+        <a class="back-link" href="../index.html">Back to Application</a>
+    </div>
+</body>
+</html>

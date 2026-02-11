@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Methodology - Educational Stratification in PISA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: #1e293b;
+            background: #f8fafc;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 2.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 0.75rem;
+        }
+        h2 {
+            color: #1e293b;
+            font-size: 1.75rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            color: #334155;
+            font-size: 1.35rem;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        p {
+            margin-bottom: 1rem;
+            color: #475569;
+            text-align: justify;
+        }
+        .formula {
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #3b82f6;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .note {
+            background: #dbeafe;
+            padding: 1.25rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .warning {
+            background: #fef3c7;
+            padding: 1.25rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #f59e0b;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        tr:hover {
+            background: #f8fafc;
+        }
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+            color: #475569;
+        }
+        .reference {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            text-indent: -1.5rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            background: #2563eb;
+        }
+        code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Methodology</h1>
+        <p><strong>Educational Stratification in PISA</strong><br>
+        Statistical Methods and Technical Documentation</p>
+        <p>This documentation describes the statistical methods used in the tool to study the intergenerational transmission of educational achievement—specifically, how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
+
+        <h2>1. Data Sources</h2>
+
+        <h3>1.1 PISA Programme</h3>
+        <p>This application uses data from the Programme for International Student Assessment (PISA), a triennial international survey coordinated by the Organisation for Economic Co-operation and Development (OECD). PISA assesses 15-year-old students' proficiency in reading, mathematics, and science, and has been conducted every three years since 2000 (OECD, 2019).</p>
+
+        <p>PISA employs a two-stage stratified sampling design. In the first stage, schools are sampled with probability proportional to size. In the second stage, students within schools are randomly selected. This design ensures representative samples of the target population in each participating country while maintaining statistical efficiency (OECD, 2017).</p>
+
+        <h3>1.2 learningtower R Package</h3>
+        <p>Data are accessed via the <code>learningtower</code> R package (Wang et al., 2024), which provides cleaned and harmonized PISA data from 2000-2022 in an easy-to-use format. The package standardizes variable names across assessment cycles and handles missing data codes according to OECD specifications.</p>
+
+        <h3>1.3 Assessment Cycles</h3>
+        <p>The current implementation includes data from eight PISA cycles:</p>
+        <ul>
+            <li><strong>PISA 2000</strong></li>
+            <li><strong>PISA 2003</strong></li>
+            <li><strong>PISA 2006</strong></li>
+            <li><strong>PISA 2009</strong></li>
+            <li><strong>PISA 2012</strong></li>
+            <li><strong>PISA 2015</strong></li>
+            <li><strong>PISA 2018</strong></li>
+            <li><strong>PISA 2022</strong></li>
+        </ul>
+
+        <h2>2. Variables</h2>
+
+        <h3>2.1 Achievement Scores</h3>
+        <p>PISA does not administer a single test to all students. Instead, students receive booklets containing different combinations of test items. To account for this design, PISA uses <em>plausible values</em> – a set of imputed values that represent the range of abilities a student might have demonstrated had they taken the full assessment (OECD, 2009).</p>
+
+        <div class="note">
+            <strong>Note:</strong> The current implementation uses the first plausible value for each domain for simplicity. Full analyses should use all plausible values and combine results using Rubin's rules (Rubin, 1987).
+        </div>
+
+        <p>Achievement scores are scaled to have an international mean of 500 and standard deviation of 100 in the first assessment cycle when a domain was the major focus.</p>
+
+        <h3>2.2 Economic, Social and Cultural Status (ESCS): Measuring Family Background</h3>
+        <p>The ESCS index is PISA's composite measure of family socioeconomic status—the primary variable for studying intergenerational transmission of educational achievement. It captures how parental characteristics relate to children's outcomes through three components:</p>
+        <ol>
+            <li><strong>Highest parental occupation (HISEI):</strong> International Socio-Economic Index of Occupational Status, measuring the occupational prestige and economic rewards associated with parents' jobs. Based on the International Standard Classification of Occupations (ISCO).</li>
+            <li><strong>Highest parental education (PARED):</strong> Years of schooling completed by the most educated parent, coded using ISCED (International Standard Classification of Education) levels.</li>
+            <li><strong>Home possessions (HOMEPOS):</strong> An index of household wealth, cultural possessions (books, art), and home educational resources (desk, computer, internet access). This captures both material resources and cultural capital available to the student.</li>
+        </ol>
+
+        <p>These components are combined using principal components analysis and standardized to have an OECD mean of 0 and standard deviation of 1 (OECD, 2017). When analyzing ESCS gradients or quartile gaps, researchers are directly measuring the strength of intergenerational transmission—how strongly these parental characteristics predict their children's academic performance at age 15.</p>
+
+        <div class="formula">
+ESCS<sub>i</sub> = PCA(HISEI<sub>i</sub>, PARED<sub>i</sub>, HOMEPOS<sub>i</sub>)
+
+where:
+  HISEI<sub>i</sub> = highest parental occupation for student i
+  PARED<sub>i</sub> = highest parental education for student i
+  HOMEPOS<sub>i</sub> = home possessions index for student i
+        </div>
+
+        <h3>2.3 Sampling Weights</h3>
+        <p>PISA provides multiple types of weights to account for the complex sampling design:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Weight Type</th>
+                    <th>Variable Name</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Final Student Weight</td>
+                    <td><code>W_FSTUWT</code></td>
+                    <td>Represents national student population; accounts for selection probability and nonresponse</td>
+                </tr>
+                <tr>
+                    <td>Senate Weight</td>
+                    <td><code>W_FSENWT</code></td>
+                    <td>Equally weights countries; each country contributes equally regardless of population</td>
+                </tr>
+                <tr>
+                    <td>Replicate Weights</td>
+                    <td><code>W_FSTR1-W_FSTR80</code></td>
+                    <td>Used for balanced repeated replication (BRR) standard error estimation</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>The default analysis uses final student weights (<code>W_FSTUWT</code>) following OECD technical standards (OECD, 2023).</p>
+
+        <h2>3. Statistical Methods</h2>
+
+        <h3>3.1 Weighted Descriptive Statistics</h3>
+        <p>All descriptive statistics account for sampling weights. The weighted mean is calculated as:</p>
+
+        <div class="formula">
+μ̂<sub>w</sub> = (Σ w<sub>i</sub> · y<sub>i</sub>) / (Σ w<sub>i</sub>)
+
+where:
+  y<sub>i</sub> = achievement score for student i
+  w<sub>i</sub> = sampling weight for student i
+  μ̂<sub>w</sub> = weighted mean
+        </div>
+
+        <p>The weighted variance is:</p>
+
+        <div class="formula">
+σ̂²<sub>w</sub> = [Σ w<sub>i</sub> · (y<sub>i</sub> - μ̂<sub>w</sub>)²] / (Σ w<sub>i</sub>)
+        </div>
+
+        <p>Weighted quantiles are computed by sorting observations by achievement score and finding the value at which the cumulative sum of weights reaches the target percentile times the total weight.</p>
+
+        <h3>3.2 Distributional Measures</h3>
+        <p>These measures summarize the spread of achievement distributions within countries. While not direct measures of intergenerational transmission, they provide context for understanding achievement variation and can be compared across countries and over time.</p>
+
+        <h4>Gini Coefficient</h4>
+        <p>The Gini coefficient measures dispersion in achievement distribution, ranging from 0 (all students have identical scores) to 1 (maximum dispersion). For a sorted vector of achievement scores:</p>
+
+        <div class="formula">
+G = [2 · Σ(i · y<sub>i</sub>)] / (n · Σ y<sub>i</sub>) - (n + 1) / n
+
+where:
+  y<sub>i</sub> = achievement scores sorted in ascending order
+  i = rank of observation (1, 2, ..., n)
+  n = sample size
+        </div>
+
+        <h4>Coefficient of Variation</h4>
+        <div class="formula">
+CV = σ / μ
+
+where σ is standard deviation and μ is mean
+        </div>
+
+        <h4>Percentile Ratios</h4>
+        <p>The P90/P10 ratio compares the 90th percentile to the 10th percentile:</p>
+        <div class="formula">
+P90/P10 = Q<sub>0.90</sub> / Q<sub>0.10</sub>
+        </div>
+
+        <h3>3.3 ESCS Gradient: The Core Measure of Intergenerational Transmission</h3>
+        <p>The ESCS gradient (β) is the central statistic for quantifying intergenerational transmission of educational achievement. It measures how many score points of achievement are associated with a one-unit increase in family socioeconomic status—directly capturing how strongly parental education, occupation, and wealth predict children's academic outcomes. It is the slope from a weighted bivariate regression:</p>
+
+        <div class="formula">
+Y<sub>i</sub> = α + β · ESCS<sub>i</sub> + ε<sub>i</sub>
+
+where:
+  Y<sub>i</sub> = achievement score (math, reading, or science)
+  ESCS<sub>i</sub> = family socioeconomic status index
+  β = ESCS gradient (intergenerational transmission coefficient)
+  ε<sub>i</sub> = residual error
+
+A larger β indicates stronger intergenerational transmission—children's
+achievement is more strongly predicted by their parents' characteristics.
+        </div>
+
+        <p>The weighted least squares estimator is:</p>
+
+        <div class="formula">
+β̂ = [Σ w<sub>i</sub> · (ESCS<sub>i</sub> - ESCS̄<sub>w</sub>) · (Y<sub>i</sub> - Ȳ<sub>w</sub>)] / [Σ w<sub>i</sub> · (ESCS<sub>i</sub> - ESCS̄<sub>w</sub>)²]
+        </div>
+
+        <h3>3.4 Regression Models</h3>
+
+        <h4>Pooled OLS</h4>
+        <p>The pooled ordinary least squares model treats all observations as independent:</p>
+
+        <div class="formula">
+Y<sub>ij</sub> = β<sub>0</sub> + β<sub>1</sub>·ESCS<sub>ij</sub> + β<sub>2</sub>·X<sub>ij</sub> + ε<sub>ij</sub>
+
+where:
+  Y<sub>ij</sub> = achievement for student i in country j
+  ESCS<sub>ij</sub> = socioeconomic status
+  X<sub>ij</sub> = vector of control variables (gender, parental education, etc.)
+  ε<sub>ij</sub> ~ N(0, σ²)
+        </div>
+
+        <h4>Fixed Effects Model</h4>
+        <p>The fixed effects model includes country-specific intercepts (α<sub>j</sub>) to control for all time-invariant country characteristics:</p>
+
+        <div class="formula">
+Y<sub>ijt</sub> = α<sub>j</sub> + γ<sub>t</sub> + β<sub>1</sub>·ESCS<sub>ijt</sub> + β<sub>2</sub>·X<sub>ijt</sub> + ε<sub>ijt</sub>
+
+where:
+  α<sub>j</sub> = country fixed effects (j = 1, ..., J countries)
+  γ<sub>t</sub> = year fixed effects (t = 1, ..., T years)
+        </div>
+
+        <p>Country fixed effects are implemented using dummy variables with one country as the reference category.</p>
+
+        <h4>Random Effects Model</h4>
+        <p>The random effects model assumes country intercepts are drawn from a distribution:</p>
+
+        <div class="formula">
+Y<sub>ij</sub> = β<sub>0</sub> + u<sub>j</sub> + β<sub>1</sub>·ESCS<sub>ij</sub> + β<sub>2</sub>·X<sub>ij</sub> + ε<sub>ij</sub>
+
+where:
+  u<sub>j</sub> ~ N(0, τ²) = random country effect
+  ε<sub>ij</sub> ~ N(0, σ²) = individual error
+
+Total variance: Var(Y) = τ² + σ²
+        </div>
+
+        <p>Random effects are estimated using quasi-demeaning (Wooldridge, 2010):</p>
+
+        <div class="formula">
+Y<sub>ij</sub>* = Y<sub>ij</sub> - θ · Ȳ<sub>j</sub>
+
+where θ = 1 - √[σ² / (σ² + n<sub>j</sub>·τ²)]
+        </div>
+
+        <h3>3.5 Model Selection and Diagnostics</h3>
+
+        <h4>Information Criteria</h4>
+        <p>Model comparison uses information-theoretic criteria that balance goodness-of-fit with parsimony:</p>
+
+        <div class="formula">
+<strong>Akaike Information Criterion (AIC):</strong>
+AIC = n · log(RSS/n) + 2k
+
+<strong>Bayesian Information Criterion (BIC):</strong>
+BIC = n · log(RSS/n) + k · log(n)
+
+where:
+  n = number of observations
+  k = number of parameters (including intercept)
+  RSS = residual sum of squares
+        </div>
+
+        <p><strong>Interpretation:</strong> Lower AIC/BIC values indicate better model fit. BIC penalizes model complexity more heavily than AIC (k·log(n) vs 2k), making it more conservative for large samples. AIC tends to select more complex models, while BIC favors parsimony (Burnham & Anderson, 2004).</p>
+
+        <h4>Residual Diagnostics</h4>
+        <p>Regression assumptions are validated through graphical diagnostics:</p>
+
+        <p><strong>Residual vs Fitted Plot:</strong> Detects violations of homoscedasticity (constant variance). Under the assumption ε ~ N(0, σ²), residuals should be randomly scattered around zero without systematic patterns. Fanning patterns indicate heteroscedasticity, which may require robust standard errors or variance-stabilizing transformations.</p>
+
+        <p><strong>Q-Q Plot (Quantile-Quantile Plot):</strong> Tests residual normality by comparing sample quantiles against theoretical normal quantiles. The standardized residuals are computed as:</p>
+
+        <div class="formula">
+z<sub>i</sub> = (e<sub>i</sub> - ē) / SD(e)
+
+where:
+  e<sub>i</sub> = residual for observation i
+  ē = mean residual (should be ≈ 0)
+  SD(e) = standard deviation of residuals
+        </div>
+
+        <p>Points lying close to the 45-degree reference line indicate normally distributed residuals. Systematic deviations (S-curves, fat tails) suggest departures from normality. Theoretical quantiles are computed using the inverse normal CDF approximation (Beasley-Springer-Moro algorithm).</p>
+
+        <p><strong>Hausman Specification Test:</strong> Tests whether random effects assumptions hold by comparing FE and RE estimates (Hausman, 1978):</p>
+
+        <div class="formula">
+H = (β̂<sub>FE</sub> - β̂<sub>RE</sub>)' · [Var(β̂<sub>FE</sub>) - Var(β̂<sub>RE</sub>)]<sup>-1</sup> · (β̂<sub>FE</sub> - β̂<sub>RE</sub>) ~ χ²<sub>k</sub>
+
+H<sub>0</sub>: E(u<sub>j</sub> | X) = 0 (RE is consistent)
+H<sub>1</sub>: E(u<sub>j</sub> | X) ≠ 0 (only FE is consistent)
+        </div>
+
+        <p>If p < 0.05, reject random effects in favor of fixed effects.</p>
+
+        <h3>3.6 Variance Decomposition</h3>
+        <p>The intraclass correlation coefficient (ICC) partitions total variance into within-country and between-country components:</p>
+
+        <div class="formula">
+ICC (ρ) = τ² / (τ² + σ²)
+
+where:
+  τ² = between-country variance
+  σ² = within-country variance
+        </div>
+
+        <p>The ICC represents the proportion of total variance in achievement that is due to differences between countries. An ICC of 0.15 means 15% of variance is between countries and 85% is within countries.</p>
+
+        <h3>3.7 ESCS Quartile Gaps: Family Background Differences in Achievement</h3>
+        <p>Quartile gaps provide an intuitive measure of intergenerational transmission by comparing achievement between students from different family backgrounds. The Q4–Q1 gap shows the score-point difference between children from the most advantaged (top ESCS quartile) versus least advantaged (bottom ESCS quartile) families:</p>
+
+        <div class="formula">
+Gap (Q4-Q1) = Ȳ<sub>Q4</sub> - Ȳ<sub>Q1</sub>
+
+Effect Size (Cohen's d) = (Ȳ<sub>Q4</sub> - Ȳ<sub>Q1</sub>) / SD<sub>pooled</sub>
+
+where:
+  Ȳ<sub>Q4</sub> = weighted mean for top SES quartile
+  Ȳ<sub>Q1</sub> = weighted mean for bottom SES quartile
+  SD<sub>pooled</sub> = √[(SD<sub>Q4</sub>² + SD<sub>Q1</sub>²) / 2]
+        </div>
+
+        <p>Effect sizes are interpreted using Cohen's conventions: small (0.2), medium (0.5), large (0.8) (Cohen, 1988).</p>
+
+        <h3>3.8 Standard Errors</h3>
+        <p>For most analyses, standard errors are computed using classical formulas with sampling weights. For robust inference, the application supports balanced repeated replication (BRR) using the 80 replicate weights provided by PISA:</p>
+
+        <div class="formula">
+SE(θ̂) = √[Σ<sub>r=1</sub><sup>R</sup> (θ̂<sub>r</sub> - θ̂)² / R]
+
+where:
+  θ̂ = estimate using final weights
+  θ̂<sub>r</sub> = estimate using replicate weight r
+  R = 80 replicate weights
+        </div>
+
+        <h2>4. Assumptions and Limitations</h2>
+
+        <h3>4.1 Causal Inference</h3>
+        <div class="warning">
+            <strong>Important:</strong> PISA is a cross-sectional observational study. All analyses report <em>associations</em>, not causal effects. The ESCS gradient measures how strongly parental characteristics (education, occupation, wealth) predict children's achievement at age 15, but does not prove that family background causes differences in achievement. Unmeasured confounders (e.g., genetic factors, peer effects, school quality, neighborhood characteristics) may explain observed associations. ESCS gradients should be interpreted as descriptive measures of intergenerational transmission patterns, not as causal estimates of the effect of changing family socioeconomic status.
+        </div>
+
+        <h3>4.2 Missing Data</h3>
+        <p>The current implementation uses listwise deletion for missing values. Students with missing data on any variable in the analysis are excluded. This approach is appropriate when data are missing completely at random (MCAR) but may introduce bias if data are missing at random (MAR) or not at random (MNAR).</p>
+
+        <p>OECD recommends multiple imputation for handling missing data in PISA (OECD, 2009), which is not yet implemented in this tool.</p>
+
+        <h3>4.3 Sampling Design</h3>
+        <p>All analyses account for sampling weights, which adjust for unequal selection probabilities and nonresponse. However, the current implementation does not account for clustering (students within schools) when computing standard errors, which may underestimate uncertainty. For publication-quality inference, cluster-robust standard errors or BRR should be used.</p>
+
+        <h3>4.4 Measurement Error</h3>
+        <p>Achievement scores are measured with error. PISA addresses this through plausible values, but the current implementation uses only the first plausible value. Full uncertainty quantification requires analyzing all plausible values and combining results (Rubin, 1987).</p>
+
+        <h3>4.5 Comparability Across Cycles</h3>
+        <p>While PISA attempts to maintain comparability across assessment cycles through linking procedures, changes in test design, sampling, and country participation may affect trend estimates. Caution is advised when interpreting changes over time, particularly for countries that altered their sampling procedures.</p>
+
+        <h3>4.6 Generalizability</h3>
+        <p>PISA results are representative of 15-year-old students enrolled in school in participating countries. Results do not generalize to:</p>
+        <ul>
+            <li>Out-of-school youth (particularly relevant in countries with low enrollment rates)</li>
+            <li>Students younger or older than 15 years</li>
+            <li>Adult populations</li>
+            <li>Non-participating countries</li>
+        </ul>
+
+        <h2>5. Software Implementation</h2>
+
+        <h3>5.1 Statistical Libraries</h3>
+        <p>Analyses are implemented in JavaScript using the following libraries:</p>
+        <ul>
+            <li><strong>jStat:</strong> Statistical distributions (t-distribution, χ² distribution) for p-values</li>
+            <li><strong>simple-statistics:</strong> Basic statistical functions (mean, variance, quantiles)</li>
+            <li><strong>Plotly.js:</strong> Interactive visualizations</li>
+        </ul>
+
+        <h3>5.2 Numerical Stability</h3>
+        <p>Regression models use ridge-regularized normal equations to improve numerical stability when computing (X'X)⁻¹:</p>
+
+        <div class="formula">
+β̂<sub>ridge</sub> = (X'WX + λI)⁻¹X'WY
+
+where λ = 10⁻¹⁰ · trace(X'WX)
+        </div>
+
+        <p>This prevents singular matrix errors when country fixed effects induce near-collinearity.</p>
+
+        <h3>5.3 Validation</h3>
+        <p>Statistical functions have been validated against R implementations using identical datasets. Key validation tests:</p>
+        <ul>
+            <li>Weighted mean and variance match R's <code>weighted.mean()</code> and <code>cov.wt()</code></li>
+            <li>Regression coefficients match R's <code>lm()</code> with weights</li>
+            <li>Gini coefficients match R's <code>ineq</code> package</li>
+        </ul>
+
+        <h2>6. References</h2>
+
+        <div class="reference">
+Cohen, J. (1988). <em>Statistical Power Analysis for the Behavioral Sciences</em> (2nd ed.). Lawrence Erlbaum Associates.
+        </div>
+
+        <div class="reference">
+Mislevy, R. J., Beaton, A. E., Kaplan, B., & Sheehan, K. M. (1992). Estimating population characteristics from sparse matrix samples of item responses. <em>Journal of Educational Measurement, 29</em>(2), 133–161. https://doi.org/10.1111/j.1745-3984.1992.tb00371.x
+        </div>
+
+        <div class="reference">
+OECD (2009). <em>PISA Data Analysis Manual: SPSS, Second Edition</em>. OECD Publishing, Paris. https://doi.org/10.1787/9789264056275-en
+        </div>
+
+        <div class="reference">
+OECD (2017). <em>PISA 2015 Technical Report</em>. OECD Publishing, Paris. https://www.oecd.org/pisa/data/2015-technical-report/
+        </div>
+
+        <div class="reference">
+OECD (2019). <em>PISA 2018 Assessment and Analytical Framework</em>. OECD Publishing, Paris. https://doi.org/10.1787/b25efab8-en
+        </div>
+
+        <div class="reference">
+OECD (2023). <em>PISA 2022 Technical Report</em>. OECD Publishing, Paris. https://www.oecd.org/pisa/data/pisa2022technicalreport/
+        </div>
+
+        <div class="reference">
+Reardon, S. F. (2011). The widening academic achievement gap between the rich and the poor: New evidence and possible explanations. In R. Murnane & G. Duncan (Eds.), <em>Whither Opportunity? Rising Inequality, Schools, and Children's Life Chances</em> (pp. 91–116). Russell Sage Foundation.
+        </div>
+
+        <div class="reference">
+Rubin, D. B. (1987). <em>Multiple Imputation for Nonresponse in Surveys</em>. John Wiley & Sons.
+        </div>
+
+        <div class="reference">
+Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., & Chen, G. (2024). <em>learningtower: OECD PISA datasets from 2000–2022 in an easy-to-use format</em> (R package, Version 1.1.0). https://doi.org/10.32614/CRAN.package.learningtower
+        </div>
+
+        <div class="reference">
+Wooldridge, J. M. (2010). <em>Econometric Analysis of Cross Section and Panel Data</em> (2nd ed.). MIT Press.
+        </div>
+
+        <div class="reference">
+Wu, M. (2005). The role of plausible values in large-scale surveys. <em>Studies in Educational Evaluation, 31</em>(2–3), 114–128. https://doi.org/10.1016/j.stueduc.2005.05.005
+        </div>
+
+        <div class="reference">
+Wuyts, C. (2024). The measurement of socio-economic status in PISA. OECD.
+        </div>
+
+        <a href="../index.html" class="back-link">← Back to Application</a>
+    </div>
+</body>
+</html>

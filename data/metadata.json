@@ -1,0 +1,749 @@
+{
+  "generated": "2025-12-16T14:18:10+0100",
+  "version": "1.0.0",
+  "source": "learningtower R package (OECD PISA data)",
+  "citations": {
+    "data_source": "OECD (2023). Programme for International Student Assessment (PISA) Database. https://www.oecd.org/pisa/data/",
+    "r_package": "Vaughan, B., Molyneux, N., & Kleissl, M. (2021). learningtower: OECD PISA Datasets from 2000-2022 in an Easy-to-Use Format. R package version 1.0.1. https://CRAN.R-project.org/package=learningtower"
+  },
+  "years_available": [2000, 2003, 2006, 2009, 2012, 2015, 2018, 2022],
+  "countries": [
+    {
+      "code": "ALB",
+      "name": "ALB",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4743, 5215, 6359, 6129, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "ARE",
+      "name": "ARE",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [11500, 14167, 19277, 24600, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "ARG",
+      "name": "ARG",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5908, "NA", 11975, 12111, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "AUS",
+      "name": "AUS",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [14481, 14530, 14273, 13437, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "AUT",
+      "name": "AUT",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4755, 7007, 6802, 6151, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "BEL",
+      "name": "BEL",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [8597, 9651, 8475, 8286, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "BGR",
+      "name": "BGR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5282, 5928, 5294, 6107, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "BRA",
+      "name": "BRA",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [19204, 23141, 10691, 10798, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "CAN",
+      "name": "CAN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [21544, 20058, 22653, 23073, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "CHE",
+      "name": "CHE",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [11229, 5860, 5822, 6829, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "CHL",
+      "name": "CHL",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [6856, 7053, 7621, 6488, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "COL",
+      "name": "COL",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [9073, 11795, 7522, 7804, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "CRI",
+      "name": "CRI",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4602, 6866, 7221, 6113, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "CZE",
+      "name": "CZE",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5327, 6894, 7019, 8460, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "DEU",
+      "name": "DEU",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5001, 6504, 5451, 6116, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "DNK",
+      "name": "DNK",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [7481, 7161, 7657, 6200, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "ESP",
+      "name": "ESP",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [25313, 6736, 35943, 30800, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "EST",
+      "name": "EST",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4779, 5587, 5316, 6392, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "FIN",
+      "name": "FIN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [8829, 5882, 5649, 10239, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "FRA",
+      "name": "FRA",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4613, 6108, 6308, 6770, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "GBR",
+      "name": "GBR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [12659, 14157, 13818, 12972, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "GRC",
+      "name": "GRC",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5125, 5532, 6403, 6403, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "HKG",
+      "name": "HKG",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4670, 5359, 6037, 5907, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "HRV",
+      "name": "HRV",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5008, 5809, 6609, 6135, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "HUN",
+      "name": "HUN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4810, 5658, 5132, 6198, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "IDN",
+      "name": "IDN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5622, 6513, 12098, 13439, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "IRL",
+      "name": "IRL",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5016, 5741, 5577, 5569, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "ISL",
+      "name": "ISL",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [3508, 3371, 3296, 3360, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "ISR",
+      "name": "ISR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5055, 6598, 6623, 6251, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "ITA",
+      "name": "ITA",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [31073, 11583, 11785, 10552, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "JOR",
+      "name": "JOR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [7038, 7267, 8963, 7799, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "JPN",
+      "name": "JPN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [6351, 6647, 6109, 5760, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "KAZ",
+      "name": "KAZ",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5808, "NA", 19507, 19769, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "KOR",
+      "name": "KOR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5033, 5581, 6650, 6454, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "LIE",
+      "name": "LIE",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [293, "NA", "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "LTU",
+      "name": "LTU",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4618, 6525, 6885, 7257, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "LUX",
+      "name": "LUX",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5258, 5299, 5230, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "LVA",
+      "name": "LVA",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4306, 4869, 5303, 5373, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MAC",
+      "name": "MAC",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5335, 4476, 3775, 4384, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MEX",
+      "name": "MEX",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [33806, 7568, 7299, 6288, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MNE",
+      "name": "MNE",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4744, 5665, 6666, 5793, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MYS",
+      "name": "MYS",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5197, "NA", 6111, 7069, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "NLD",
+      "name": "NLD",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4460, 5385, 4765, 5046, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "NOR",
+      "name": "NOR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4686, 5456, 5813, 6611, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "NZL",
+      "name": "NZL",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4291, 4520, 6173, 4682, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "PER",
+      "name": "PER",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [6035, 6971, 6086, 6968, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "POL",
+      "name": "POL",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4607, 4478, 5625, 6011, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "PRT",
+      "name": "PRT",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5722, 7325, 5932, 6793, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QAT",
+      "name": "QAT",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [10966, 12083, 13828, 7676, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QCN",
+      "name": "QCN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5177, "NA", "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QRS",
+      "name": "QRS",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [1761, "NA", "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "ROU",
+      "name": "ROU",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5074, 4876, 5075, 7364, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "RUS",
+      "name": "RUS",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5231, 6036, 7608, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "SGP",
+      "name": "SGP",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5546, 6115, 6676, 6606, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "SRB",
+      "name": "SRB",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4684, "NA", 6609, 6413, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "SVK",
+      "name": "SVK",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4678, 6350, 5965, 5824, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "SVN",
+      "name": "SVN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5911, 6406, 6401, 6721, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "SWE",
+      "name": "SWE",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4736, 5458, 5504, 6072, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "TAP",
+      "name": "TAP",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [6046, 7708, 7243, 5857, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "THA",
+      "name": "THA",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [6606, 8249, 8633, 8495, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "TUN",
+      "name": "TUN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4407, 5375, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "TUR",
+      "name": "TUR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4848, 5895, 6890, 7250, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "URY",
+      "name": "URY",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [5315, 6062, 5263, 6618, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "USA",
+      "name": "USA",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4978, 5712, 4838, 4552, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "VNM",
+      "name": "VNM",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": [4959, 5826, 5377, 6068, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "DOM",
+      "name": "DOM",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 4740, 5674, 6868, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "DZA",
+      "name": "DZA",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 5519, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "GEO",
+      "name": "GEO",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 5316, 5572, 6583, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "KSV",
+      "name": "KSV",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 4826, 5058, 6027, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "LBN",
+      "name": "LBN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 4546, 5614, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MDA",
+      "name": "MDA",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 5325, 5367, 6235, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MKD",
+      "name": "MKD",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 5324, 5569, 6610, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MLT",
+      "name": "MLT",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 3634, 3363, 3127, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QAR",
+      "name": "QAR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 1657, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QCH",
+      "name": "QCH",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 9841, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QES",
+      "name": "QES",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 32330, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QUC",
+      "name": "QUC",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 1652, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QUD",
+      "name": "QUD",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 1398, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QUE",
+      "name": "QUE",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 1887, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "TTO",
+      "name": "TTO",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", 4692, "NA", "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "BIH",
+      "name": "BIH",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 6480, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "BLR",
+      "name": "BLR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 5803, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "BRN",
+      "name": "BRN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 6828, 5576, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MAR",
+      "name": "MAR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 6814, 6867, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "PAN",
+      "name": "PAN",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 6270, 4544, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "PHL",
+      "name": "PHL",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 7233, 7193, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QAZ",
+      "name": "QAZ",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 6827, 7720, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QCI",
+      "name": "QCI",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 12058, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QMR",
+      "name": "QMR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 2016, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QRT",
+      "name": "QRT",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 5816, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "SAU",
+      "name": "SAU",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 6136, 6928, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "UKR",
+      "name": "UKR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", 5998, "NA", 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "GTM",
+      "name": "GTM",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 5190, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "JAM",
+      "name": "JAM",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 3873, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "KHM",
+      "name": "KHM",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 5279, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "MNG",
+      "name": "MNG",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 6999, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "PRY",
+      "name": "PRY",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 5084, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "PSE",
+      "name": "PSE",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 7905, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "QUR",
+      "name": "QUR",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 3876, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "SLV",
+      "name": "SLV",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 6705, 2012, 2015, 2018, 2022]
+    },
+    {
+      "code": "UZB",
+      "name": "UZB",
+      "years": [2012, 2015, 2018, 2022],
+      "total_students": ["NA", "NA", "NA", 7293, 2012, 2015, 2018, 2022]
+    }
+  ],
+  "variables": {
+    "student_level": [
+      {
+        "name": "student_id",
+        "label": "Student identifier",
+        "type": "identifier"
+      },
+      {
+        "name": "school_id",
+        "label": "School identifier",
+        "type": "identifier"
+      },
+      {
+        "name": "country",
+        "label": "Country ISO code",
+        "type": "categorical"
+      },
+      {
+        "name": "year",
+        "label": "Assessment year",
+        "type": "categorical"
+      },
+      {
+        "name": "math",
+        "label": "Mathematics achievement score",
+        "type": "continuous"
+      },
+      {
+        "name": "reading",
+        "label": "Reading achievement score",
+        "type": "continuous"
+      },
+      {
+        "name": "science",
+        "label": "Science achievement score",
+        "type": "continuous"
+      },
+      {
+        "name": "escs",
+        "label": "Economic, Social, and Cultural Status Index",
+        "type": "continuous"
+      },
+      {
+        "name": "gender",
+        "label": "Student gender",
+        "type": "categorical"
+      },
+      {
+        "name": "age",
+        "label": "Student age in years",
+        "type": "continuous"
+      },
+      {
+        "name": "mother_educ",
+        "label": "Mother's education (ISCED)",
+        "type": "ordinal"
+      },
+      {
+        "name": "father_educ",
+        "label": "Father's education (ISCED)",
+        "type": "ordinal"
+      },
+      {
+        "name": "computer",
+        "label": "Computer at home",
+        "type": "binary"
+      },
+      {
+        "name": "internet",
+        "label": "Internet connection at home",
+        "type": "binary"
+      },
+      {
+        "name": "books",
+        "label": "Number of books at home",
+        "type": "ordinal"
+      },
+      {
+        "name": "wealth",
+        "label": "Family wealth index",
+        "type": "continuous"
+      },
+      {
+        "name": "read",
+        "label": "Read",
+        "type": "unknown"
+      },
+      {
+        "name": "stu_wgt",
+        "label": "Stu Wgt",
+        "type": "unknown"
+      },
+      {
+        "name": "desk",
+        "label": "Desk",
+        "type": "unknown"
+      },
+      {
+        "name": "room",
+        "label": "Room",
+        "type": "unknown"
+      },
+      {
+        "name": "dishwasher",
+        "label": "Dishwasher",
+        "type": "unknown"
+      },
+      {
+        "name": "television",
+        "label": "Television",
+        "type": "unknown"
+      },
+      {
+        "name": "computer_n",
+        "label": "Computer n",
+        "type": "unknown"
+      },
+      {
+        "name": "car",
+        "label": "Car",
+        "type": "unknown"
+      },
+      {
+        "name": "book",
+        "label": "Book",
+        "type": "unknown"
+      }
+    ]
+  },
+  "total_chunks": 513,
+  "estimated_total_size_mb": 1241
+}

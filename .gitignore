@@ -1,0 +1,18 @@
+# R
+.Rhistory
+.Rapp.history
+.RData
+.Rproj.user/
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log

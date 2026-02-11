@@ -1,0 +1,3603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Inequality Data Explorer</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/7.8.0/simple-statistics.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.4/jstat.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #94a3b8;
+            --accent-color: #fb923c;
+            --success-color: #34d399;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.3);
+            --code-bg: #334155;
+            --plotly-bg: #1e293b;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-text {
+            flex: 1;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .sidebar {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            height: fit-content;
+        }
+        
+        .content-area {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            min-height: 600px;
+        }
+        
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+select, input {
+    width: 100%;
+    padding: 0.625rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background: var(--surface);
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+        
+        select:hover, input:hover {
+            border-color: var(--primary-color);
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+        
+        .tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stat-card {
+            background: var(--background);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            background: #422006;
+            border-left: 4px solid #f59e0b;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            color: #fbbf24;
+        }
+        
+        .alert-info {
+            background: #1e3a8a;
+            border-left-color: #3b82f6;
+            color: #93c5fd;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .description {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .regression-output {
+            background: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .regression-output h4 {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .coef-table {
+            width: 100%;
+            margin-top: 1rem;
+            border-collapse: collapse;
+        }
+        
+        .coef-table th {
+            background: var(--background);
+            padding: 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .coef-table td {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .significant {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        .model-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .model-box {
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .model-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            padding: 0.25rem 0;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .checkbox-label span {
+            display: inline-block;
+            line-height: 1.2;
+        }
+        
+        .year-selector {
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.5rem;
+            background: var(--surface);
+        }
+        
+        .year-option {
+            display: flex;
+            align-items: center;
+            padding: 0.25rem 0;
+        }
+        
+        .year-option input {
+            width: auto;
+            margin-right: 0.5rem;
+        }
+        
+        .advanced-options {
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        
+        .options-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .options-header::before {
+            content: '▶';
+            margin-right: 0.5rem;
+            transition: transform 0.3s;
+            font-size: 0.75rem;
+        }
+        
+        .options-header.expanded::before {
+            transform: rotate(90deg);
+        }
+        
+        .options-content {
+            display: none;
+        }
+        
+        .options-content.expanded {
+            display: block;
+        }
+        
+        .weight-info {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .methodology-note {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-size: 0.875rem;
+            color: #93c5fd;
+        }
+        
+        .data-source {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+#country-checkboxes, #country-checkboxes * { min-width: 0; }
+#year-checkboxes, #year-checkboxes * { min-width: 0; }
+
+
+  /* High-contrast form controls for dark UIs */
+  .ui-contrast,
+  .ui-contrast select,
+  select.ui-contrast,
+  .ui-contrast input,
+  .ui-contrast .selectlike {
+    background-color: #0b1220;
+    color: #e6f0ff;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 10px 12px;
+    line-height: 1.2;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  select.ui-contrast:focus,
+  .ui-contrast:focus-within {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+  }
+
+  /* Sampling/Weights panel */
+  .panel-dark {
+    background: #0b1220;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  /* Label contrast + spacing */
+  .form-label {
+    display:block;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    margin-bottom: 6px;
+    letter-spacing: .2px;
+  }
+  
+  /* Plotly containers: fill parent, never overflow */
+#overview-chart,
+#distribution-chart,
+#percentile-chart,
+#lorenz-curve,
+#gap-plot,
+#country-comparison,
+#decomposition-chart,
+#regression-plot {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 420px;
+}
+
+/* Country selector: grid layout, no clipping, text left, checkbox right */
+#country-checkboxes {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; /* wider cells avoid crowding */
+  gap: 6px 12px !important;
+  max-height: 260px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;     /* no horizontal scroll */
+  padding: 6px 6px 6px 0;            /* space for scrollbar */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+/* Each option lays out as [label text][checkbox] with safe overflow handling */
+#country-checkboxes label {
+  display: grid !important;
+  grid-template-columns: 1fr auto;   /* text takes remaining space, checkbox sticks to right */
+  align-items: center;
+  column-gap: 8px;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;           /* critical: allows text to shrink without pushing checkbox out */
+  padding: 2px 4px;
+  white-space: nowrap;
+  overflow: hidden;                   /* clip long names */
+  text-overflow: ellipsis;
+}
+
+#country-checkboxes label span {
+  min-width: 0;                       /* let ellipsis work */
+}
+
+#country-checkboxes input[type="checkbox"] {
+  width: 16px; height: 16px;          /* consistent size */
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--primary-color);
+}
+
+/* Belt-and-suspenders to prevent any children from expanding container */
+#country-checkboxes, #country-checkboxes * { min-width: 0; }
+
+
+
+/* Clamp any horizontal overflow app-wide */
+html, body, .container, .content-area, main {
+  overflow-x: hidden !important;
+}
+
+/* Distribution page containers never push layout sideways */
+#distribution,
+#distribution-chart,
+#percentile-chart,
+#lorenz-curve {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Plotly root element sometimes adds tiny overflow with transforms */
+#distribution .js-plotly-plot,
+#distribution-chart .js-plotly-plot,
+#percentile-chart .js-plotly-plot,
+#lorenz-curve .js-plotly-plot {
+  max-width: 100% !important;
+}
+
+/* Small inline spinner for buttons */
+.spinner-inline {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+  
+</style>
+
+<script>
+
+
+
+function setBusy(isBusy){
+  const s = document.getElementById('inlineSpinner');
+  if (s) s.style.display = isBusy ? 'inline-block' : 'none';
+}
+
+(function () {
+  if (typeof window.getOutcomeKey !== 'function') {
+    window.getOutcomeKey = function () {
+      const v = document.getElementById('outcome')?.value?.toLowerCase();
+      return (v === 'reading' || v === 'math' || v === 'science') ? v : 'reading';
+    };
+  }
+  if (typeof window.getOutcomeLabel !== 'function') {
+    window.getOutcomeLabel = function (key) {
+      const k = key || window.getOutcomeKey();
+      const labels = { reading: 'Reading', math: 'Math', science: 'Science', achievement: 'Achievement' };
+      return labels[k] || 'Reading';
+    };
+  }
+  if (typeof window.getOutcomeFieldName !== 'function') {
+    window.getOutcomeFieldName = function (key) {
+      const k = key || window.getOutcomeKey();
+      const map = { reading: 'reading_score', math: 'math_score', science: 'science_score' };
+      return map[k] || 'achievement';
+    };
+  }
+})();
+</script>
+
+</head>
+<body>
+<header class="header" style="position: sticky; top: 0; z-index: 50;">
+  <div class="container">
+    <div class="header-content" style="gap: 1rem;">
+      <div class="header-text">
+        <h1>Educational Inequality Data Explorer</h1>
+        <p class="subtitle">Analyzing Student Outcomes and Social Stratification Using International Assessment Data</p>
+      </div>
+      <div class="header-actions" style="min-width: 240px;">
+<button id="refreshRenderBtn" class="btn" style="margin:0;width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
+  <span>⟳ Refresh & Render All</span>
+  <span id="inlineSpinner" class="spinner-inline" aria-hidden="true" style="display:none;"></span>
+</button>
+
+      </div>
+    </div>
+  </div>
+</header>
+
+    <div class="container">
+        <div class="main-content">
+            <aside class="sidebar">
+                <h3 style="margin-bottom: 1.5rem;">Data Configuration</h3>
+                
+                <div class="control-group">
+                    <label for="data-file-input">Load PISA Data File</label>
+                    <input type="file" id="data-file-input" accept=".json,.csv" style="width: 100%; padding: 0.75rem; border: 2px dashed var(--border); border-radius: 4px; background: var(--surface); color: var(--text-primary); cursor: pointer; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                    <div class="weight-info">
+                        Select .json or .csv file (e.g., pisa_data_medium.csv)<br>
+                        <span id="file-status" style="color: var(--text-secondary); font-size: 0.85rem;">No file loaded</span>
+                    </div>
+                </div>
+                
+                <div style="background: #1e3a8a; border: 1px solid #3b82f6; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem; color: #93c5fd;">📥 Need Data? Download R Scripts</div>
+                    <div style="font-size: 0.85rem; color: #93c5fd; margin-bottom: 0.75rem;">
+                        Download these R scripts to prepare your data from the learningtower package:
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem;">
+                        <a href="pisa-data.R" download style="color: #60a5fa; text-decoration: none; padding: 0.25rem 0;">
+                            📄 1_make_pisa.R <span style="color: #93c5fd; font-size: 0.8em;">- Create PISA dataset</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="assessment">Assessment Program</label>
+                    <select id="assessment" disabled style="background: var(--code-bg);">
+                        <option value="pisa">PISA (Programme for International Student Assessment)</option>
+                    </select>
+                    <div class="weight-info">learningtower package provides PISA data only</div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Years</label>
+                    <div style="margin-bottom: 0.5rem;">
+                        <button onclick="selectAllYears()" style="padding: 0.4rem 0.8rem; margin-right: 0.5rem; font-size: 0.85rem; cursor: pointer;">Select All</button>
+                        <button onclick="deselectAllYears()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; cursor: pointer;">Deselect All</button>
+                    </div>
+                    <div id="year-checkboxes" style="display: flex; gap: 1rem; flex-wrap: wrap; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface);">
+                        <!-- Year checkboxes will be populated dynamically -->
+                    </div>
+                    <div class="weight-info" id="years-selected-count">No years selected</div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Analysis Type</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="analysis-type" value="pooled" checked>
+                            <span>Pooled Analysis (all years and countries together)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="analysis-type" value="separate">
+                            <span>Separate Analysis (each country-year separately)</span>
+                        </label>
+                    </div>
+                    <div class="weight-info">Pooled combines all data; Separate runs analysis for each country-year combination.</div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="countries">Countries</label>
+                    <div style="margin-bottom: 0.5rem;">
+                        <button onclick="selectAllCountries()" style="padding: 0.4rem 0.8rem; margin-right: 0.5rem; font-size: 0.85rem; cursor: pointer;">Select All</button>
+                        <button onclick="deselectAllCountries()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; cursor: pointer;">Deselect All</button>
+                    </div>
+                    
+                    <div class="input-with-icon" style="margin-bottom: 6px;">
+  <input id="countryFilterInput" type="text" placeholder="Filter countries…" 
+         style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px; 
+                background:var(--surface); color:var(--text-primary);" />
+</div>
+
+<div style="display:flex; gap:8px; margin: 4px 0 8px;">
+  <button class="btn btn-secondary" type="button" onclick="countrySelectAll()">Select all</button>
+  <button class="btn btn-secondary" type="button" onclick="countryClearAll()">Clear</button>
+</div>
+
+
+                    <div id="country-checkboxes" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 0.75rem; border-radius: 4px; background: var(--surface); display: flex; flex-direction: column; gap: 0.5rem;">
+                        <!-- Checkboxes will be populated dynamically -->
+                    </div>
+                    
+                    <div class="weight-info" id="countries-selected-count">No countries selected</div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="outcome">Outcome Variable</label>
+                    <select id="outcome">
+                        <option value="reading">Reading Scores</option>
+                        <option value="math">Mathematics Scores</option>
+                        <option value="science">Science Scores</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="predictor">Primary Stratification Variable</label>
+                    <select id="predictor">
+                        <option value="ses">Socioeconomic Status (ESCS Index)</option>
+                        <option value="parent_edu">Parental Education</option>
+                    </select>
+                </div>
+                
+                <div class="advanced-options">
+                    <div class="options-header" onclick="toggleAdvanced(this)">
+                        Advanced Options
+                    </div>
+                    <div class="options-content">
+                        <div class="control-group">
+                            <label>Sampling Weights</label>
+                            <select id="weight-type">
+                                <option value="student">Student Weight (W_FSTUWT)</option>
+                                <option value="senate">Senate Weight (W_FSENWT)</option>
+                                <option value="replicate">BRR Replicate Weights</option>
+                                <option value="none">No Weights</option>
+                            </select>
+                            <div class="weight-info">Following OECD (2023) technical standards</div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Control Variables</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" value="gender" id="ctrl-gender"> <span>Gender</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" value="parentEdu" id="ctrl-parentEdu"> <span>Parental Education</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" value="year" id="ctrl-year"> <span>Year</span>
+                                </label>
+                            </div>
+                            <div class="weight-info">
+                                Control variables will be included in regression models. Coefficients and p-values will be shown in the results section.
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Regression Models</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="ols-model" checked> OLS (Pooled)
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="fe-model" checked> Fixed Effects
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="re-model" checked> Random Effects
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="multilevel-model"> Multilevel/HLM
+                                </label>
+                              
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+<button class="btn" onclick="recomputeAndRenderAll()">Refresh & Render All</button>
+                <button class="btn btn-secondary" onclick="downloadResults()">Download Results</button>
+                
+            </aside>
+            
+            <main class="content-area">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                    <button class="tab" onclick="switchTab('distribution')">Distribution Analysis</button>
+                    <button class="tab" onclick="switchTab('gap-decomposition')">Achievement Gap Decomposition</button>
+                    <button class="tab" onclick="switchTab('regression')">Regression Analysis</button>
+                    <button class="tab" onclick="switchTab('diagnostics')">Diagnostics</button>
+                    <button class="tab" onclick="switchTab('comparative')">Comparative Analysis</button>
+                    <button class="tab" onclick="switchTab('methodology')">Methodology</button>
+                </div>
+                
+                <div id="overview" class="tab-content active">
+                    <div class="section-title">Educational Inequality Overview</div>
+                    <p class="description">
+                        This dashboard provides empirical analysis of educational inequalities using standardized assessment data. 
+                        The analysis framework draws on social stratification theory (Bourdieu & Passeron, 1977; Coleman et al., 1966) 
+                        to examine how socioeconomic factors correlate with student achievement outcomes.
+                    </p>
+                    
+                    <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+                        <strong>Key Metrics Explained:</strong><br>
+                        <strong>Inequality Index (Gini):</strong> Measures the dispersion of achievement scores within the selected sample (0 = perfect equality, 1 = maximum inequality). This reflects how evenly distributed test scores are among students, independent of the number of countries. A higher Gini coefficient indicates greater inequality in achievement.<br>
+                        <strong>SES Gradient (β):</strong> The slope coefficient indicating how much achievement increases per unit increase in socioeconomic status. A higher value indicates stronger SES-achievement association.<br>
+                        <strong>Mean Achievement:</strong> Average test score across all selected students and countries.
+                    </div>
+                    
+                    <div class="grid-3">
+                        <div class="stat-card">
+                            <div class="stat-value" id="mean-score">--</div>
+                            <div class="stat-label">Mean Achievement Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="inequality-index">--</div>
+                            <div class="stat-label">Inequality Index (Gini)</div>
+                        </div>
+                  <div class="stat-card">
+  <div class="stat-value" id="predictor-gradient">--</div>
+  <div class="stat-label" id="gradient-label">Gradient (β)</div>
+                      </div>
+                    </div>
+                    
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Achievement Scores by Country</h3>
+                    <div id="overview-chart" style="margin-top: 1rem;"></div>
+                    
+                    <div class="data-source">
+                        Data Source: OECD PISA via learningtower R package | Analysis methodology follows OECD (2023) technical standards
+                    </div>
+                </div>
+                
+                <div id="distribution" class="tab-content">
+                    <div class="section-title">Score Distribution Analysis</div>
+                    <p class="description">
+                        Kernel density estimation and percentile analysis reveal patterns of educational achievement distribution 
+                        across selected countries. Bimodal distributions may indicate stratification effects (Hanushek & Woessmann, 2011).
+                    </p>
+                    
+                    <div id="distribution-chart"></div>
+                    
+                    <div class="grid-2" style="margin-top: 2rem;">
+                        <div id="percentile-chart"></div>
+                        <div id="lorenz-curve"></div>
+                    </div>
+                    
+                </div>
+                
+                <div id="gap-decomposition" class="tab-content">
+                    <div class="section-title">Achievement Gap Decomposition</div>
+                    <p class="description">
+                        Decomposition of achievement gaps by socioeconomic status across and within countries. 
+                        This analysis quantifies inequality by examining differences between SES groups and partitioning 
+                        variance into within-country and between-country components (Reardon, 2011; Chmielewski, 2019).
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        Gap Measures:<br>
+                        Achievement Gap (Q4-Q1): Difference between top and bottom SES quartiles<br>
+                        Variance Decomposition: σÂ²_total = σÂ²_within + σÂ²_between<br>
+                        Effect Size (d): (Mean_high - Mean_low) / SD_pooled
+                    </div>
+                    
+                    
+     <div id="gap-results" style="margin-top: 2rem; display:none;">
+  <p style="color: var(--text-secondary);">Rendering…</p>
+</div>
+                    
+                    <!-- Pooled/Overall Decomposition -->
+                    <div id="gap-pooled" style="display: none; margin-top: 2rem;">
+                        <h3>Overall Achievement Gap (All Selected Countries)</h3>
+                        <div id="gap-pooled-content"></div>
+                    </div>
+                    
+                    <!-- Within-Country Decomposition -->
+                    <div id="gap-countries" style="display: none; margin-top: 2rem;">
+                        <h3>Achievement Gaps by Country</h3>
+                        <div id="gap-countries-content"></div>
+                    </div>
+                    
+                    <!-- Variance Decomposition -->
+                    <div id="gap-variance" style="display: none; margin-top: 2rem;">
+                        <h3>Variance Decomposition</h3>
+                        <div id="gap-variance-content"></div>
+                    </div>
+                    
+                    <!-- Visualization -->
+                    <div id="gap-visualization" style="display: none; margin-top: 2rem;">
+                        <h3>Achievement Gap Comparison</h3>
+                        <div id="gap-plot"></div>
+                    </div>
+                </div>
+                
+                <div id="regression" class="tab-content">
+                    <div class="section-title">Regression Analysis</div>
+                    <p class="description">
+                        Comparison of regression models examining the relationship between student background characteristics and achievement outcomes. 
+                        Models account for clustering at school and country levels following Raudenbush & Bryk (2002) and Snijders & Bosker (2012).
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        Model Specifications:<br>
+                        OLS: Achievement_ij = β₀ + β₁Â(SES_ij) + β₂(Controls_ij) + ε_ij<br>
+                        Fixed Effects: Achievement_ijt = α_i + γ_t + β₁Â(SES_ijt) + β₂(Controls_ijt) + ε_ijt<br>
+                        Random Effects: Achievement_ij = β₀ + β₁Â(SES_ij) + β₂(Controls_ij) + u_j + ε_ij<br>
+                        Where i = student, j = country, t = year
+                    </div>
+                    
+                    <div id="regression-comparison" class="model-comparison"></div>
+                    <div id="model-diagnostics" style="margin-top: 2rem;">
+                        <h4>Model Diagnostics & Tests</h4>
+                        <div id="hausman-test"></div>
+                        <div id="regression-plot" style="margin-top: 1rem;"></div>
+                    </div>
+                </div>
+                
+                <div id="comparative" class="tab-content">
+                    <div class="section-title">Cross-National Comparative Analysis</div>
+                    <p class="description">
+                        Comparative analysis reveals variation in educational inequality across national contexts. 
+                        Following Marks (2005) and Sirin (2005), we examine both absolute achievement gaps and 
+                        the strength of the SES-achievement gradient.
+                    </p>
+                    
+                    <div id="country-comparison"></div>
+                    <div id="decomposition-chart" style="margin-top: 2rem;"></div>
+                </div>
+                
+                <div id="diagnostics" class="tab-content">
+                    <div class="section-title">Regression Diagnostics</div>
+                    <p class="description">
+                        Examine regression model fit, residuals, and within/between country effects. This diagnostic page shows all three analysis types: within-country, between-country, and pooled.
+                    </p>
+                    
+
+                    
+                    <div id="diagnostics-results" style="margin-top: 2rem;">
+                        <p class="description" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            Select countries and years, then click "Run Diagnostics" to see results.
+                        </p>
+                    </div>
+                </div>
+                
+                <div id="methodology" class="tab-content">
+                    <div class="section-title">Methodology</div>
+                    <p class="description">
+                        This application implements established methods from educational sociology and stratification research to analyze 
+                        the relationship between socioeconomic background and educational achievement using PISA data.
+                    </p>
+                    
+                    <h4 style="margin-top: 1.5rem;">Key Methods Implemented</h4>
+                    <ul style="line-height: 1.8; margin: 1rem 0 1rem 2rem; color: var(--text-secondary);">
+                        <li><strong>Survey-Weighted Analysis:</strong> Accounts for complex sampling design using student weights and replicate weights</li>
+                        <li><strong>Regression Models:</strong> OLS regression with controls, multilevel models for cross-country analysis</li>
+                        <li><strong>Inequality Metrics:</strong> Gini coefficient, Lorenz curves, Theil index, achievement gaps</li>
+                        <li><strong>Decomposition:</strong> Variance decomposition and Blinder-Oaxaca decomposition for temporal analysis</li>
+                        <li><strong>Within/Between Analysis:</strong> Separates within-country and between-country variation</li>
+                    </ul>
+                    
+                    <div style="margin-top: 2rem; padding: 1.5rem; background: var(--code-bg); border-radius: 8px;">
+                        <h4 style="margin-top: 0;">Complete Methodological Documentation</h4>
+                        <p style="margin: 1rem 0;">
+                            For comprehensive documentation including data preparation procedures, statistical formulas, 
+                            interpretation guidelines, and technical specifications, download the full methods document.
+                        </p>
+                        <a href="Methods_Document.html" download="Educational_Inequality_Methods.html" 
+                           style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--primary-color); 
+                                  color: white; text-decoration: none; border-radius: 4px; font-weight: 500;
+                                  transition: background 0.3s;">
+                            Download Methods Document
+                        </a>
+                        <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                            The methods document includes detailed explanations of all statistical procedures, formulas,
+                            interpretation guidelines, limitations, and best practices for using this tool.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 1rem;">Fetching data from OECD API...</p>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+    
+    function countrySelectAll() {
+  document.querySelectorAll('#country-checkboxes label').forEach(l => {
+    if (l.style.display !== 'none') {
+      const cb = l.querySelector('input[type="checkbox"]');
+      if (cb) cb.checked = true;
+    }
+  });
+  updateCountriesSelectedCount?.();
+}
+
+function countryClearAll() {
+  document.querySelectorAll('#country-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+  updateCountriesSelectedCount?.();
+}
+    
+    function filterCountries() {
+  const q = (document.getElementById('countryFilterInput')?.value || '').trim().toLowerCase();
+  document.querySelectorAll('#country-checkboxes label').forEach(lab => {
+    const name = lab.querySelector('span')?.textContent?.toLowerCase() || '';
+    lab.style.display = name.includes(q) ? '' : 'none';
+  });
+}
+
+// reapply filter whenever the list is rebuilt
+function reapplyCountryFilter() {
+  if (document.getElementById('countryFilterInput')) filterCountries();
+}
+
+// initialize the filter input once DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('countryFilterInput');
+  if (inp) inp.addEventListener('input', filterCountries);
+});
+
+    
+    // Map predictor key to the data field we expect in loaded data
+function getPredictorFieldName(pred = document.getElementById('predictor')?.value) {
+  const map = { ses: 'ses', parent_edu: 'parentEdu'};
+  return map[pred] || 'ses';
+}
+
+// Labels for UI/titles/axes, with gender removed from primary stratification
+function getPredictorLabel(predictor, shortForm = false) {
+  const labels = {
+    'ses': { full: 'Socioeconomic Status (ESCS Index)', short: 'SES', axis: 'Socioeconomic Status (ESCS)' },
+    'parent_edu': { full: 'Parental Education', short: 'Parent Edu', axis: 'Parental Education Level' }
+  };
+  const pred = predictor || document.getElementById('predictor')?.value || 'ses';
+  return shortForm ? labels[pred].short : labels[pred].full;
+}
+
+function getPredictorAxisLabel(predictor) {
+  const map = {
+    'ses': 'Socioeconomic Status (ESCS)',
+    'parent_edu': 'Parental Education Level'
+  };
+  const pred = predictor || document.getElementById('predictor')?.value || 'ses';
+  return map[pred];
+}
+
+// General slope (β) calculator for any predictor
+function calculateGradient(scores, x, weights) {
+  const meanY = weightedMean(scores, weights);
+  const meanX = weightedMean(x, weights);
+  const num = scores.reduce((s, y, i) => s + weights[i] * (x[i] - meanX) * (y - meanY), 0);
+  const den = x.reduce((s, xi, i) => s + weights[i] * Math.pow(xi - meanX, 2), 0);
+  return num / den;
+}
+
+// Top button: recompute & render all tabs + diagnostics/gaps
+async function recomputeAndRenderAll() {
+  setBusy(true);
+  try {
+    await fetchAndAnalyzeData();           // rebuild currentData + analysisResults
+    renderDistributionAnalysis();          // Distribution tab
+    renderRegressionAnalysis();            // Regression tab
+    renderComparativeAnalysis();           // Comparative tab
+    try { runDiagnostics(); } catch(e) { console.warn('Diagnostics refresh error', e); }
+    try { runGapDecomposition(); } catch(e) { console.warn('Gap refresh error', e); }
+  } finally {
+    setBusy(false);
+  }
+}
+
+    
+        // Global variables for data storage
+        let currentData = null;
+        let analysisResults = null;
+        const currentTheme = 'dark'; // Always use dark theme
+        let loadedPISAData = null; // Store the full loaded PISA dataset
+        
+        // File upload handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('data-file-input');
+            const fileStatus = document.getElementById('file-status');
+            const refreshBtn = document.getElementById('refreshRenderBtn');
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', () => { recomputeAndRenderAll(); });
+}
+
+            
+            fileInput.addEventListener('change', async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                fileStatus.textContent = 'Loading...';
+                fileStatus.style.color = '#3b82f6';
+                
+                try {
+                    // Check file size
+                    const fileSizeMB = file.size / 1024 / 1024;
+                    const fileName = file.name.toLowerCase();
+                    const isCSV = fileName.endsWith('.csv');
+                    const isJSON = fileName.endsWith('.json');
+                    
+                    console.log(`File: ${file.name}, Size: ${fileSizeMB.toFixed(2)} MB, Type: ${isCSV ? 'CSV' : isJSON ? 'JSON' : 'Unknown'}`);
+                    
+                    if (file.size === 0) {
+                        throw new Error('File is empty. Make sure the R script completed successfully.');
+                    }
+                    
+                    if (!isCSV && !isJSON) {
+                        throw new Error('Invalid file type. Please select a .json or .csv file.');
+                    }
+                    
+                    // Hard limit to prevent browser crashes
+                    if (fileSizeMB > 500) {
+                        throw new Error(`File too large (${fileSizeMB.toFixed(0)} MB). Browser memory limit is ~500 MB.\n\nSolutions:\n1. Use pisa_data_sample.csv or pisa_data_medium.csv\n2. Create a smaller dataset in R (see create_medium_dataset.R)\n3. Filter by specific countries/years in R before exporting`);
+                    }
+                    
+                    if (fileSizeMB > 200) {
+                        fileStatus.textContent = `⚠ Large file (${fileSizeMB.toFixed(0)} MB). Loading may take 30-60 seconds...`;
+                    }
+                    
+                    // Handle CSV files
+                    if (isCSV) {
+                        console.log('Parsing CSV file...');
+                        fileStatus.textContent = `Parsing CSV (${fileSizeMB.toFixed(1)} MB)...`;
+                        
+                        loadedPISAData = await new Promise((resolve, reject) => {
+                            Papa.parse(file, {
+                                header: true,
+                                dynamicTyping: true,
+                                skipEmptyLines: true,
+                                complete: function(results) {
+                                    if (results.errors.length > 0) {
+                                        console.warn('CSV parsing warnings:', results.errors);
+                                    }
+                                    resolve(results.data);
+                                },
+                                error: function(error) {
+                                    reject(new Error(`CSV parsing failed: ${error.message}`));
+                                }
+                            });
+                        });
+                        
+                        console.log(`Parsed ${loadedPISAData.length} CSV records`);
+                    } 
+                    // Handle JSON files
+                    else {
+                        const text = await file.text();
+                        
+                        // Validate that we have content
+                        if (!text || text.trim().length === 0) {
+                            throw new Error('File contains no data. Check if the file was created correctly.');
+                        }
+                        
+                        // Check if it starts with valid JSON
+                        const firstChar = text.trim()[0];
+                        if (firstChar !== '[' && firstChar !== '{') {
+                            throw new Error('File does not appear to be valid JSON. Expected format: pisa_data.json from R script.');
+                        }
+                        
+                        // Attempt to parse JSON
+                        try {
+                            loadedPISAData = JSON.parse(text);
+                        } catch (parseError) {
+                            const preview = text.substring(0, 100).replace(/\n/g, ' ');
+                            throw new Error(`Invalid JSON format. File may be incomplete or corrupted. Preview: "${preview}..."`);
+                        }
+                    }
+                    
+                    // Validate data structure (common for both CSV and JSON)
+                    if (!Array.isArray(loadedPISAData)) {
+                        throw new Error('Expected an array of student records. Check file format.');
+                    }
+                    
+                    if (loadedPISAData.length === 0) {
+                        throw new Error('File contains no student records.');
+                    }
+                    
+                    // Validate required fields
+                    const firstRecord = loadedPISAData[0];
+                    const requiredFields = ['country', 'year', 'achievement', 'ses'];
+                    const missingFields = requiredFields.filter(field => !(field in firstRecord));
+                    
+                    if (missingFields.length > 0) {
+                        throw new Error(`Missing required fields: ${missingFields.join(', ')}. Check R script output.`);
+                    }
+                    
+                    // Populate countries and years from loaded data
+                    populateCountriesFromData(loadedPISAData);
+                    populateYearsFromData(loadedPISAData);
+                    updateSelectorsByVariable(true);
+
+                    
+                    const fileType = isCSV ? 'CSV' : 'JSON';
+                    fileStatus.textContent = `✓ Loaded ${loadedPISAData.length.toLocaleString()} students from ${fileType} (${fileSizeMB.toFixed(1)} MB)`;
+                    fileStatus.style.color = '#10b981';
+                    
+                    console.log(`✓ Successfully loaded ${loadedPISAData.length} student records from ${fileType}`);
+                    console.log('Countries:', [...new Set(loadedPISAData.map(d => d.country))].sort());
+                    console.log('Years:', [...new Set(loadedPISAData.map(d => d.year))].sort());
+                    
+                } catch (error) {
+                    console.error('Error loading file:', error);
+                    let errorMsg = error.message;
+                    
+                    // Add helpful troubleshooting tips
+                    if (error.message.includes('Unexpected end of JSON') || error.message.includes('incomplete')) {
+                        errorMsg += ' | Tip: Re-run the R script to regenerate the JSON file.';
+                    }
+                    
+                    fileStatus.textContent = `✗ ${errorMsg}`;
+                    fileStatus.style.color = '#ef4444';
+                    
+                    // Show alert with more details
+                    alert(`Failed to load data file:\n\n${errorMsg}\n\nTroubleshooting:\n1. Make sure you ran prepare_pisa_data.R successfully\n2. Check that pisa_data.json or pisa_data_sample.json exists\n3. Verify the file isn't corrupted (should be valid JSON)\n4. Try the sample file first: pisa_data_sample.json`);
+                }
+            });
+            
+        });
+        
+        // Populate countries dropdown from loaded data
+        function populateCountriesFromData(data) {
+            const countries = [...new Set(data.map(d => d.country))].sort();
+            const container = document.getElementById('country-checkboxes');
+            
+            if (!container) {
+                console.warn('Country checkboxes container not found');
+                return;
+            }
+            
+            container.innerHTML = countries.map((country, index) => `
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; cursor: pointer; user-select: none;">
+                    <input type="checkbox" value="${country}" ${index < 5 ? 'checked' : ''} onchange="updateCountriesSelectedCount()" style="flex-shrink: 0;">
+                    <span>${country}</span>
+                </label>
+            `).join('');
+            
+            updateCountriesSelectedCount();
+        }
+        
+        // Populate years from loaded data
+        function populateYearsFromData(data) {
+            const years = [...new Set(data.map(d => d.year))].sort();
+            const container = document.getElementById('year-checkboxes');
+            
+            if (!container) {
+                console.warn('Year checkboxes container not found');
+                return;
+            }
+            
+            container.innerHTML = years.map((year, index) => `
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none;">
+                    <input type="checkbox" value="${year}" ${index < 3 ? 'checked' : ''} onchange="updateYearsSelectedCount()">
+                    <span>${year}</span>
+                </label>
+            `).join('');
+            
+            updateYearsSelectedCount();
+        }
+        
+        let predictor = document.getElementById('predictor')?.value || 'ses';
+if (predictor === 'resources' || predictor === 'homeResources' || predictor === 'home_resources') {
+  predictor = 'ses';
+  const sel = document.getElementById('predictor');
+  if (sel) sel.value = 'ses';
+}
+
+        
+// === Availability-aware selectors (countries & years) ===
+function updateSelectorsByVariable(firstLoad = false) {
+  if (!loadedPISAData || !Array.isArray(loadedPISAData)) return;
+
+  const prevCountries = getSelectedCountries();
+  const prevYears = getSelectedYears();
+
+  const predictor = document.getElementById('predictor')?.value || 'ses';
+  const predictorField = getPredictorFieldName(predictor);
+
+  const outcome = document.getElementById('outcome')?.value || 'reading';
+  const outcomeFieldMap = { reading: 'reading_score', math: 'math_score', science: 'science_score' };
+  const outcomeField = outcomeFieldMap[outcome] || 'achievement';
+  const assessment = document.getElementById('assessment')?.value;
+
+  const hasOutcome = (d) => {
+    const v = (d[outcomeField] != null && !isNaN(d[outcomeField])) ? d[outcomeField] : d.achievement;
+    return v != null && !isNaN(v);
+  };
+  const hasPred = (d) => d[predictorField] != null && !isNaN(d[predictorField]);
+
+  // Try strict filter (needs BOTH predictor and outcome)
+  let valid = loadedPISAData.filter(d =>
+    hasOutcome(d) && hasPred(d) && d.country && !isNaN(parseInt(d.year))
+  );
+
+  // Fallback: if predictor not present, keep availability by OUTCOME so the list doesn't go blank
+  if (valid.length === 0) {
+    console.warn(`No rows with predictor "${predictorField}". Falling back to outcome-only availability.`);
+    valid = loadedPISAData.filter(d =>
+      hasOutcome(d) && d.country && !isNaN(parseInt(d.year))
+    );
+    const noteEl = document.getElementById('countries-selected-count');
+    if (noteEl) {
+      noteEl.textContent = `Predictor not found in data; showing all countries/years with ${outcome}.`;
+    }
+  }
+
+  // Compute availability sets
+  let availableCountries = [...new Set(valid.map(d => d.country))].sort();
+  let availableYears = [...new Set(valid.map(d => parseInt(d.year)))].sort((a,b)=>b-a);
+
+  // Respect assessment cycle if you keep it
+  if (typeof ASSESSMENT_YEARS !== 'undefined' && assessment && ASSESSMENT_YEARS[assessment]) {
+    const allowed = new Set(ASSESSMENT_YEARS[assessment]);
+    availableYears = availableYears.filter(y => allowed.has(y));
+  }
+
+  // --- Rebuild Country checkboxes ---
+  const cWrap = document.getElementById('country-checkboxes');
+  if (cWrap) {
+    cWrap.innerHTML = availableCountries.map(country => `
+      <label>
+        <input type="checkbox" value="${country}" ${prevCountries.includes(country) ? 'checked' : ''} onchange="updateCountriesSelectedCount()">
+        <span>${country}</span>
+      </label>
+    `).join('');
+
+    // If nothing stayed selected, default to the first few to avoid empty state
+    if (cWrap.querySelectorAll('input[type="checkbox"]:checked').length === 0 && availableCountries.length) {
+      cWrap.querySelectorAll('input[type="checkbox"]').forEach((cb, i) => { if (i < 3) cb.checked = true; });
+    }
+    updateCountriesSelectedCount();
+  }
+
+  // --- Rebuild Year checkboxes ---
+  const yWrap = document.getElementById('year-checkboxes');
+  if (yWrap) {
+    yWrap.innerHTML = availableYears.map(year => `
+      <label>
+        <input type="checkbox" value="${year}" ${prevYears.includes(parseInt(year)) ? 'checked' : ''} onchange="updateYearsSelectedCount()">
+        <span>${year}</span>
+      </label>
+    `).join('');
+
+    if (yWrap.querySelectorAll('input[type="checkbox"]:checked').length === 0 && availableYears.length) {
+      yWrap.querySelectorAll('input[type="checkbox"]').forEach((cb, i) => { if (i < 3) cb.checked = true; });
+    }
+    updateYearsSelectedCount();
+  }
+
+  // Reapply live filter text if user typed something
+  reapplyCountryFilter();
+}
+
+        
+        // Assessment-specific year configurations
+        const ASSESSMENT_YEARS = {
+            pisa: [2022, 2018, 2015, 2012, 2009, 2006, 2003, 2000], // Every 3 years
+            timss: [2019, 2015, 2011, 2007, 2003], // Every 4 years
+            pirls: [2021, 2016, 2011, 2006, 2001], // Every 5 years
+            talis: [2018, 2013, 2008] // Every 5 years
+        };
+        
+        // Update year selector when assessment changes
+        function updateYearSelector() {
+            const assessment = document.getElementById('assessment').value;
+            const container = document.getElementById('year-checkboxes');
+            const years = ASSESSMENT_YEARS[assessment] || [];
+            
+            if (!container) {
+                console.warn('Year checkboxes container not found');
+                return;
+            }
+            
+            container.innerHTML = years.map((year, index) => `
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none;">
+                    <input type="checkbox" value="${year}" ${index < 3 ? 'checked' : ''} onchange="updateYearsSelectedCount()">
+                    <span>${year}</span>
+                </label>
+            `).join('');
+            
+            updateYearsSelectedCount();
+        }
+        
+        // Theme toggle function
+        
+        // Toggle advanced options
+        function toggleAdvanced(element) {
+            element.classList.toggle('expanded');
+            element.nextElementSibling.classList.toggle('expanded');
+        }
+        
+        // OECD API configuration - Using actual SDMX endpoints from documentation
+        const OECD_API_BASE = 'https://sdmx.oecd.org/public/rest/data';
+        
+        // Build OECD API query using correct SDMX structure
+        function buildOECDQuery(countries, years, outcome, assessment) {
+            // According to OECD API documentation:
+            // Format: {Host URL}/{Agency},{Dataset},{Version}/{Data selection}?{parameters}
+            
+            // For PISA data, we use the Education at a Glance dataset
+            // Example structure: OECD.EDU.EAG,DSD_EDU@DF_EDU
+            
+            const countryStr = countries.join('+');
+            const yearStr = years.map(y => String(y)).join('+');
+            
+            // Use the documented API structure
+            // The dataset for PISA results in Education Statistics
+            const dataset = 'OECD.EDU.EAG,DSD_EDU@DF_EDU';
+            
+            // Data selection: Countries.Indicator.Years
+            // Using 'all' for dimensions we want all values for
+            const dataSelection = `${countryStr}..${yearStr}`;
+            
+            // Build the complete URL with parameters
+            const url = `${OECD_API_BASE}/${dataset}/${dataSelection}` +
+                       `?startPeriod=${Math.min(...years)}` +
+                       `&endPeriod=${Math.max(...years)}` +
+                       `&dimensionAtObservation=AllDimensions` +
+                       `&format=csvfilewithlabels`;
+            
+            console.log('OECD API Query:', url);
+            return url;
+        }
+        
+// Fetch real OECD data with proper error handling (no simulation fallback)
+async function fetchOECDData(countries, years, outcome, assessment) {
+  const query = buildOECDQuery(countries, years, outcome, assessment);
+  try {
+    const response = await fetch(query, {
+      method: 'GET',
+      headers: { 'Accept': 'text/csv', 'Content-Type': 'application/json' },
+      mode: 'cors'
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const csvText = await response.text();
+    const parsed = Papa.parse(csvText, { header: true, dynamicTyping: true, skipEmptyLines: true });
+    return transformOECDData(parsed.data, countries, years, outcome);
+  } catch (error) {
+    console.error('Error fetching OECD data (no fallback):', error);
+    throw error; // no simulated data
+  }
+}
+
+        
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            
+            // Render appropriate visualizations
+            if (currentData) {
+                switch(tabName) {
+                    case 'overview':
+                        renderOverviewChart();
+                        break;
+                    case 'distribution':
+                        renderDistributionAnalysis();
+                        break;
+                    case 'regression':
+                        renderRegressionAnalysis();
+                        break;
+                    case 'comparative':
+                        renderComparativeAnalysis();
+                        break;
+                        
+                        case 'diagnostics':
+  try { runDiagnostics(); } catch (e) { console.warn(e); }
+  break;
+case 'gap-decomposition':
+  try { runGapDecomposition(); } catch (e) { console.warn(e); }
+  break;
+
+
+                }
+            }
+        }
+        
+        // Get selected control variables
+        function getSelectedControls() {
+            const controls = [];
+            document.querySelectorAll('.checkbox-group input[type="checkbox"]:checked').forEach(checkbox => {
+                if (checkbox.value !== 'on') {
+                    controls.push(checkbox.value);
+                }
+            });
+            return controls;
+        }
+        
+function performAdvancedStatisticalAnalysis(data, weightType) {
+  const results = { descriptive:{}, models:{}, inequality:{}, comparative:{}, diagnostics:{} };
+
+  // ---------- helpers ----------
+  
+  
+  const weightsFor = (rows) => rows.map(r =>
+    (weightType === 'none') ? 1
+    : (weightType === 'senate') ? (r.senateWeight ?? 1)
+    : (r.studentWeight ?? r.w_fstuwt ?? 1)
+  );
+
+  const wmean = (arr, ww) => {
+    const sw = ww.reduce((a,b)=>a+b,0) || 1;
+    return arr.reduce((s,v,i)=> s + (isFinite(v)?+v:0)*ww[i], 0) / sw;
+  };
+  const wsd = (arr, ww) => {
+    const m = wmean(arr, ww);
+    const sw = ww.reduce((a,b)=>a+b,0);
+    const v = arr.reduce((s,vv,i)=> s + ww[i]*Math.pow((+vv - m),2), 0) / Math.max(sw-1, 1);
+    return Math.sqrt(Math.max(v, 0));
+  };
+
+  // t distribution p-values (two-sided)
+  const pval_t = (t, df) => {
+    const cdf = jStat.studentt.cdf(Math.abs(t), Math.max(1, df));
+    const p = 2 * (1 - cdf);
+    return Math.min(1, Math.max(0, p));
+  };
+
+// Weighted OLS with ridge-stabilized normal equations.
+// IMPORTANT: treat y as a column vector for jStat, and sanitize weights.
+function weightedOLS(y, X, w) {
+  const n = y.length;
+  const k = X[0].length;
+
+  // sanitize weights → strictly positive finite
+  const ww = w.map(v => (Number.isFinite(v) && v > 0) ? +v : 1);
+  const sqrtW = ww.map(Math.sqrt);
+
+  // premultiply by sqrt(w)
+  const Xw  = X.map((row,i) => row.map(v => v * sqrtW[i]));
+  const yw  = y.map((v,i) => v * sqrtW[i]);
+  const ywCol = yw.map(v => [v]);           // ← column vector
+
+  const Xt   = jStat.transpose(Xw);
+  const XtX  = jStat.multiply(Xt, Xw);
+
+  // tiny ridge to stabilize (handles collinearity with many FEs)
+  let tr = 0; for (let i = 0; i < k; i++) tr += XtX[i][i];
+  const lam = (tr > 0 ? 1e-10 * tr : 1e-8);
+  for (let i = 0; i < k; i++) XtX[i][i] += lam;
+
+  const XtY      = jStat.multiply(Xt, ywCol);
+  const XtX_inv  = jStat.inv(XtX);
+  const betaCol  = jStat.multiply(XtX_inv, XtY);
+  const beta     = betaCol.map(row => row[0]);
+
+  // predictions & residuals
+  const yhat  = X.map(row => row.reduce((s, v, j) => s + v * beta[j], 0));
+  const resid = y.map((yi, i) => yi - yhat[i]);
+
+  // weighted SSE/SST
+  const ybar = weightedMean(y, ww); // uses your global helper
+  const SSE  = resid.reduce((s, e, i) => s + ww[i] * e * e, 0);
+  const SST  = y.reduce((s, yi, i) => s + ww[i] * Math.pow(yi - ybar, 2), 0);
+
+  const df      = Math.max(n - k, 1);
+  const sigma2  = SSE / df;
+  const vcov    = XtX_inv.map(row => row.map(val => val * sigma2));
+  const se      = beta.map((_, i) => Math.sqrt(Math.max(vcov[i][i], 0)));
+  const tStats  = beta.map((b, i) => b / (se[i] || 1e-12));
+  const pVals   = tStats.map(t => {
+    const p = 2 * (1 - jStat.studentt.cdf(Math.abs(t), df));
+    return Math.min(1, Math.max(0, p));
+  });
+
+  // keep raw R²; it will now be in [0,1] unless SST≈0
+  const r2    = (SST > 0) ? 1 - (SSE / SST) : NaN;
+  const adjR2 = Number.isFinite(r2) ? 1 - (1 - r2) * ((n - 1) / df) : NaN;
+
+  return { beta, se, tStats, pVals, r2, adjR2, n, k, df, vcov };
+}
+
+function estimateICCAndSizes(rows, groups) {
+  const overallMean = ss.mean(rows.map(r => r.achievement));
+  const totalVar = ss.variance(rows.map(r => r.achievement));
+  const byG = {};
+  groups.forEach(g => { byG[g] = []; });
+  rows.forEach(r => byG[r.country]?.push(r.achievement));
+
+  // between variance (weighted by group size)
+  const N = rows.length;
+  const between = groups.reduce((s,g) => {
+    const arr = byG[g] || [];
+    if (!arr.length) return s;
+    const m = ss.mean(arr);
+    return s + (arr.length / N) * Math.pow(m - overallMean, 2);
+  }, 0);
+  const within = Math.max(totalVar - between, 0);
+  const icc = (totalVar > 0) ? (between / totalVar) : 0;
+  return { icc, totalVar, between, within, groupSizes: groups.map(g => (byG[g]||[]).length) };
+}
+
+function quasiDemeanRE(y, X, groups, groupIndex, icc, totalVar) {
+  // σ_u^2 and σ_e^2 from ICC
+  const sigma_u2 = Math.max(icc * totalVar, 0);
+  const sigma_e2 = Math.max(totalVar - sigma_u2, 1e-9);
+
+  // precompute group means for each column
+  const k = X[0].length;
+  const gMeans = {}; const gY = {};
+  groups.forEach(g => { gMeans[g] = new Array(k).fill(0); gY[g]=0; });
+  const gN = {}; groups.forEach(g => gN[g]=0);
+  for (let i=0;i<y.length;i++){
+    const g = groupIndex[i];
+    gN[g] += 1;
+    gY[g] += y[i];
+    for (let j=0;j<k;j++) gMeans[g][j] += X[i][j];
+  }
+  groups.forEach(g => {
+    if (gN[g] > 0) {
+      gY[g] /= gN[g];
+      for (let j=0;j<k;j++) gMeans[g][j] /= gN[g];
+    }
+  });
+
+  // transform
+  const yStar = new Array(y.length);
+  const XStar = new Array(y.length);
+  for (let i=0;i<y.length;i++){
+    const g = groupIndex[i];
+    const theta = 1 - Math.sqrt(sigma_e2 / (sigma_e2 + gN[g] * sigma_u2));
+    yStar[i] = y[i] - theta * gY[g];
+    XStar[i] = X[i].map((xj,j)=> xj - theta * gMeans[g][j]);
+  }
+  return { yStar, XStar };
+}
+
+
+
+  // ---------- build design matrices ----------
+  const predKey        = getPredictorFieldName();
+  const predLabelFull  = getPredictorLabel(null, false); // e.g., 'Socioeconomic Status (ESCS)'
+  const controls       = getSelectedControls();          // ['gender','parentEdu','year'] etc.
+  const includeYear    = controls.includes('year');
+
+  // gender field candidate & recode to 0/1
+  function findGenderField(rows) {
+    const c = ['gender','female','is_female','sex'];
+    return c.find(k => rows.some(r => r[k] !== undefined && r[k] !== null));
+  }
+  const gField = findGenderField(data);
+  const toG01 = (v) => {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'number') {
+      if (v === 0 || v === 1) return v;
+      if (v === 2) return 0; // 1=female, 2=male
+      return (v > 0.5) ? 1 : 0;
+    }
+    const s = String(v).toLowerCase();
+    if (s.startsWith('f')) return 1;
+    if (s.startsWith('m')) return 0;
+    return null;
+  };
+
+  // countries & years in current data
+  const countries = [...new Set(data.map(d => d.country))];
+  const years     = [...new Set(data.map(d => d.year))].sort();
+  const baseCountry = countries[0];
+  const baseYear    = years[0];
+
+
+
+var getWeightType = window.getWeightType || function () {
+  // Reads <select id="weight-type">; falls back to 'student' if absent.
+  const el = document.getElementById('weight-type');
+  return (el && typeof el.value === 'string') ? el.value : 'student';
+};
+window.getWeightType = getWeightType;
+
+// Return first finite, positive number from row[k] over a list of candidate keys.
+var firstFinitePositive = window.firstFinitePositive || function (row /*, ...keys */) {
+  for (let i = 1; i < arguments.length; i++) {
+    const k = arguments[i];
+    if (row && Object.prototype.hasOwnProperty.call(row, k)) {
+      const v = +row[k];
+      if (Number.isFinite(v) && v > 0) return v;
+    }
+  }
+  return NaN;
+};
+window.firstFinitePositive = firstFinitePositive;
+
+// Main weight accessor used everywhere (makeDM, descriptives, overview gradient).
+var weightOfRow = window.weightOfRow || function (row) {
+  const wt = getWeightType();
+
+  if (wt === 'none') return 1;
+
+  if (wt === 'senate') {
+    // Adjust these keys to match your dataset if needed
+    const v = firstFinitePositive(row,
+      'senateWeight', 'w_senate', 'W_SENATE',
+      'w_schwt', 'W_SCHWT'
+    );
+    return Number.isFinite(v) ? v : 1;
+  }
+
+  // default: 'student' base weight (PISA)
+  const v = firstFinitePositive(row,
+    // canonical PISA name(s)
+    'w_fstuwt', 'W_FSTUWT',
+    // other variants you might have in merged files
+    'studentWeight', 'stuWeight', 'weight', 'w'
+  );
+  return Number.isFinite(v) ? v : 1;
+};
+window.weightOfRow = weightOfRow;
+
+
+// Build design matrix for the current selection.
+// opts: { countryFE: boolean, yearFE: boolean }
+function makeDM(rows, opts = {}) {
+  const countryFE = !!opts.countryFE;
+  const yearFE    = !!opts.yearFE;
+
+  const predKey   = getPredictorFieldName();                // e.g., 'escs', 'parentEdu', etc.
+  const predLabel = getPredictorLabel(null, false);         // full label for display
+
+  // Unique levels for FEs (reference = first level)
+  const countries = countryFE ? [...new Set(rows.map(r => r.country))] : [];
+  const years     = yearFE    ? [...new Set(rows.map(r => r.year))]     : [];
+
+  // Variable order: Intercept, predictor, (country FEs excl. ref), (year FEs excl. ref)
+  const varNames = ['Intercept', predLabel];
+  if (countryFE) for (let i = 1; i < countries.length; i++) varNames.push(`α_${countries[i]}`);
+  if (yearFE)    for (let i = 1; i < years.length; i++)     varNames.push(`γ_${years[i]}`);
+
+  const X = [];
+  const y = [];
+  const w = []; // <-- define ONCE here
+
+  for (const r of rows) {
+    const yi = +r.achievement;
+    const xi = +r[predKey];
+    if (!isFinite(yi) || !isFinite(xi)) continue;
+
+    const rowX = [1, xi];
+
+    if (countryFE) {
+      // Reference is countries[0]; add dummies for countries[1..end]
+      for (let i = 1; i < countries.length; i++) {
+        rowX.push(r.country === countries[i] ? 1 : 0);
+      }
+    }
+
+    if (yearFE) {
+      // Reference is years[0]; add dummies for years[1..end]
+      for (let i = 1; i < years.length; i++) {
+        rowX.push(r.year === years[i] ? 1 : 0);
+      }
+    }
+
+    X.push(rowX);
+    y.push(yi);
+    // Weight aligned to the SAME kept row
+    const wi = weightOfRow(r);
+w.push((Number.isFinite(wi) && wi > 0) ? wi : 1);    // uses the helper you added earlier
+  }
+
+  return { X, y, w, varNames, countries, years };
+}
+
+  // ---------- descriptive & inequality ----------
+const wy = [], ww = [];
+for (const d of data) {
+  const v = +d.achievement;
+  if (isFinite(v)) { wy.push(v); ww.push(weightOfRow(d)); }
+}
+  results.descriptive = {
+    mean: wmean(wy, ww),
+    sd:   wsd(wy, ww),
+    p10:  ss.quantile(wy, 0.10),
+    p50:  ss.quantile(wy, 0.50),
+    p90:  ss.quantile(wy, 0.90),
+    n:    wy.length
+  };
+  const gini = (vals) => {
+    if (!vals.length) return NaN;
+    const x = [...vals].sort((a,b)=>a-b), n = x.length, mu = x.reduce((s,v)=>s+v,0)/n;
+    if (mu === 0) return 0;
+    const cum = x.reduce((s,v,i)=> s + (2*(i+1)-n-1)*v, 0);
+    return Math.abs(cum/(n*n*mu));
+  };
+  results.inequality = {
+    gini: gini(wy),
+    cv:   results.descriptive.sd / Math.max(results.descriptive.mean, 1e-9),
+    p90p10: results.descriptive.p90 / Math.max(results.descriptive.p10, 1e-9)
+  };
+
+  // ---------- models (driven by checkboxes) ----------
+  const wantOLS = document.getElementById('ols-model')?.checked;
+  const wantFE  = document.getElementById('fe-model')?.checked;
+
+  if (wantOLS) {
+    const dm = makeDM(data, {countryFE:false, yearFE:false});
+    if (dm.X.length >= dm.varNames.length + 1) {
+      const fit = weightedOLS(dm.y, dm.X, dm.w);
+      results.models.ols = {
+        modelName: 'OLS (Pooled)',
+        variableNames: dm.varNames,
+        coefficients: fit.beta,
+        standardErrors: fit.se,
+        tStatistics: fit.tStats,
+        pValues: fit.pVals,
+        r2: fit.r2,
+        adjR2: fit.adjR2,
+        nobs: fit.n,
+        ngroups: null,
+        weighted: (weightType !== 'none')
+      };
+    }
+  }
+
+  if (wantFE) {
+    const dm = makeDM(data, {countryFE:true, yearFE:includeYear});
+    if (dm.X.length >= dm.varNames.length + 1) {
+      const fit = weightedOLS(dm.y, dm.X, dm.w);
+      results.models.fixedEffects = {
+        modelName: `Fixed Effects (Country dummies${includeYear ? ' + Year FE' : ''})`,
+        variableNames: dm.varNames,
+        coefficients: fit.beta,
+        standardErrors: fit.se,
+        tStatistics: fit.tStats,
+        pValues: fit.pVals,
+        r2: fit.r2,
+        adjR2: fit.adjR2,
+        nobs: fit.n,
+        ngroups: dm.ngroups,
+        weighted: (weightType !== 'none')
+      };
+    }
+  }
+  
+  const wantRE  = document.getElementById('re-model')?.checked;
+const wantMLM = document.getElementById('multilevel-model')?.checked;
+
+if (wantRE || wantMLM) {
+  const dm = makeDM(data, {countryFE:false, yearFE:includeYear}); // no country dummies for RE
+  if (dm.X.length >= dm.varNames.length + 1) {
+    const groups = [...new Set(data.map(d => d.country))];
+    const { icc, totalVar } = estimateICCAndSizes(data, groups);
+    const groupIndex = data.map(d => d.country);
+    const { yStar, XStar } = quasiDemeanRE(dm.y, dm.X, groups, groupIndex, icc, totalVar);
+    const fit = weightedOLS(yStar, XStar, dm.w);
+
+    const reModel = {
+      modelName: `Random Effects (Country-intercept${includeYear ? ' + Year FE' : ''})`,
+      variableNames: dm.varNames,
+      coefficients: fit.beta,
+      standardErrors: fit.se,
+      tStatistics: fit.tStats,
+      pValues: fit.pVals,
+      r2: fit.r2,
+      adjR2: fit.adjR2,
+      nobs: fit.n,
+      ngroups: groups.length,
+      rho: icc,
+      icc: icc,
+      weighted: (weightType !== 'none'),
+      vcov: fit.vcov
+    };
+if (wantRE)   results.models.randomEffects = reModel;
+if (wantMLM)  results.models.multilevel   = { ...reModel, modelName: `Multilevel (Random intercept${includeYear ? ' + Year FE' : ''})` };
+  }
+}
+
+function hausmanTest(fe, re, targetName) {
+  // align on the main predictor only (robust 1-df test)
+  const iFE = fe.variableNames.findIndex(n => n === targetName);
+  const iRE = re.variableNames.findIndex(n => n === targetName);
+  if (iFE < 0 || iRE < 0) return null;
+
+  const bDiff = fe.coefficients[iFE] - re.coefficients[iRE];
+  const vFE = fe.vcov?.[iFE]?.[iFE] ?? Math.pow(fe.standardErrors[iFE],2);
+  const vRE = re.vcov?.[iRE]?.[iRE] ?? Math.pow(re.standardErrors[iRE],2);
+  const varDiff = Math.max(vFE + vRE, 1e-12); // conservative
+  const chi2 = (bDiff*bDiff) / varDiff;
+  const p = 1 - jStat.chisquare.cdf(chi2, 1);
+  return { chiSquared: chi2, pValue: p, df: 1,
+           conclusion: (p < 0.05 ? 'Reject RE → Prefer FE' : 'Fail to reject → RE acceptable') };
+}
+
+if (results.models.fixedEffects && results.models.randomEffects) {
+  const predName = getPredictorLabel(null, false); // full label
+  const ht = hausmanTest(results.models.fixedEffects, results.models.randomEffects, predName);
+  if (ht) results.diagnostics.hausmanTest = ht;
+}
+
+
+  // ---------- comparative (by country-year; real data) ----------
+  results.comparative = {};
+  const predField = predKey;
+  const countriesList = [...new Set(data.map(d=> d.country))];
+  const yearsList     = [...new Set(data.map(d=> d.year))];
+  countriesList.forEach(cty => {
+    results.comparative[cty] = {};
+    yearsList.forEach(yr => {
+      const sub = data.filter(d => d.country===cty && d.year===yr && isFinite(+d.achievement) && isFinite(+d[predField]));
+      if (!sub.length) return;
+      const wy = sub.map(d=> +d.achievement);
+      const wx = sub.map(d=> +d[predField]);
+      const ww = sub.map(weightOfRow);
+      const mY = wmean(wy, ww), mX = wmean(wx, ww);
+      const num = wy.reduce((s,yy,i)=> s + ww[i]*(wx[i]-mX)*(yy-mY), 0);
+      const den = wx.reduce((s,xx,i)=> s + ww[i]*Math.pow(xx-mX,2), 0);
+      results.comparative[cty][yr] = {
+        mean: mY,
+        gini: gini(wy),
+        predictorGradient: num / Math.max(den, 1e-9),
+        n: sub.length
+      };
+    });
+  });
+
+  return results;
+}
+window.performAdvancedStatisticalAnalysis = performAdvancedStatisticalAnalysis;
+
+
+        
+        
+        // Main data fetching and analysis function
+        async function fetchAndAnalyzeData() {
+            const loading = document.querySelector('.loading');
+            loading.classList.add('active');
+            
+            try {
+                // Check if data is loaded
+                if (!loadedPISAData || loadedPISAData.length === 0) {
+                    throw new Error('Please load a PISA data file first using the file upload button above.');
+                }
+                
+                // Get selected parameters
+                const years = getSelectedYears();
+                
+                if (years.length === 0) {
+                    alert('Please select at least one year');
+                    loading.classList.remove('active');
+                    return;
+                }
+                
+                const countries = getSelectedCountries();
+                    
+                if (countries.length === 0) {
+                    alert('Please select at least one country');
+                    loading.classList.remove('active');
+                    return;
+                }
+                    
+                const outcome = document.getElementById('outcome').value;
+                const weightType = document.getElementById('weight-type').value;
+                const controls = getSelectedControls();
+                
+              // Map outcome to field name if available
+const outcomeFieldMap = { 'reading': 'reading_score', 'math': 'math_score', 'science': 'science_score' };
+const outcomeField = outcomeFieldMap[outcome] || 'achievement';
+
+
+// Map predictor to actual field in data
+const predictor = document.getElementById('predictor')?.value || 'ses';
+const predictorField = getPredictorFieldName(predictor);
+
+// Filter and normalize rows...
+currentData = loadedPISAData
+  .map(row => {
+    const achievementValue = (row[outcomeField] !== undefined && row[outcomeField] !== null)
+      ? row[outcomeField]
+      : row.achievement;
+    return {
+      ...row,
+      achievement: achievementValue,
+      predictorValue: row[predictorField],
+      predictor,
+      outcomeType: outcome
+    };
+  })
+  
+  .filter(row => {
+    return countries.includes(row.country) &&
+           years.includes(parseInt(row.year)) &&
+           row.achievement != null && !isNaN(row.achievement) &&
+           row.predictorValue != null && !isNaN(row.predictorValue);
+  });
+
+if (!currentData || currentData.length === 0) {
+  throw new Error(`No data found for selected filters. Check outcome/predictor availability in your file.`);
+}
+
+                
+                if (!currentData || currentData.length === 0) {
+                    throw new Error(`No data found for selected countries and years. Available countries: ${[...new Set(loadedPISAData.map(d => d.country))].sort().join(', ')}`);
+                }
+                
+                console.log(`Analyzing ${currentData.length} student records`);
+                
+                // Perform statistical analyses with multiple models
+                analysisResults = performAdvancedStatisticalAnalysis(currentData, weightType);
+                
+                // Update overview statistics
+                updateOverviewStats();
+                
+                // Render initial visualizations
+                renderOverviewChart();
+                
+            } catch (error) {
+                console.error('Error in analysis:', error);
+                alert(error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+        
+performAdvancedStatisticalAnalysis
+        // Calculate weighted statistics
+        function calculateWeightedStats(values, weights) {
+            const weightedValues = values.map((v, i) => ({ value: v, weight: weights[i] }))
+                                        .sort((a, b) => a.value - b.value);
+            
+            const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+            const mean = weightedMean(values, weights);
+            
+            // Weighted standard deviation
+            const variance = values.reduce((sum, v, i) => 
+                sum + weights[i] * Math.pow(v - mean, 2), 0) / totalWeight;
+            const sd = Math.sqrt(variance);
+            
+            // Weighted percentiles
+            const percentiles = [0.1, 0.25, 0.5, 0.75, 0.9];
+            const quantiles = {};
+            
+            percentiles.forEach(p => {
+                let cumWeight = 0;
+                const targetWeight = p * totalWeight;
+                
+                for (let i = 0; i < weightedValues.length; i++) {
+                    cumWeight += weightedValues[i].weight;
+                    if (cumWeight >= targetWeight) {
+                        quantiles[`p${Math.round(p * 100)}`] = weightedValues[i].value;
+                        break;
+                    }
+                }
+            });
+            
+            return {
+                mean: mean,
+                median: quantiles.p50,
+                sd: sd,
+                min: weightedValues[0].value,
+                max: weightedValues[weightedValues.length - 1].value,
+                q1: quantiles.p25,
+                q3: quantiles.p75,
+                p10: quantiles.p10,
+                p90: quantiles.p90
+            };
+        }
+        
+        // Weighted mean helper
+        function weightedMean(values, weights) {
+            const sum = values.reduce((acc, v, i) => acc + v * weights[i], 0);
+            const weightSum = weights.reduce((acc, w) => acc + w, 0);
+            return sum / weightSum;
+        }
+        
+        // Calculate SES gradient with weights
+        function calculateSESGradient(scores, ses, weights) {
+            const n = scores.length;
+            const meanY = weightedMean(scores, weights);
+            const meanX = weightedMean(ses, weights);
+            
+            const num = scores.reduce((sum, y, i) => 
+                sum + weights[i] * (ses[i] - meanX) * (y - meanY), 0);
+            const denom = ses.reduce((sum, x, i) => 
+                sum + weights[i] * Math.pow(x - meanX, 2), 0);
+            
+            return num / denom;
+        }
+        
+        
+        // Calculate Gini coefficient
+        function calculateGini(values) {
+            if (!values || values.length === 0) return 0;
+            const sorted = [...values].sort((a, b) => a - b);
+            const n = sorted.length;
+            
+            let sumOfProducts = 0;
+            let totalSum = 0;
+            
+            for (let i = 0; i < n; i++) {
+                sumOfProducts += (i + 1) * sorted[i];
+                totalSum += sorted[i];
+            }
+            
+            // Gini coefficient formula
+            const gini = (2 * sumOfProducts) / (n * totalSum) - (n + 1) / n;
+            
+            return Math.abs(gini); // Ensure positive value between 0 and 1
+        }
+        
+
+function updateOverviewStats() {
+  if (!analysisResults || !currentData) return;
+
+  // Mean & Gini
+  document.getElementById('mean-score').textContent =
+    Math.round(analysisResults.descriptive.mean);
+  document.getElementById('inequality-index').textContent =
+    !isNaN(analysisResults.inequality.gini) ? analysisResults.inequality.gini.toFixed(3) : 'N/A';
+
+  // Dynamic label for the gradient
+  const predShort = getPredictorLabel(null, true); // short label (e.g., 'Parent Edu')
+  const labelEl = document.getElementById('gradient-label');
+  if (labelEl) labelEl.textContent = `${predShort} Gradient (β)`;
+
+  // Single-pass aligned arrays (avoid 'w' conflicts: call it 'weights')
+  const predField = getPredictorFieldName();
+  const scores  = [];
+  const x       = [];
+  const weights = [];
+
+  for (const d of currentData) {
+    const yi = +d.achievement, xi = +d[predField];
+    if (isFinite(yi) && isFinite(xi)) {
+      scores.push(yi);
+      x.push(xi);
+      weights.push(weightOfRow(d));   // same helper as in makeDM()
+    }
+  }
+
+  const beta = calculateGradient(scores, x, weights);
+  document.getElementById('predictor-gradient').textContent =
+    Number(beta).toFixed(2);
+}
+
+function renderOverviewChart() {
+  if (!currentData || !analysisResults) return;
+
+  // Safe local fallback if helper somehow isn't present
+  const outcomeLbl = (typeof getOutcomeLabel === 'function')
+    ? getOutcomeLabel()
+    : (document.getElementById('outcome')?.selectedOptions?.[0]?.text || 'Reading');
+
+  const countries = Object.keys(analysisResults.comparative);
+  const years = getSelectedYears();
+  const traces = [];
+  years.forEach(year => {
+    const means = [], grads = [], labels = [];
+    countries.forEach(country => {
+      const cell = analysisResults.comparative[country][year];
+      if (cell) { means.push(cell.mean); grads.push(cell.predictorGradient); labels.push(country); }
+    });
+    traces.push({ x: means, y: grads, mode: 'markers+text', name: `Year ${year}`, text: labels, textposition: 'top center', marker: { size: 12, opacity: 0.7 }});
+  });
+
+  const predShort = getPredictorLabel(null, true);
+  const isDark = true;
+const layout = {
+  title: `Stratification of Achievement (${outcomeLbl})`,
+  xaxis: { title: 'Mean Achievement Score', gridcolor: isDark ? '#334155' : '#e2e8f0' },
+  yaxis: { title: `${predShort} Gradient (Score Points per 1 unit)`, gridcolor: isDark ? '#334155' : '#e2e8f0' },
+  paper_bgcolor: isDark ? '#1e293b' : '#ffffff',
+  plot_bgcolor: isDark ? '#1e293b' : '#ffffff',
+  font: { color: isDark ? '#f1f5f9' : '#1e293b' },
+  hovermode: 'closest'
+};  Plotly.newPlot('overview-chart', traces, layout, {responsive: true});
+}
+
+        // Render regression analysis with model comparison
+        function renderRegressionAnalysis() {
+          
+          
+          const box = document.querySelector('#regression .alert.alert-info');
+if (box) {
+  const y = (typeof getOutcomeLabel === 'function') ? getOutcomeLabel() : 'Achievement';
+  const x = getPredictorLabel(null, false);
+  box.innerHTML = `
+    <strong>Model Specifications:</strong><br>
+    OLS: ${y}<sub>ij</sub> = β₀ + β₁·${x}<sub>ij</sub> + β₂·Controls<sub>ij</sub> + ε<sub>ij</sub><br>
+    Fixed Effects: ${y}<sub>ijt</sub> = α<sub>j</sub> + γ<sub>t</sub> + β₁·${x}<sub>ijt</sub> + β₂·Controls<sub>ijt</sub> + ε<sub>ijt</sub><br>
+    Random Effects: ${y}<sub>ij</sub> = β₀ + β₁·${x}<sub>ij</sub> + β₂·Controls<sub>ij</sub> + u<sub>j</sub> + ε<sub>ij</sub><br>
+    Where i = student, j = country, t = year.
+  `;
+}
+          
+            if (!analysisResults) return;
+            
+            const comparisonDiv = document.getElementById('regression-comparison');
+            let html = '';
+          
+            // Create side-by-side model comparison
+            Object.entries(analysisResults.models).forEach(([key, model]) => {
+                html += createModelTable(model);
+            });
+            
+            comparisonDiv.innerHTML = html;
+            
+            // Render Hausman test results if available
+            if (analysisResults.diagnostics.hausmanTest) {
+                const hausman = analysisResults.diagnostics.hausmanTest;
+                const chiSq = !isNaN(hausman.chiSquared) ? hausman.chiSquared.toFixed(2) : 'N/A';
+                const pVal = !isNaN(hausman.pValue) ? hausman.pValue.toFixed(4) : 'N/A';
+                document.getElementById('hausman-test').innerHTML = `
+                    <div class="methodology-note">
+                        <strong>Hausman Specification Test</strong><br>
+                        H₀: Difference in coefficients not systematic<br>
+                        χ²(${hausman.df}) = ${chiSq}<br>
+                        p-value = ${pVal}<br>
+                        <strong>Conclusion:</strong> ${hausman.conclusion}
+                    </div>
+                `;
+            }
+            
+            // Create coefficient comparison plot
+            renderCoefficientPlot();
+        }
+        
+        // Create HTML table for a regression model
+        function createModelTable(model) {
+            if (!model) return '';
+            
+            let html = `
+                <div class="model-box">
+                    <div class="model-header">${model.modelName}</div>
+                    <div class="methodology-note" style="margin-bottom: 1rem;">
+                        N = ${model.nobs}${model.ngroups ? `, Groups = ${model.ngroups}` : ''}<br>
+                        ${model.r2Within !== undefined && !isNaN(model.r2Within) ? `R² (within) = ${model.r2Within.toFixed(3)}<br>` : ''}
+                        ${model.r2Between !== undefined && !isNaN(model.r2Between) ? `R² (between) = ${model.r2Between.toFixed(3)}<br>` : ''}
+                        ${model.r2 !== undefined && !isNaN(model.r2) ? `R² ${model.r2Within !== undefined ? '(overall)' : ''} = ${model.r2.toFixed(3)}<br>` : ''}
+                        ${model.icc !== undefined && !isNaN(model.icc) ? `ICC = ${model.icc.toFixed(3)}<br>` : ''}
+                        ${model.rho !== undefined && !isNaN(model.rho) ? `ρ = ${model.rho.toFixed(3)}<br>` : ''}
+                        ${model.weighted ? 'Weighted estimation' : ''}
+                    </div>
+                    <table class="coef-table">
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Coef.</th>
+                                <th>SE</th>
+                                <th>p-value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            if (model.quantiles) {
+                // Quantile regression format
+                Object.entries(model.quantiles).forEach(([q, res]) => {
+                    if (res && !isNaN(res.sesCoefficient) && !isNaN(res.standardError) && !isNaN(res.pValue)) {
+                        html += `
+                            <tr>
+                                <td>SES (${q})</td>
+                                <td class="${res.pValue < 0.05 ? 'significant' : ''}">${res.sesCoefficient.toFixed(2)}</td>
+                                <td>${res.standardError.toFixed(2)}</td>
+                                <td>${res.pValue.toFixed(4)}</td>
+                            </tr>
+                        `;
+                    }
+                });
+            } else if (model.coefficients && model.variableNames) {
+                // Standard regression format
+                model.coefficients.forEach((coef, i) => {
+                    if (model.pValues && model.standardErrors && 
+                        i < model.pValues.length && i < model.standardErrors.length &&
+                        i < model.variableNames.length &&
+                        !isNaN(coef) && !isNaN(model.standardErrors[i]) && !isNaN(model.pValues[i])) {
+                        const sig = model.pValues[i] < 0.05;
+                        html += `
+                            <tr>
+                                <td>${model.variableNames[i]}</td>
+                                <td class="${sig ? 'significant' : ''}">${coef.toFixed(2)}</td>
+                                <td>${model.standardErrors[i].toFixed(2)}</td>
+<td>${Math.min(1, Math.max(0, model.pValues[i])).toFixed(4)}</td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            return html;
+        }
+        
+function renderCoefficientPlot() {
+  if (!analysisResults || !analysisResults.models) return;
+
+  const predName = getPredictorLabel(null, false); // full label
+  const traces = [];
+
+  Object.values(analysisResults.models).forEach(model => {
+    if (model && Array.isArray(model.variableNames)) {
+      const idx = model.variableNames.findIndex(name => name === predName);
+      if (idx >= 0) {
+        traces.push({
+          x: [model.modelName],
+          y: [model.coefficients[idx]],
+          error_y: { type: 'data', array: [1.96 * model.standardErrors[idx]], visible: true },
+          type: 'scatter',
+          name: model.modelName
+        });
+      }
+    }
+  });
+
+  const isDark = true;
+  const layout = {
+    title: `${predName} Coefficient Across Models (95% CI)`,
+    xaxis: { title: 'Model', gridcolor: isDark ? '#334155' : '#e2e8f0' },
+    yaxis: { title: `${predName} Coefficient`, gridcolor: isDark ? '#334155' : '#e2e8f0' },
+    paper_bgcolor: isDark ? '#1e293b' : '#ffffff',
+    plot_bgcolor: isDark ? '#1e293b' : '#ffffff',
+    font: { color: isDark ? '#f1f5f9' : '#1e293b' },
+    showlegend: false
+  };
+
+  Plotly.newPlot('regression-plot', traces, layout, { responsive: true });
+}
+
+
+
+        // Render distribution analysis
+        function renderDistributionAnalysis() {
+            if (!currentData) return;
+            const countries = [...new Set(currentData.map(d => d.country))];
+            const traces = [];
+            
+            countries.forEach(country => {
+                const countryData = currentData.filter(d => d.country === country);
+                const scores = countryData.map(d => d.achievement);
+                
+                traces.push({
+                    x: scores,
+                    type: 'histogram',
+                    name: country,
+                    opacity: 0.6,
+                    histnorm: 'probability density'
+                });
+            });
+            
+            const isDark = true;
+            const layout = {
+                title: 'Achievement Score Distributions by Country',
+                xaxis: { 
+                    title: 'Achievement Score',
+                    gridcolor: isDark ? '#334155' : '#e2e8f0'
+                },
+                yaxis: { 
+                    title: 'Density',
+                    gridcolor: isDark ? '#334155' : '#e2e8f0'
+                },
+                paper_bgcolor: isDark ? '#1e293b' : '#ffffff',
+                plot_bgcolor: isDark ? '#1e293b' : '#ffffff',
+                font: { color: isDark ? '#f1f5f9' : '#1e293b' },
+                barmode: 'overlay'
+            };
+            
+            Plotly.newPlot('distribution-chart', traces, layout, {responsive: true});
+            
+            // Percentile chart
+            const percentiles = [10, 25, 50, 75, 90];
+            const percentileData = countries.map(country => {
+                const countryScores = currentData
+                    .filter(d => d.country === country)
+                    .map(d => d.achievement);
+                
+                return {
+                    name: country,
+                    y: percentiles.map(p => ss.quantile(countryScores, p/100)),
+                    type: 'scatter',
+                    mode: 'lines+markers'
+                };
+            });
+            
+            const percentileLayout = {
+                title: 'Achievement Percentiles',
+                xaxis: { 
+                    title: 'Percentile',
+                    tickvals: [0, 1, 2, 3, 4],
+                    ticktext: ['P10', 'P25', 'P50', 'P75', 'P90'],
+                    gridcolor: isDark ? '#334155' : '#e2e8f0'
+                },
+                yaxis: { 
+                    title: 'Achievement Score',
+                    gridcolor: isDark ? '#334155' : '#e2e8f0'
+                },
+                paper_bgcolor: isDark ? '#1e293b' : '#ffffff',
+                plot_bgcolor: isDark ? '#1e293b' : '#ffffff',
+                font: { color: isDark ? '#f1f5f9' : '#1e293b' }
+            };
+            
+            Plotly.newPlot('percentile-chart', percentileData, percentileLayout, {responsive: true});
+            
+            // Lorenz curve
+            renderLorenzCurve();
+        }
+        
+        // Render Lorenz curve for inequality visualization
+        function renderLorenzCurve() {
+            if (!currentData) return;
+            
+            const countries = [...new Set(currentData.map(d => d.country))];
+            const traces = [];
+            
+            // Add line of equality
+            traces.push({
+                x: [0, 1],
+                y: [0, 1],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Equality',
+                line: {
+                    dash: 'dash',
+                    color: '#999'
+                }
+            });
+            
+            countries.forEach(country => {
+                const scores = currentData
+                    .filter(d => d.country === country)
+                    .map(d => d.achievement)
+                    .sort((a, b) => a - b);
+                
+                const n = scores.length;
+                const cumSum = scores.reduce((acc, val, i) => {
+                    acc.push((acc[i] || 0) + val);
+                    return acc;
+                }, []);
+                
+                const totalSum = cumSum[n - 1];
+                const x = cumSum.map((_, i) => (i + 1) / n);
+                const y = cumSum.map(sum => sum / totalSum);
+                
+                traces.push({
+                    x: [0, ...x],
+                    y: [0, ...y],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: country
+                });
+            });
+            
+            const isDark = true;
+            const layout = {
+                title: 'Lorenz Curve: Achievement Inequality',
+                xaxis: { 
+                    title: 'Cumulative Population Proportion',
+                    gridcolor: isDark ? '#334155' : '#e2e8f0'
+                },
+                yaxis: { 
+                    title: 'Cumulative Achievement Proportion',
+                    gridcolor: isDark ? '#334155' : '#e2e8f0'
+                },
+                paper_bgcolor: isDark ? '#1e293b' : '#ffffff',
+                plot_bgcolor: isDark ? '#1e293b' : '#ffffff',
+                font: { color: isDark ? '#f1f5f9' : '#1e293b' },
+                showlegend: true
+            };
+            
+            Plotly.newPlot('lorenz-curve', traces, layout, {responsive: true});
+        }
+        
+        // Render comparative analysis
+        function renderComparativeAnalysis() {
+            if (!analysisResults) return;
+            
+            const countries = Object.keys(analysisResults.comparative);
+            const years = getSelectedYears();
+            
+            // Create panel data visualization
+            const traces = [];
+            
+            years.forEach(year => {
+                const means = [];
+                const countryNames = [];
+                
+                countries.forEach(country => {
+                    if (analysisResults.comparative[country][year]) {
+                        means.push(analysisResults.comparative[country][year].mean);
+                        countryNames.push(country);
+                    }
+                });
+                
+                traces.push({
+                    x: countryNames,
+                    y: means,
+                    name: `Year ${year}`,
+                    type: 'bar'
+                });
+            });
+            
+            const isDark = true;
+            const layout = {
+                title: 'Cross-National Comparison: Achievement Trends',
+                xaxis: { 
+                    title: 'Country',
+                    gridcolor: isDark ? '#334155' : '#e2e8f0'
+                },
+                yaxis: {
+                    title: 'Mean Achievement Score',
+                    gridcolor: isDark ? '#334155' : '#e2e8f0'
+                },
+                paper_bgcolor: isDark ? '#1e293b' : '#ffffff',
+                plot_bgcolor: isDark ? '#1e293b' : '#ffffff',
+                font: { color: isDark ? '#f1f5f9' : '#1e293b' },
+                barmode: 'group'
+            };
+            
+            Plotly.newPlot('country-comparison', traces, layout, {responsive: true});
+            
+            // Decomposition chart
+            renderDecompositionChart();
+        }
+        
+function renderDecompositionChart() {
+  if (!currentData) return;
+
+  const selCountries = [...new Set(currentData.map(d => d.country))];
+  if (!selCountries.length) return;
+
+  const vd = calculateVarianceDecomposition(currentData, selCountries);
+
+  const components = ['Within-country', 'Between-country'];
+  const values = [vd.percentWithin, vd.percentBetween];
+
+  const trace = { x: components, y: values, type: 'bar' };
+
+  const isDark = true;
+  const layout = {
+    title: 'Variance Decomposition of Achievement',
+    yaxis: { title: 'Percent of Total Variance', range: [0,100], gridcolor: isDark ? '#334155' : '#e2e8f0' },
+    paper_bgcolor: isDark ? '#1e293b' : '#ffffff',
+    plot_bgcolor: isDark ? '#1e293b' : '#ffffff',
+    font: { color: isDark ? '#f1f5f9' : '#1e293b' },
+    annotations: [{
+      x: 0.5, y: -0.15, xref: 'paper', yref: 'paper',
+      text: `ICC = ${vd.icc.toFixed(3)} (ρ)`,
+      showarrow: false
+    }]
+  };
+
+  Plotly.newPlot('decomposition-chart', [trace], layout, { responsive: true });
+}
+
+
+        
+        // Download results function
+        function downloadResults() {
+            if (!analysisResults) {
+                alert('Please fetch and analyze data first');
+                return;
+            }
+            
+            // Prepare comprehensive CSV content
+            let csv = 'Educational Inequality Analysis Results\n';
+            csv += `Analysis Date: ${new Date().toISOString()}\n`;
+            csv += `Selected Years: ${getSelectedYears().join(', ')}\n\n`;
+            
+            csv += 'Descriptive Statistics (Weighted)\n';
+            csv += 'Measure,Value\n';
+            
+            Object.entries(analysisResults.descriptive).forEach(([key, value]) => {
+                if (typeof value === 'number' && !isNaN(value)) {
+                    csv += `${key},${value.toFixed(2)}\n`;
+                }
+            });
+            
+            csv += '\nInequality Indices\n';
+            csv += 'Index,Value\n';
+            Object.entries(analysisResults.inequality).forEach(([key, value]) => {
+                if (typeof value === 'number' && !isNaN(value)) {
+                    csv += `${key},${value.toFixed(3)}\n`;
+                }
+            });
+            
+            // Add all regression models
+            csv += '\nRegression Models Comparison\n';
+            Object.entries(analysisResults.models).forEach(([key, model]) => {
+                if (model && !model.quantiles) {
+                    csv += `\n${model.modelName}\n`;
+                    csv += 'Variable,Coefficient,Std Error,t-statistic,p-value\n';
+                    model.coefficients.forEach((coef, i) => {
+                        if (!isNaN(coef) && !isNaN(model.standardErrors[i]) && 
+                            !isNaN(model.tStatistics[i]) && !isNaN(model.pValues[i])) {
+                            csv += `${model.variableNames[i]},${coef.toFixed(2)},${model.standardErrors[i].toFixed(2)},${model.tStatistics[i].toFixed(2)},${model.pValues[i].toFixed(4)}\n`;
+                        }
+                    });
+                    if (!isNaN(model.r2)) {
+                        csv += `R-squared,${model.r2.toFixed(3)}\n`;
+                    }
+                    if (model.ngroups) {
+                        csv += `Number of groups,${model.ngroups}\n`;
+                    }
+                }
+            });
+            
+            // Add Hausman test if available
+            if (analysisResults.diagnostics?.hausmanTest) {
+                const h = analysisResults.diagnostics.hausmanTest;
+                csv += '\nHausman Test Results\n';
+                if (!isNaN(h.chiSquared)) {
+                    csv += `Chi-squared,${h.chiSquared.toFixed(2)}\n`;
+                }
+                csv += `Degrees of freedom,${h.df}\n`;
+                if (!isNaN(h.pValue)) {
+                    csv += `p-value,${h.pValue.toFixed(4)}\n`;
+                }
+                csv += `Conclusion,"${h.conclusion}"\n`;
+            }
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'educational_inequality_analysis.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Utility functions
+        function gaussianRandom() {
+            let u = 0, v = 0;
+            while(u === 0) u = Math.random();
+            while(v === 0) v = Math.random();
+            return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        }
+        
+        function normalCDF(x) {
+            const a1 =  0.254829592;
+            const a2 = -0.284496736;
+            const a3 =  1.421413741;
+            const a4 = -1.453152027;
+            const a5 =  1.061405429;
+            const p  =  0.3275911;
+            
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x) / Math.sqrt(2.0);
+            
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            
+            return 0.5 * (1.0 + sign * y);
+        }
+        
+        // ============================================
+        // IMPROVED COUNTRY AND YEAR SELECTION
+        // ============================================
+        
+        
+        // Country selection functions
+        function selectAllCountries() {
+            document.querySelectorAll('#country-checkboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+            updateCountriesSelectedCount();
+        }
+        
+        function deselectAllCountries() {
+            document.querySelectorAll('#country-checkboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            updateCountriesSelectedCount();
+        }
+        
+        function updateCountriesSelectedCount() {
+            const checked = document.querySelectorAll('#country-checkboxes input[type="checkbox"]:checked').length;
+            const total = document.querySelectorAll('#country-checkboxes input[type="checkbox"]').length;
+            document.getElementById('countries-selected-count').textContent = 
+                `${checked} of ${total} countries selected`;
+        }
+        
+        // Get selected countries
+        function getSelectedCountries() {
+            return Array.from(document.querySelectorAll('#country-checkboxes input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+        }
+        
+        // Year selection functions
+        function selectAllYears() {
+            document.querySelectorAll('#year-checkboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+            updateYearsSelectedCount();
+        }
+        
+        function deselectAllYears() {
+            document.querySelectorAll('#year-checkboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            updateYearsSelectedCount();
+        }
+        
+        function updateYearsSelectedCount() {
+            const checked = document.querySelectorAll('#year-checkboxes input[type="checkbox"]:checked').length;
+            const total = document.querySelectorAll('#year-checkboxes input[type="checkbox"]').length;
+            document.getElementById('years-selected-count').textContent = 
+                `${checked} of ${total} years selected`;
+        }
+        
+        // Get selected years - NEW VERSION
+        function getSelectedYears() {
+            return Array.from(document.querySelectorAll('#year-checkboxes input[type="checkbox"]:checked'))
+                .map(cb => parseInt(cb.value));
+        }
+        
+        // Get year analysis type
+        function getYearAnalysisType() {
+            const selected = document.querySelector('input[name="year-analysis-type"]:checked');
+            return selected ? selected.value : 'within';
+        }
+        
+        // ============================================
+        // DIAGNOSTICS PAGE FUNCTIONS
+        // ============================================
+        
+        function runDiagnostics() {
+        
+        const selectedCountries = getSelectedCountries();
+const selectedYears = getSelectedYears();
+if (!loadedPISAData || loadedPISAData.length === 0) { alert('Please load data first'); return; }
+if (selectedCountries.length === 0 || selectedYears.length === 0) { alert('Please select at least one country and one year'); return; }
+
+const outcomeFieldMap = { reading: 'reading_score', math: 'math_score', science: 'science_score' };
+const outField = outcomeFieldMap[document.getElementById('outcome').value] || 'achievement';
+const predField = getPredictorFieldName();
+
+// Build a transformed dataset that always has the right achievement & predictor
+const data = loadedPISAData
+.filter(d => selectedCountries.includes(d.country) && selectedYears.includes(parseInt(d.year)))
+  .map(d => ({ ...d, achievement: (d[outField] !== undefined && d[outField] !== null) ? d[outField] : d.achievement }))
+  .filter(d => d.achievement != null && !isNaN(d.achievement) && d[predField] != null && !isNaN(d[predField]));
+
+            // Always show all three analysis types
+            const showWithin = true;
+            const showBetween = true;
+            const showPooled = true;
+            
+            let resultsHTML = '<div style="background: var(--surface); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">';
+            resultsHTML += '<h3 style="margin-top: 0;">Regression Diagnostics Results</h3>';
+            resultsHTML += `<p style="color: var(--text-secondary);">Analyzed ${data.length.toLocaleString()} students from ${selectedCountries.length} countries and ${selectedYears.length} years</p>`;
+            resultsHTML += '</div>';
+            
+            // Pooled analysis
+            if (showPooled) {
+                const pooledResults = runSimpleRegression(data);
+                resultsHTML += formatDiagnosticsResults('Pooled Analysis (All Countries Combined)', pooledResults, data);
+                
+                // Store pooled regression data for plotting
+// Store pooled regression data for plotting
+if (!pooledResults.error) {
+  const validData = data.filter(d => d.achievement != null && d[predField] != null && !isNaN(d.achievement) && !isNaN(d[predField]));
+  storeRegressionData('Pooled', 'All Years', pooledResults, validData);
+}
+            }
+            
+            // Within-country analysis
+            if (showWithin) {
+                resultsHTML += '<h3 style="margin: 2rem 0 1rem 0;">Within-Country Regression Coefficients (by Country-Year)</h3>';
+                resultsHTML += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">';
+                
+                selectedCountries.forEach(country => {
+                    selectedYears.forEach(year => {
+                        const countryYearData = data.filter(d => d.country === country && d.year === year);
+                        if (countryYearData.length > 0) {
+                            const results = runSimpleRegression(countryYearData);
+                            resultsHTML += formatCountryYearResults(country, year, results, countryYearData);
+                            
+                            // Store regression data for plotting
+                            if (!results.error) {
+                               const predField = getPredictorFieldName();
+const validData = countryYearData.filter(d =>
+  d.achievement != null && d[predField] != null &&
+  !isNaN(d.achievement) && !isNaN(d[predField])
+);
+storeRegressionData(country, year, results, validData);
+
+                            }
+                        }
+                    });
+                });
+                
+                resultsHTML += '</div>';
+            }
+            
+            // Between-country analysis
+            if (showBetween && selectedCountries.length > 1) {
+                resultsHTML += '<h3 style="margin: 2rem 0 1rem 0;">Between-Country Variation</h3>';
+                const betweenResults = analyzeBetweenCountryVariation(data, selectedCountries);
+                resultsHTML += formatBetweenResults(betweenResults);
+            }
+            
+            document.getElementById('diagnostics-results').innerHTML = resultsHTML;
+        }
+        
+
+function runSimpleRegression(data) {
+  const predField = getPredictorFieldName();
+  const valid = data.filter(d =>
+    d.achievement != null && !isNaN(d.achievement) &&
+    d[predField] != null && !isNaN(d[predField])
+  );
+  if (valid.length < 10) return { error: 'Insufficient data for regression' };
+
+  const n = valid.length;
+  const x = valid.map(d => d[predField]);
+  const y = valid.map(d => d.achievement);
+  const meanX = ss.mean(x), meanY = ss.mean(y);
+
+  let sumXY = 0, sumX2 = 0;
+  for (let i = 0; i < n; i++) {
+    sumXY += (x[i] - meanX) * (y[i] - meanY);
+    sumX2 += Math.pow(x[i] - meanX, 2);
+  }
+  const slope = sumXY / sumX2;
+  const intercept = meanY - slope * meanX;
+
+  const yhat = x.map(v => intercept + slope * v);
+  const residuals = y.map((yi, i) => yi - yhat[i]);
+  const sst = y.reduce((s, yi) => s + Math.pow(yi - meanY, 2), 0);
+  const sse = residuals.reduce((s, r) => s + r*r, 0);
+  const r2 = 1 - (sse / sst);
+  const mse = sse / (n - 2);
+  const seSlope = Math.sqrt(mse / sumX2);
+  const tStat = slope / seSlope;
+
+  return { n, slope, intercept, r2, se: seSlope, tStat, residuals, predicted: yhat, meanAch: meanY, meanSES: meanX };
+}
+
+
+        function formatDiagnosticsResults(title, results, data) {
+            if (results.error) {
+                return `<div style="background: #fee; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                    <strong>${title}:</strong> ${results.error}
+                </div>`;
+            }
+            
+            return `
+                <div style="background: var(--surface); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--border);">
+                    <h4 style="margin-top: 0;">${title}</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                        <div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">Slope (β₁Â)</div>
+                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--primary-color);">${results.slope.toFixed(2)}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">points per SD</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">R²</div>
+                            <div style="font-size: 1.5rem; font-weight: 600;">${(results.r2 * 100).toFixed(1)}%</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">variance explained</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">t-statistic</div>
+                            <div style="font-size: 1.5rem; font-weight: 600;">${results.tStat.toFixed(2)}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">SE = ${results.se.toFixed(3)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">Sample Size</div>
+                            <div style="font-size: 1.5rem; font-weight: 600;">${results.n.toLocaleString()}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">students</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; padding: 0.75rem; background: var(--code-bg); border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                        Achievement = ${results.intercept.toFixed(2)} + ${results.slope.toFixed(2)} × Var
+                    </div>
+                </div>
+            `;
+        }
+        
+        function formatCountryResults(country, results, data) {
+            if (results.error) {
+                return `<div style="background: #fee; padding: 1rem; border-radius: 4px;">
+                    <strong>${country}:</strong> ${results.error}
+                </div>`;
+            }
+            
+            // Generate unique ID for this result card
+            const cardId = `country-result-${country.replace(/\s+/g, '-')}`;
+            
+            return `
+                <div id="${cardId}" style="background: var(--surface); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <h4 style="margin: 0 0 0.5rem 0;">${country}</h4>
+                    <div style="font-size: 0.9rem;">
+                        <div>Slope: <strong>${results.slope.toFixed(2)}</strong> (t=${results.tStat.toFixed(2)})</div>
+                        <div>R²: <strong>${(results.r2 * 100).toFixed(1)}%</strong></div>
+                        <div>n: ${results.n.toLocaleString()}</div>
+                    </div>
+                    <button class="btn" onclick="showRegressionPlotForCountry('${country}')" style="margin-top: 0.75rem; font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                        View Regression Plot
+                    </button>
+                </div>
+            `;
+        }
+        
+        function formatCountryYearResults(country, year, results, data) {
+            if (results.error) {
+                return `<div style="background: var(--code-bg); padding: 1rem; border-radius: 4px; border: 1px solid var(--border);">
+                    <strong>${country} (${year}):</strong> ${results.error}
+                </div>`;
+            }
+            
+            // Generate unique ID for this result card
+            const cardId = `country-year-result-${country.replace(/\s+/g, '-')}-${year}`;
+            
+            return `
+                <div id="${cardId}" style="background: var(--surface); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <h4 style="margin: 0 0 0.5rem 0;">${country} <span style="color: var(--text-secondary); font-weight: 400; font-size: 0.9em;">(${year})</span></h4>
+                    <div style="font-size: 0.9rem;">
+                        <div>Slope (β₁): <strong>${results.slope.toFixed(2)}</strong> (t=${results.tStat.toFixed(2)})</div>
+                        <div>R²: <strong>${(results.r2 * 100).toFixed(1)}%</strong></div>
+                        <div>n: ${results.n.toLocaleString()} students</div>
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-secondary);">
+                            Intercept: ${results.intercept.toFixed(1)} | SE: ${results.se.toFixed(3)}
+                        </div>
+                    </div>
+                    <button class="btn" onclick="showRegressionPlot('${country}', '${year}')" style="margin-top: 0.75rem; font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                        View Regression Plot
+                    </button>
+                </div>
+            `;
+        }
+        
+        function analyzeBetweenCountryVariation(data, countries) {
+            const countryResults = countries.map(country => {
+                const countryData = data.filter(d => d.country === country);
+                const results = runSimpleRegression(countryData);
+                return {
+                    country,
+                    slope: results.slope || 0,
+                    r2: results.r2 || 0,
+                    meanAch: results.meanAch || 0,
+                    n: results.n || 0
+                };
+            }).filter(r => r.n > 0);
+            
+            const slopes = countryResults.map(r => r.slope);
+            const meanSlope = ss.mean(slopes);
+            const sdSlope = ss.standardDeviation(slopes);
+            const minSlope = Math.min(...slopes);
+            const maxSlope = Math.max(...slopes);
+            
+            return {
+                countryResults,
+                meanSlope,
+                sdSlope,
+                minSlope,
+                maxSlope,
+                range: maxSlope - minSlope
+            };
+        }
+        
+        function formatBetweenResults(results) {
+            return `
+                <div style="background: var(--surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <h4 style="margin-top: 0;">Between-Country Variation in SES Slopes</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                        <div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">Mean Slope</div>
+                            <div style="font-size: 1.4rem; font-weight: 600;">${results.meanSlope.toFixed(2)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">SD of Slopes</div>
+                            <div style="font-size: 1.4rem; font-weight: 600;">${results.sdSlope.toFixed(2)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">Range</div>
+                            <div style="font-size: 1.4rem; font-weight: 600;">${results.minSlope.toFixed(2)} to ${results.maxSlope.toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-top: 1rem;">
+                        The standard deviation of ${results.sdSlope.toFixed(2)} indicates ${results.sdSlope > 5 ? 'substantial' : 'moderate'} 
+                        variation in the strength of socioeconomic gradients across countries.
+                    </p>
+                </div>
+            `;
+        }
+        
+        // ============================================
+        // ACHIEVEMENT GAP DECOMPOSITION
+        // ============================================
+        
+function runGapDecomposition() {
+  // selections (these were missing)
+  const selectedCountries = getSelectedCountries();
+  const selectedYears = getSelectedYears();
+  if (!loadedPISAData || loadedPISAData.length === 0) { alert('Please load data first'); return; }
+  if (selectedCountries.length === 0 || selectedYears.length === 0) { alert('Please select at least one country and one year'); return; }
+
+  // outcome + predictor
+  const outcomeFieldMap = { reading: 'reading_score', math: 'math_score', science: 'science_score' };
+  const outField = outcomeFieldMap[document.getElementById('outcome').value] || 'achievement';
+  const predField = getPredictorFieldName();
+
+  // filtered & normalized data
+  const data = loadedPISAData
+    .filter(d => selectedCountries.includes(d.country) && selectedYears.includes(parseInt(d.year)))
+    .map(d => ({ ...d, achievement: (d[outField] ?? d.achievement) }))
+    .filter(d => d.achievement != null && !isNaN(d.achievement) && d[predField] != null && !isNaN(d[predField]));
+
+  if (data.length === 0) { alert('No data available for selected countries and years'); return; }
+
+  // Quartiles on the chosen predictor
+  const xVals = data.map(d => d[predField]).sort((a,b)=>a-b);
+  const q1 = ss.quantile(xVals, 0.25), q2 = ss.quantile(xVals, 0.50), q3 = ss.quantile(xVals, 0.75);
+
+  data.forEach(d => {
+    const x = d[predField];
+    const q = (x <= q1) ? 1 : (x <= q2) ? 2 : (x <= q3) ? 3 : 4;
+    d._q = q;               // current field used by decomposition
+    d.ses_quartile = q;     // backward-compat for any older code paths
+  });
+
+  // Pooled/Overall
+  const pooledResults = calculateGapMeasures(data, 'Overall');
+  displayPooledGap(pooledResults);
+
+  // By country
+  const countryResults = selectedCountries.map(country => {
+    const cd = data.filter(d => d.country === country);
+    return cd.length ? calculateGapMeasures(cd, country) : null;
+  }).filter(Boolean);
+  displayCountryGaps(countryResults);
+
+  // Variance decomposition
+  const varianceDecomp = calculateVarianceDecomposition(data, selectedCountries);
+  displayVarianceDecomposition(varianceDecomp);
+
+  // Visualization
+  plotGapComparison(countryResults, pooledResults);
+
+  // Show sections
+  document.getElementById('gap-pooled').style.display = 'block';
+  document.getElementById('gap-countries').style.display = 'block';
+  document.getElementById('gap-variance').style.display = 'block';
+  document.getElementById('gap-visualization').style.display = 'block';
+  document.getElementById('gap-results').style.display = 'none';
+}
+
+
+        function calculateGapMeasures(data, label) {
+            
+            // Group by quartile (use _q which we set above; ses_quartile kept only for back-compat)
+const q1Data = data.filter(d => (d._q ?? d.ses_quartile) === 1);
+const q2Data = data.filter(d => (d._q ?? d.ses_quartile) === 2);
+const q3Data = data.filter(d => (d._q ?? d.ses_quartile) === 3);
+const q4Data = data.filter(d => (d._q ?? d.ses_quartile) === 4);
+
+            
+            // Calculate means
+            const meanQ1 = q1Data.length > 0 ? ss.mean(q1Data.map(d => d.achievement)) : null;
+            const meanQ2 = q2Data.length > 0 ? ss.mean(q2Data.map(d => d.achievement)) : null;
+            const meanQ3 = q3Data.length > 0 ? ss.mean(q3Data.map(d => d.achievement)) : null;
+            const meanQ4 = q4Data.length > 0 ? ss.mean(q4Data.map(d => d.achievement)) : null;
+            
+            // Calculate standard deviations
+            const sdQ1 = q1Data.length > 1 ? ss.standardDeviation(q1Data.map(d => d.achievement)) : null;
+            const sdQ4 = q4Data.length > 1 ? ss.standardDeviation(q4Data.map(d => d.achievement)) : null;
+            
+            // Overall SD
+            const overallSD = ss.standardDeviation(data.map(d => d.achievement));
+            
+            // Achievement gaps
+            const gap_Q4_Q1 = (meanQ4 && meanQ1) ? meanQ4 - meanQ1 : null;
+            const gap_Q3_Q2 = (meanQ3 && meanQ2) ? meanQ3 - meanQ2 : null;
+            const gap_Q4_Q2 = (meanQ4 && meanQ2) ? meanQ4 - meanQ2 : null;
+            
+            // Effect sizes (Cohen's d)
+            const pooledSD_Q4_Q1 = (sdQ1 && sdQ4) ? Math.sqrt((sdQ1**2 + sdQ4**2) / 2) : overallSD;
+            const effectSize_Q4_Q1 = gap_Q4_Q1 ? gap_Q4_Q1 / pooledSD_Q4_Q1 : null;
+            
+            // Between-group variance (treating quartiles as groups)
+            const overallMean = ss.mean(data.map(d => d.achievement));
+            const betweenVar = [meanQ1, meanQ2, meanQ3, meanQ4]
+                .filter(m => m !== null)
+                .reduce((sum, m) => sum + (m - overallMean)**2, 0) / 4;
+            
+            // Total variance
+            const totalVar = ss.variance(data.map(d => d.achievement));
+            
+            // R-squared (proportion of variance explained by quartiles)
+            const rSquared = betweenVar / totalVar;
+            
+            return {
+                label,
+                n: data.length,
+                nQ1: q1Data.length,
+                nQ2: q2Data.length,
+                nQ3: q3Data.length,
+                nQ4: q4Data.length,
+                meanQ1,
+                meanQ2,
+                meanQ3,
+                meanQ4,
+                gap_Q4_Q1,
+                gap_Q3_Q2,
+                gap_Q4_Q2,
+                effectSize_Q4_Q1,
+                rSquared,
+                totalVar,
+                betweenVar,
+                withinVar: totalVar - betweenVar
+            };
+        }
+        
+        
+// tiny safe-format helpers
+function _fmt1(v) { return Number.isFinite(v) ? v.toFixed(1) : 'N/A'; }
+function _fmt2(v) { return Number.isFinite(v) ? v.toFixed(2) : 'N/A'; }
+function _pct1(v) { return Number.isFinite(v) ? (v * 100).toFixed(1) + '%' : 'N/A'; }
+function _int(v)  { return Number.isFinite(v) ? v.toLocaleString() : 'N/A'; }
+function _band(d) {
+  if (!Number.isFinite(d)) return '—';
+  return (d >= 0.80) ? 'Large' : (d >= 0.50) ? 'Medium' : (d >= 0.20) ? 'Small' : 'Negligible';
+}
+// first non-null/finite utility
+function _firstNum(/* ...candidates */) {
+  for (let i = 0; i < arguments.length; i++) {
+    const v = arguments[i];
+    if (Number.isFinite(v)) return v;
+  }
+  return NaN;
+}
+
+/**
+ * Robustly renders the pooled gap panel.
+ * Expected fields (any that are missing are shown as N/A without crashing):
+ *   results.n
+ *   results.gap_Q4_Q1
+ *   results.effectSize_Q4_Q1
+ *   results.rSquared (0..1)
+ *   quartile means under any of:
+ *     results.quartiles.{Q1,Q2,Q3,Q4}
+ *     results.quartileMeans.{Q1,Q2,Q3,Q4}
+ *     results.{mean_Q1,mean_Q2,mean_Q3,mean_Q4}
+ *     results.{q1_mean,q2_mean,q3_mean,q4_mean}
+ */
+function displayPooledGap(results) {
+  const target = document.getElementById('gap-pooled-content');
+  if (!target) return;
+
+  // Pull quartile means from whatever naming exists
+// inside displayPooledGap(results) — replace the 4 const lines for q1..q4
+const Q = results?.quartiles || results?.quartileMeans || {};
+
+const q1 = _firstNum(Q?.Q1, Q?.q1, results?.meanQ1, results?.mean_Q1, results?.Q1, results?.q1_mean);
+const q2 = _firstNum(Q?.Q2, Q?.q2, results?.meanQ2, results?.mean_Q2, results?.Q2, results?.q2_mean);
+const q3 = _firstNum(Q?.Q3, Q?.q3, results?.meanQ3, results?.mean_Q3, results?.Q3, results?.q3_mean);
+const q4 = _firstNum(Q?.Q4, Q?.q4, results?.meanQ4, results?.mean_Q4, results?.Q4, results?.q4_mean);
+
+  const gap   = _firstNum(results?.gap_Q4_Q1, (Number.isFinite(q4) && Number.isFinite(q1)) ? (q4 - q1) : NaN);
+  const d     = _firstNum(results?.effectSize_Q4_Q1);
+  const r2    = _firstNum(results?.rSquared);
+
+  const n     = Number.isFinite(results?.n) ? results.n : NaN;
+
+  const html = `
+    <div style="background: var(--surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+      <h4 style="margin-top: 0;">Pooled Analysis ${Number.isFinite(n) ? `(N = ${_int(n)})` : ''}</h4>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.25rem 0 1.5rem 0;">
+        <div style="background: var(--code-bg); padding: 1rem; border-radius: 6px;">
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">Achievement Gap (Q4 − Q1)</div>
+          <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">${_fmt1(gap)}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">points</div>
+        </div>
+
+        <div style="background: var(--code-bg); padding: 1rem; border-radius: 6px;">
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">Effect Size (Cohen’s d)</div>
+          <div style="font-size: 1.8rem; font-weight: 700;">${_fmt2(d)}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">${_band(d)}</div>
+        </div>
+
+        <div style="background: var(--code-bg); padding: 1rem; border-radius: 6px;">
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">R² (Quartiles)</div>
+          <div style="font-size: 1.8rem; font-weight: 700;">${Number.isFinite(r2) ? _pct1(r2) : 'N/A'}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">variance explained</div>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding: 0.5rem; border-bottom: 1px solid var(--border);">Quartile</th>
+              <th style="text-align:right; padding: 0.5rem; border-bottom: 1px solid var(--border);">Mean score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">Q1 (lowest)</td>
+              <td style="padding: 0.5rem; text-align:right; border-bottom: 1px solid var(--border);">${_fmt1(q1)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">Q2</td>
+              <td style="padding: 0.5rem; text-align:right; border-bottom: 1px solid var(--border);">${_fmt1(q2)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">Q3</td>
+              <td style="padding: 0.5rem; text-align:right; border-bottom: 1px solid var(--border);">${_fmt1(q3)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">Q4 (highest)</td>
+              <td style="padding: 0.5rem; text-align:right;">${_fmt1(q4)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; font-weight:600; border-top: 1px solid var(--border);">Gap (Q4 − Q1)</td>
+              <td style="padding: 0.5rem; text-align:right; font-weight:600; border-top: 1px solid var(--border);">${_fmt1(gap)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  target.innerHTML = html;
+}
+
+        
+function displayCountryGaps(countryResults) {
+            // Sort by gap size
+            const sorted = [...countryResults].sort((a, b) => b.gap_Q4_Q1 - a.gap_Q4_Q1);
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1rem;">';
+            
+            sorted.forEach(result => {
+                html += `
+                    <div style="background: var(--surface); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <h4 style="margin: 0 0 1rem 0;">${result.label}</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <div style="background: var(--code-bg); padding: 0.75rem; border-radius: 4px;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Gap (Q4-Q1)</div>
+                                <div style="font-size: 1.4rem; font-weight: 600;">${result.gap_Q4_Q1.toFixed(1)}</div>
+                            </div>
+                            <div style="background: var(--code-bg); padding: 0.75rem; border-radius: 4px;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Effect Size</div>
+                                <div style="font-size: 1.4rem; font-weight: 600;">${result.effectSize_Q4_Q1.toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem;">
+                            <div style="display: flex; justify-content: space-between; padding: 0.25rem 0;">
+                                <span>Q1 Mean:</span><strong>${result.meanQ1.toFixed(1)}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.25rem 0;">
+                                <span>Q4 Mean:</span><strong>${result.meanQ4.toFixed(1)}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.25rem 0;">
+                                <span>R² (Quartiles):</span><strong>${(result.rSquared * 100).toFixed(1)}%</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; color: var(--text-secondary);">
+                                <span>N:</span><span>${result.n.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            document.getElementById('gap-countries-content').innerHTML = html;
+        }
+        
+        function calculateVarianceDecomposition(data, countries) {
+            // Overall mean
+            const overallMean = ss.mean(data.map(d => d.achievement));
+            
+            // Calculate country means
+            const countryMeans = countries.map(country => {
+                const countryData = data.filter(d => d.country === country);
+                return {
+                    country,
+                    mean: ss.mean(countryData.map(d => d.achievement)),
+                    n: countryData.length
+                };
+            });
+            
+            // Between-country variance (weighted by sample size)
+            const totalN = data.length;
+            const betweenCountryVar = countryMeans.reduce((sum, cm) => {
+                return sum + (cm.n / totalN) * (cm.mean - overallMean)**2;
+            }, 0);
+            
+            // Total variance
+            const totalVar = ss.variance(data.map(d => d.achievement));
+            
+            // Within-country variance
+            const withinCountryVar = totalVar - betweenCountryVar;
+            
+            // Intraclass correlation (ICC)
+            const icc = betweenCountryVar / totalVar;
+            
+            return {
+                totalVar,
+                betweenCountryVar,
+                withinCountryVar,
+                icc,
+                percentBetween: (betweenCountryVar / totalVar) * 100,
+                percentWithin: (withinCountryVar / totalVar) * 100
+            };
+        }
+        
+        function displayVarianceDecomposition(results) {
+            const html = `
+                <div style="background: var(--surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <h4 style="margin-top: 0;">Variance Components</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Decomposition of total achievement variance into within-country and between-country components.
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="background: var(--code-bg); padding: 1rem; border-radius: 6px;">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">Total Variance</div>
+                            <div style="font-size: 1.5rem; font-weight: 600;">${results.totalVar.toFixed(1)}</div>
+                        </div>
+                        <div style="background: #1e3a8a; border: 1px solid #3b82f6; padding: 1rem; border-radius: 6px;">
+                            <div style="font-size: 0.85rem; color: #93c5fd;">Within-Country</div>
+                            <div style="font-size: 1.5rem; font-weight: 600; color: #93c5fd;">${results.withinCountryVar.toFixed(1)}</div>
+                            <div style="font-size: 0.8rem; color: #93c5fd;">${results.percentWithin.toFixed(1)}%</div>
+                        </div>
+                        <div style="background: #422006; border: 1px solid #f59e0b; padding: 1rem; border-radius: 6px;">
+                            <div style="font-size: 0.85rem; color: #fbbf24;">Between-Country</div>
+                            <div style="font-size: 1.5rem; font-weight: 600; color: #fbbf24;">${results.betweenCountryVar.toFixed(1)}</div>
+                            <div style="font-size: 0.8rem; color: #fbbf24;">${results.percentBetween.toFixed(1)}%</div>
+                        </div>
+                        <div style="background: var(--code-bg); padding: 1rem; border-radius: 6px;">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">ICC (ρ)</div>
+                            <div style="font-size: 1.5rem; font-weight: 600;">${results.icc.toFixed(3)}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">correlation</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <div style="background: var(--code-bg); height: 40px; border-radius: 6px; overflow: hidden; display: flex;">
+                            <div style="background: #3b82f6; width: ${results.percentWithin}%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.9rem;">
+                                Within: ${results.percentWithin.toFixed(1)}%
+                            </div>
+                            <div style="background: #fbbf24; width: ${results.percentBetween}%; display: flex; align-items: center; justify-content: center; color: #422006; font-weight: 600; font-size: 0.9rem;">
+                                Between: ${results.percentBetween.toFixed(1)}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background: #1e3a8a; border-radius: 6px;">
+                        <strong>Interpretation:</strong> ${results.percentWithin.toFixed(1)}% of achievement variance occurs within countries, 
+                        while ${results.percentBetween.toFixed(1)}% occurs between countries. The intraclass correlation (ICC = ${results.icc.toFixed(3)}) 
+                        indicates that ${results.icc > 0.15 ? 'substantial' : results.icc > 0.05 ? 'moderate' : 'small'} clustering of achievement by country.
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('gap-variance-content').innerHTML = html;
+        }
+        
+        function plotGapComparison(countryResults, pooledResults) {
+            // Sort countries by gap size
+            const sorted = [...countryResults].sort((a, b) => a.gap_Q4_Q1 - b.gap_Q4_Q1);
+            
+            const trace1 = {
+                type: 'bar',
+                x: sorted.map(r => r.label),
+                y: sorted.map(r => r.gap_Q4_Q1),
+                name: 'Q4-Q1 Gap',
+                marker: {
+                    color: sorted.map(r => {
+                        if (r.gap_Q4_Q1 > pooledResults.gap_Q4_Q1) return '#dc2626';
+                        else if (r.gap_Q4_Q1 > pooledResults.gap_Q4_Q1 * 0.9) return '#f59e0b';
+                        else return '#10b981';
+                    })
+                },
+                text: sorted.map(r => r.gap_Q4_Q1.toFixed(1)),
+                textposition: 'outside'
+            };
+            
+            const layout = {
+                title: 'Achievement Gap (Q4-Q1) by Country',
+                xaxis: { title: 'Country', tickangle: -45 },
+                yaxis: { title: 'Achievement Gap (points)' },
+                shapes: [{
+                    type: 'line',
+                    x0: -0.5,
+                    x1: sorted.length - 0.5,
+                    y0: pooledResults.gap_Q4_Q1,
+                    y1: pooledResults.gap_Q4_Q1,
+                    line: {
+                        color: 'rgb(50, 50, 50)',
+                        width: 2,
+                        dash: 'dash'
+                    }
+                }],
+                annotations: [{
+                    x: sorted.length - 1,
+                    y: pooledResults.gap_Q4_Q1,
+                    xref: 'x',
+                    yref: 'y',
+                    text: `Overall: ${pooledResults.gap_Q4_Q1.toFixed(1)}`,
+                    showarrow: false,
+                    xanchor: 'left',
+                    bgcolor: '#1e293b',
+                    bordercolor: '#3b82f6',
+                    borderwidth: 1
+                }],
+                margin: { b: 120 },
+                paper_bgcolor: 'var(--plotly-bg)',
+                plot_bgcolor: 'var(--plotly-bg)'
+            };
+            
+            Plotly.newPlot('gap-plot', [trace1], layout, {responsive: true});
+        }
+        
+        // ============================================
+        // REGRESSION VISUALIZATION
+        // ============================================
+        
+        let regressionPlotData = {}; // Store regression data for plotting
+        
+
+function showRegressionPlot(country, year) {
+  const key = `${country}_${year}`;
+  const plotData = regressionPlotData[key];
+  if (!plotData) { alert('Regression data not available for this selection'); return; }
+
+  const trace1 = { type:'scatter', mode:'markers', x: plotData.predictor, y: plotData.achievement, name:'Observed',
+                   marker:{ size:4, color:'rgba(59,130,246,0.4)', line:{ width:0 } } };
+  const xMin = Math.min(...plotData.predictor), xMax = Math.max(...plotData.predictor);
+  const trace2 = { type:'scatter', mode:'lines', x: [xMin, xMax],
+                   y: [xMin, xMax].map(x => plotData.intercept + plotData.slope * x),
+                   name:`Fitted (β=${plotData.slope.toFixed(2)})`, line:{ color:'rgb(220,38,38)', width:3 } };
+
+  const layout = {
+    title: `Regression: ${country} (${year})<br>${getOutcomeLabel()} = ${plotData.intercept.toFixed(1)} + ${plotData.slope.toFixed(2)} × ${getPredictorLabel(null, true)}<br>R² = ${(plotData.r2 * 100).toFixed(1)}%`,
+    xaxis: { title: getPredictorAxisLabel() },
+    yaxis: { title: `${getOutcomeLabel()} Score` },
+    showlegend: true, hovermode:'closest',
+    paper_bgcolor: 'var(--plotly-bg)', plot_bgcolor: 'var(--plotly-bg)'
+  };
+
+  const modalHTML = `
+    <div id="regression-plot-modal" style="position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="closeRegressionPlot()">
+      <div style="background: var(--surface); padding: 2rem; border-radius: 12px; max-width: 900px; width: 90%; max-height: 90vh; overflow: auto;" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <h3 style="margin:0;">Regression Fit Visualization</h3>
+          <button onclick="closeRegressionPlot()" style="padding:0.5rem 1rem;cursor:pointer;background: var(--accent-color); color: white; border: none; border-radius: 4px;">Close</button>
+        </div>
+        <div id="regression-plot-container" style="width:100%; height:500px;"></div>
+        <div style="margin-top:1rem; padding:1rem; background: var(--code-bg); border-radius:6px; font-size:0.9rem;">
+          <strong>Model Statistics:</strong><br>
+          Slope (β): ${plotData.slope.toFixed(3)} (SE = ${plotData.se.toFixed(3)}, t = ${plotData.tStat.toFixed(2)})<br>
+          Intercept: ${plotData.intercept.toFixed(2)}<br>
+          R-squared: ${(plotData.r2 * 100).toFixed(2)}%<br>
+          Sample Size: ${plotData.n.toLocaleString()} students
+        </div>
+      </div>
+    </div>`;
+  const existing = document.getElementById('regression-plot-modal'); if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  Plotly.newPlot('regression-plot-container', [trace1, trace2], layout, {responsive:true});
+}
+
+
+        function closeRegressionPlot() {
+            const modal = document.getElementById('regression-plot-modal');
+            if (modal) modal.remove();
+        }
+        
+
+function storeRegressionData(country, year, results, data) {
+  const key = `${country}_${year}`;
+  const predField = getPredictorFieldName();
+  regressionPlotData[key] = {
+    country, year,
+    slope: results.slope, intercept: results.intercept, r2: results.r2, se: results.se, tStat: results.tStat, n: results.n,
+    predictor: data.map(d => d[predField]),
+    achievement: data.map(d => d.achievement)
+  };
+}
+        function showRegressionPlotForCountry(country) {
+            // Find data for this country (using "All Years" as the year key)
+            const key = `${country}_All Years`;
+            showRegressionPlot(country, 'All Years');
+        }
+        
+        function addRegressionPlotButton(containerId, country, year, slope, intercept, r2, se, tStat, n, sesData, achievementData) {
+            // Store data for plotting
+            const key = `${country}_${year}`;
+            regressionPlotData[key] = {
+                country,
+                year,
+                slope,
+                intercept,
+                r2,
+                se,
+                tStat,
+                n,
+                ses: sesData,
+                achievement: achievementData
+            };
+            
+            // Add button to container
+            const container = document.getElementById(containerId);
+            if (container) {
+                const button = document.createElement('button');
+                button.className = 'btn';
+                button.textContent = 'View Regression Plot';
+                button.style.marginTop = '0.5rem';
+                button.onclick = () => showRegressionPlot(country, year);
+                container.appendChild(button);
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default selections
+            document.getElementById('assessment').value = 'pisa';
+            
+            
+            // Update year selector for default assessment
+            updateYearSelector();
+            
+  document.getElementById('assessment').addEventListener('change', function() {
+  updateYearSelector();        // keep cycle UI in sync
+  updateSelectorsByVariable(); // then prune to actual availability
+});
+
+// Re-filter options when stratification variable or outcome changes
+document.getElementById('predictor')?.addEventListener('change', updateSelectorsByVariable);
+document.getElementById('outcome')?.addEventListener('change', updateSelectorsByVariable);
+
+            
+            // Initialize regression model checkboxes
+            const modelCheckboxes = ['ols-model', 'fe-model', 're-model'];
+            modelCheckboxes.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox && !checkbox.hasAttribute('checked')) {
+                    checkbox.checked = true;
+                }
+            });
+            
+            // Auto-fetch initial data after a short delay to ensure everything is loaded
+            setTimeout(() => {
+                fetchAndAnalyzeData();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "EduStrat: A Browser-Based Tool for Exploratory Analysis of Socioeconomic Stratification in PISA Microdata"
+authors:
+  - family-names: Schoenholzer
+    given-names: Kevin
+    orcid: "https://orcid.org/0000-0001-9892-5869"
+    affiliation: "Università della Svizzera italiana (USI)"
+    email: kevin.schoenholzer@usi.ch
+version: "1.0.0"
+date-released: "2026-02-11"
+license: MIT
+url: "https://kevinschoenholzer.com/edustrat/"
+repository-code: "https://github.com/kevisc/edustrat"
+keywords:
+  - education
+  - inequality
+  - PISA
+  - socioeconomic status
+  - intergenerational transmission
+  - ESCS
+  - large-scale assessment
+  - survey weighting
+  - regression
+  - variance decomposition
+abstract: >-
+  EduStrat (Educational Stratification in PISA) is a browser-based
+  statistical tool for exploratory analysis of how parental socioeconomic
+  characteristics predict student academic achievement, using microdata
+  from the OECD Programme for International Student Assessment (PISA).
+  The tool covers eight PISA assessment cycles (2000-2022), more than
+  100 countries, and approximately 3.5 million student observations.

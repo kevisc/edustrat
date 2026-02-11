@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Sources - Educational Stratification in PISA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: #1e293b;
+            background: #f8fafc;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 2.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 0.75rem;
+        }
+        h2 {
+            color: #1e293b;
+            font-size: 1.75rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            color: #334155;
+            font-size: 1.35rem;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        p {
+            margin-bottom: 1rem;
+            color: #475569;
+        }
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+            color: #475569;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        .highlight-box {
+            background: #dbeafe;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .info-box {
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #64748b;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+        .data-table th {
+            background: #1e293b;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .data-table tr:hover {
+            background: #f8fafc;
+        }
+        .code {
+            font-family: 'Courier New', monospace;
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            background: #2563eb;
+        }
+        .external-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .external-link:hover {
+            text-decoration: underline;
+        }
+        .variable-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .variable-card {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 3px solid #3b82f6;
+        }
+        .variable-card strong {
+            color: #1e293b;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .variable-card span {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Sources</h1>
+        <p>Comprehensive guide to the PISA data underlying the Educational Stratification in PISA tool</p>
+        <p>This application is designed to study the intergenerational transmission of educational achievement—specifically, how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
+
+        <h2>1. The PISA Programme</h2>
+
+        <h3>1.1 Programme Overview</h3>
+        <p>The <strong>Programme for International Student Assessment (PISA)</strong> is a triennial international survey coordinated by the Organisation for Economic Co-operation and Development (OECD) since 2000. PISA assesses the extent to which 15-year-old students near the end of compulsory education have acquired the knowledge and skills essential for full participation in modern societies.</p>
+
+        <div class="highlight-box">
+            <strong>Key Facts:</strong>
+            <ul>
+                <li><strong>Launch Year:</strong> 2000</li>
+                <li><strong>Frequency:</strong> Every 3 years</li>
+                <li><strong>Target Population:</strong> 15-year-old students</li>
+                <li><strong>Domains Assessed:</strong> Mathematics, Reading, Science (rotating major focus)</li>
+                <li><strong>Participating Countries/Economies:</strong> 81+ (as of 2022)</li>
+                <li><strong>Sample Size:</strong> ~600,000 students per cycle</li>
+            </ul>
+        </div>
+
+        <h3>1.2 PISA Assessment Cycles</h3>
+        <p>PISA has been conducted in the following years, with each cycle focusing on one major domain while assessing all three:</p>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th>Major Domain</th>
+                    <th>Countries/Economies</th>
+                    <th>Students Assessed</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2000</td>
+                    <td>Reading</td>
+                    <td>43</td>
+                    <td>~265,000</td>
+                    <td><strong>Available in App</strong></td>
+                </tr>
+                <tr>
+                    <td>2003</td>
+                    <td>Mathematics</td>
+                    <td>41</td>
+                    <td>~276,000</td>
+                    <td><strong>Available in App</strong></td>
+                </tr>
+                <tr>
+                    <td>2006</td>
+                    <td>Science</td>
+                    <td>57</td>
+                    <td>~398,000</td>
+                    <td><strong>Available in App</strong></td>
+                </tr>
+                <tr>
+                    <td>2009</td>
+                    <td>Reading</td>
+                    <td>65</td>
+                    <td>~475,000</td>
+                    <td><strong>Available in App</strong></td>
+                </tr>
+                <tr>
+                    <td>2012</td>
+                    <td>Mathematics</td>
+                    <td>65</td>
+                    <td>~510,000</td>
+                    <td><strong>Available in App</strong></td>
+                </tr>
+                <tr>
+                    <td>2015</td>
+                    <td>Science</td>
+                    <td>72</td>
+                    <td>~540,000</td>
+                    <td><strong>Available in App</strong></td>
+                </tr>
+                <tr>
+                    <td>2018</td>
+                    <td>Reading</td>
+                    <td>79</td>
+                    <td>~600,000</td>
+                    <td><strong>Available in App</strong></td>
+                </tr>
+                <tr>
+                    <td>2022</td>
+                    <td>Mathematics</td>
+                    <td>81</td>
+                    <td>~690,000</td>
+                    <td><strong>Available in App</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>This application includes data from all PISA cycles from 2000-2022</strong> (8 assessment cycles: 2000, 2003, 2006, 2009, 2012, 2015, 2018, 2022), covering 513 country-year combinations across 101+ unique countries/economies.</p>
+
+        <h2>2. Assessment Framework</h2>
+
+        <h3>2.1 Mathematics Assessment</h3>
+        <p>PISA mathematics assesses students' capacity to formulate, employ, and interpret mathematics in a variety of contexts. It includes reasoning mathematically and using mathematical concepts, procedures, facts, and tools to describe, explain, and predict phenomena.</p>
+
+        <div class="info-box">
+            <strong>Mathematics Competencies:</strong>
+            <ul>
+                <li>Mathematical reasoning</li>
+                <li>Problem formulation and solving</li>
+                <li>Mathematical modeling</li>
+                <li>Mathematical argumentation</li>
+            </ul>
+        </div>
+
+        <h3>2.2 Reading Assessment</h3>
+        <p>PISA reading literacy assesses students' capacity to understand, use, evaluate, reflect on, and engage with texts in order to achieve goals, develop knowledge and potential, and participate in society.</p>
+
+        <div class="info-box">
+            <strong>Reading Competencies:</strong>
+            <ul>
+                <li>Retrieving information</li>
+                <li>Forming broad understanding</li>
+                <li>Developing interpretation</li>
+                <li>Reflecting on and evaluating content and form</li>
+            </ul>
+        </div>
+
+        <h3>2.3 Science Assessment</h3>
+        <p>PISA science literacy assesses the ability to engage with science-related issues and with the ideas of science, as a reflective citizen. It includes understanding natural phenomena, designing scientific enquiry, and interpreting evidence.</p>
+
+        <div class="info-box">
+            <strong>Science Competencies:</strong>
+            <ul>
+                <li>Explaining phenomena scientifically</li>
+                <li>Evaluating and designing scientific enquiry</li>
+                <li>Interpreting data and evidence scientifically</li>
+            </ul>
+        </div>
+
+        <h2>3. Sampling Design</h2>
+
+        <h3>3.1 Target Population</h3>
+        <p>PISA targets students who are between 15 years 3 months and 16 years 2 months at the time of assessment, regardless of their grade level. This age range was chosen because students at this age are approaching the end of compulsory schooling in most OECD countries.</p>
+
+        <h3>3.2 Two-Stage Stratified Sampling</h3>
+        <p>PISA employs a sophisticated two-stage stratified sampling design:</p>
+
+        <ol>
+            <li><strong>Stage 1 - School Sampling:</strong> Schools are sampled with probability proportional to size (PPS), where size is the number of eligible 15-year-old students. Typically, 150-200 schools per country are selected.</li>
+            <li><strong>Stage 2 - Student Sampling:</strong> Within each selected school, approximately 35 students are randomly sampled from the complete list of eligible 15-year-old students.</li>
+        </ol>
+
+        <div class="highlight-box">
+            <strong>Sampling Standards:</strong>
+            <ul>
+                <li><strong>Minimum Sample Size:</strong> 4,500 students (for small countries, all eligible students may be assessed)</li>
+                <li><strong>Minimum School Participation Rate:</strong> 85%</li>
+                <li><strong>Minimum Student Participation Rate:</strong> 80%</li>
+                <li><strong>Combined Participation Rate:</strong> At least 65% (school rate × student rate)</li>
+            </ul>
+        </div>
+
+        <h3>3.3 Sampling Weights</h3>
+        <p>PISA provides several types of sampling weights to ensure representative estimates:</p>
+
+        <ul>
+            <li><strong>Student Weight (W_FSTUWT):</strong> Adjusts for unequal probability of selection and non-response. Use this for most analyses.</li>
+            <li><strong>Senate Weight (W_FSENWT):</strong> Gives each country equal weight regardless of population size. Use for cross-country comparisons where you want each country to contribute equally.</li>
+            <li><strong>Replicate Weights (W_FSTR1-W_FSTR80):</strong> Used for balanced repeated replication (BRR) variance estimation.</li>
+        </ul>
+
+        <h2>4. The learningtower R Package</h2>
+
+        <h3>4.1 Package Overview</h3>
+        <p>This application uses data processed through the <span class="code">learningtower</span> R package (Vaughan et al., 2021), which provides harmonized, analysis-ready PISA data in a consistent format.</p>
+
+        <div class="info-box">
+            <strong>learningtower Package Benefits:</strong>
+            <ul>
+                <li>Harmonized variable names across assessment cycles</li>
+                <li>Cleaned and validated data</li>
+                <li>Consistent country codes (ISO 3166-1 alpha-3)</li>
+                <li>Simplified access to core variables</li>
+                <li>Reduced file size compared to raw OECD data</li>
+            </ul>
+        </div>
+
+        <h3>4.2 Package Installation</h3>
+        <p>The learningtower package is available on CRAN:</p>
+        <pre style="background: #1e293b; color: #f1f5f9; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0;"><code>install.packages("learningtower")
+library(learningtower)</code></pre>
+
+        <h3>4.3 Data Access via learningtower</h3>
+        <p>The package provides easy access to PISA data:</p>
+        <pre style="background: #1e293b; color: #f1f5f9; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0;"><code># Load all student data for a specific year
+data_2018 <- load_student(2018)
+
+# Load data for specific countries
+data_usa <- load_student(2018, countries = "USA")
+
+# Access codebook
+codebook <- load_codebook()</code></pre>
+
+        <h3>4.4 Package Citation</h3>
+        <p>If you use data from this application, please cite the learningtower package:</p>
+        <div class="info-box">
+            <p>Vaughan, B., Stanke, L., Teng, T., Hyndman, R., & O'Hara-Wild, E. (2021). <em>learningtower: OECD PISA datasets from 2000-2018 in an easy-to-use format</em> (R package version 1.0.1). https://CRAN.R-project.org/package=learningtower</p>
+        </div>
+
+        <h2>5. Data Structure in This Application</h2>
+
+        <h3>5.1 JSON Chunk Format</h3>
+        <p>This application pre-generates 513 country-year specific JSON files (e.g., <span class="code">USA_2018.json</span>) for efficient progressive loading. Each chunk contains:</p>
+
+        <pre style="background: #1e293b; color: #f1f5f9; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0;"><code>{
+  "country": "USA",
+  "year": 2018,
+  "n_students": 4838,
+  "data_quality": {
+    "missing_math": 0,
+    "missing_reading": 0,
+    "missing_science": 0,
+    "missing_escs": 0,
+    "complete_cases": 4838
+  },
+  "students": [
+    {
+      "student_id": "USA_2018_00001",
+      "math": 498.5,
+      "reading": 505.2,
+      "science": 502.9,
+      "escs": 0.23,
+      "gender": "male",
+      "age": 15.5,
+      ...
+    }
+  ]
+}</code></pre>
+
+        <h3>5.2 File Organization</h3>
+        <ul>
+            <li><strong>Location:</strong> <span class="code">pisa/data/country-year/</span></li>
+            <li><strong>Naming Convention:</strong> <span class="code">{COUNTRY}_{YEAR}.json</span> (e.g., USA_2018.json, DEU_2022.json)</li>
+            <li><strong>Total Files:</strong> 320 files</li>
+            <li><strong>File Size Range:</strong> 2-5 MB per file</li>
+            <li><strong>Total Data Size:</strong> ~1 GB</li>
+        </ul>
+
+        <h3>5.3 Metadata File</h3>
+        <p>The application also includes a <span class="code">metadata.json</span> file that catalogs all available data:</p>
+        <pre style="background: #1e293b; color: #f1f5f9; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0;"><code>{
+  "countries": ["ALB", "ARG", "AUS", ...],
+  "years": [2000, 2003, 2006, 2009, 2012, 2015, 2018, 2022],
+  "variables": {
+    "math": "Mathematics achievement score",
+    "reading": "Reading achievement score",
+    "science": "Science achievement score",
+    "escs": "PISA index of economic, social and cultural status",
+    ...
+  }
+}</code></pre>
+
+        <h2>6. Variable Codebook</h2>
+
+        <h3>6.1 Achievement Variables</h3>
+        <div class="variable-grid">
+            <div class="variable-card">
+                <strong>math</strong>
+                <span>Mathematics achievement score (plausible value 1)</span>
+            </div>
+            <div class="variable-card">
+                <strong>reading</strong>
+                <span>Reading achievement score (plausible value 1)</span>
+            </div>
+            <div class="variable-card">
+                <strong>science</strong>
+                <span>Science achievement score (plausible value 1)</span>
+            </div>
+        </div>
+
+        <p><em>Note: PISA uses plausible values to account for measurement error. This application uses the first plausible value (PV1) for each domain for simplicity. Advanced analyses should consider all 10 plausible values.</em></p>
+
+        <h3>6.2 Socioeconomic Status Variables</h3>
+        <div class="variable-grid">
+            <div class="variable-card">
+                <strong>escs</strong>
+                <span>PISA index of economic, social and cultural status (standardized to mean 0, SD 1 across OECD countries)</span>
+            </div>
+            <div class="variable-card">
+                <strong>wealth</strong>
+                <span>Family wealth index derived from household possessions</span>
+            </div>
+            <div class="variable-card">
+                <strong>books</strong>
+                <span>Number of books at home (categorical: 0-10, 11-25, 26-100, 101-200, 201-500, 500+)</span>
+            </div>
+        </div>
+
+        <h3>6.3 Parental Education Variables</h3>
+        <div class="variable-grid">
+            <div class="variable-card">
+                <strong>mother_educ</strong>
+                <span>Mother's education level (ISCED classification)</span>
+            </div>
+            <div class="variable-card">
+                <strong>father_educ</strong>
+                <span>Father's education level (ISCED classification)</span>
+            </div>
+            <div class="variable-card">
+                <strong>parent_edu</strong>
+                <span>Highest parental education (years of schooling)</span>
+            </div>
+        </div>
+
+        <h3>6.4 Demographic Variables</h3>
+        <div class="variable-grid">
+            <div class="variable-card">
+                <strong>gender</strong>
+                <span>Student gender (male/female)</span>
+            </div>
+            <div class="variable-card">
+                <strong>age</strong>
+                <span>Student age in years</span>
+            </div>
+            <div class="variable-card">
+                <strong>computer</strong>
+                <span>Has computer at home (yes/no)</span>
+            </div>
+        </div>
+
+        <h3>6.5 Sampling Weights</h3>
+        <div class="variable-grid">
+            <div class="variable-card">
+                <strong>w_fstuwt</strong>
+                <span>Final student weight (use for most analyses)</span>
+            </div>
+            <div class="variable-card">
+                <strong>w_fsenwt</strong>
+                <span>Senate weight (equal country weighting)</span>
+            </div>
+        </div>
+
+        <h3>6.6 Identification Variables</h3>
+        <div class="variable-grid">
+            <div class="variable-card">
+                <strong>country</strong>
+                <span>Country code (ISO 3166-1 alpha-3, e.g., USA, DEU, JPN)</span>
+            </div>
+            <div class="variable-card">
+                <strong>year</strong>
+                <span>PISA assessment year (2000-2022)</span>
+            </div>
+            <div class="variable-card">
+                <strong>student_id</strong>
+                <span>Unique student identifier</span>
+            </div>
+            <div class="variable-card">
+                <strong>school_id</strong>
+                <span>School identifier (for clustering standard errors)</span>
+            </div>
+        </div>
+
+        <h2>7. Official OECD Data Access</h2>
+
+        <h3>7.1 OECD PISA Data Portal</h3>
+        <p>The official source for all PISA data is the OECD PISA Data Portal:</p>
+        <div class="highlight-box">
+            <p><strong>Main Portal:</strong> <a href="https://www.oecd.org/pisa/data/" class="external-link" target="_blank">https://www.oecd.org/pisa/data/</a></p>
+        </div>
+
+        <h3>7.2 Cycle-Specific Data</h3>
+        <ul>
+            <li><strong>PISA 2022:</strong> <a href="https://www.oecd.org/pisa/data/2022database/" class="external-link" target="_blank">https://www.oecd.org/pisa/data/2022database/</a></li>
+            <li><strong>PISA 2018:</strong> <a href="https://www.oecd.org/pisa/data/2018database/" class="external-link" target="_blank">https://www.oecd.org/pisa/data/2018database/</a></li>
+            <li><strong>PISA 2015:</strong> <a href="https://www.oecd.org/pisa/data/2015database/" class="external-link" target="_blank">https://www.oecd.org/pisa/data/2015database/</a></li>
+            <li><strong>PISA 2012:</strong> <a href="https://www.oecd.org/pisa/data/2012database/" class="external-link" target="_blank">https://www.oecd.org/pisa/data/2012database/</a></li>
+        </ul>
+
+        <h3>7.3 Technical Documentation</h3>
+        <ul>
+            <li><strong>PISA 2018 Technical Report:</strong> <a href="https://www.oecd.org/pisa/data/pisa2018technicalreport/" class="external-link" target="_blank">Technical Report</a></li>
+            <li><strong>PISA Data Analysis Manual:</strong> OECD (2009). <em>PISA data analysis manual: SPSS</em> (2nd ed.). <a href="https://doi.org/10.1787/9789264056275-en" class="external-link" target="_blank">https://doi.org/10.1787/9789264056275-en</a></li>
+        </ul>
+
+        <h2>8. Data Quality and Limitations</h2>
+
+        <h3>8.1 Strengths</h3>
+        <ul>
+            <li>Large, representative samples from each participating country</li>
+            <li>Standardized assessment framework enabling cross-country comparisons</li>
+            <li>Rich contextual questionnaires on student background</li>
+            <li>High-quality sampling design with rigorous quality control</li>
+            <li>Transparent documentation and public data availability</li>
+        </ul>
+
+        <h3>8.2 Limitations</h3>
+        <ul>
+            <li><strong>Cross-sectional design:</strong> Data from each cycle are collected at a single point in time, limiting causal inference</li>
+            <li><strong>Coverage exclusions:</strong> Some countries exclude specific populations (e.g., remote regions, special education students)</li>
+            <li><strong>Response rates:</strong> Vary by country; some countries have lower participation rates</li>
+            <li><strong>Translation effects:</strong> Assessments are translated into 40+ languages, potentially affecting comparability</li>
+            <li><strong>Cultural context:</strong> Test items may have different cultural relevance across countries</li>
+        </ul>
+
+        <h3>8.3 Missing Data</h3>
+        <p>PISA data contain missing values due to:</p>
+        <ul>
+            <li>Item non-response (student skipped a question)</li>
+            <li>Not reached (student ran out of time)</li>
+            <li>Not administered (question not in student's test booklet)</li>
+            <li>Questionnaire non-response</li>
+        </ul>
+        <p>This application uses complete-case analysis by default. Advanced users should consider multiple imputation methods for handling missing data.</p>
+
+        <h2>9. Countries Included in This Application</h2>
+
+        <h3>9.1 OECD Countries</h3>
+        <p>The following 38 OECD countries are available (availability varies by year):</p>
+        <div style="columns: 3; column-gap: 1.5rem; margin: 1rem 0;">
+            <p style="margin: 0.25rem 0;">Australia (AUS)</p>
+            <p style="margin: 0.25rem 0;">Austria (AUT)</p>
+            <p style="margin: 0.25rem 0;">Belgium (BEL)</p>
+            <p style="margin: 0.25rem 0;">Canada (CAN)</p>
+            <p style="margin: 0.25rem 0;">Chile (CHL)</p>
+            <p style="margin: 0.25rem 0;">Colombia (COL)</p>
+            <p style="margin: 0.25rem 0;">Costa Rica (CRI)</p>
+            <p style="margin: 0.25rem 0;">Czech Republic (CZE)</p>
+            <p style="margin: 0.25rem 0;">Denmark (DNK)</p>
+            <p style="margin: 0.25rem 0;">Estonia (EST)</p>
+            <p style="margin: 0.25rem 0;">Finland (FIN)</p>
+            <p style="margin: 0.25rem 0;">France (FRA)</p>
+            <p style="margin: 0.25rem 0;">Germany (DEU)</p>
+            <p style="margin: 0.25rem 0;">Greece (GRC)</p>
+            <p style="margin: 0.25rem 0;">Hungary (HUN)</p>
+            <p style="margin: 0.25rem 0;">Iceland (ISL)</p>
+            <p style="margin: 0.25rem 0;">Ireland (IRL)</p>
+            <p style="margin: 0.25rem 0;">Israel (ISR)</p>
+            <p style="margin: 0.25rem 0;">Italy (ITA)</p>
+            <p style="margin: 0.25rem 0;">Japan (JPN)</p>
+            <p style="margin: 0.25rem 0;">Korea (KOR)</p>
+            <p style="margin: 0.25rem 0;">Latvia (LVA)</p>
+            <p style="margin: 0.25rem 0;">Lithuania (LTU)</p>
+            <p style="margin: 0.25rem 0;">Luxembourg (LUX)</p>
+            <p style="margin: 0.25rem 0;">Mexico (MEX)</p>
+            <p style="margin: 0.25rem 0;">Netherlands (NLD)</p>
+            <p style="margin: 0.25rem 0;">New Zealand (NZL)</p>
+            <p style="margin: 0.25rem 0;">Norway (NOR)</p>
+            <p style="margin: 0.25rem 0;">Poland (POL)</p>
+            <p style="margin: 0.25rem 0;">Portugal (PRT)</p>
+            <p style="margin: 0.25rem 0;">Slovak Republic (SVK)</p>
+            <p style="margin: 0.25rem 0;">Slovenia (SVN)</p>
+            <p style="margin: 0.25rem 0;">Spain (ESP)</p>
+            <p style="margin: 0.25rem 0;">Sweden (SWE)</p>
+            <p style="margin: 0.25rem 0;">Switzerland (CHE)</p>
+            <p style="margin: 0.25rem 0;">Turkey (TUR)</p>
+            <p style="margin: 0.25rem 0;">United Kingdom (GBR)</p>
+            <p style="margin: 0.25rem 0;">United States (USA)</p>
+        </div>
+
+        <h3>9.2 Partner Countries/Economies</h3>
+        <p>An additional 60+ partner countries and economies are available, including:</p>
+        <div style="columns: 3; column-gap: 1.5rem; margin: 1rem 0;">
+            <p style="margin: 0.25rem 0;">Albania (ALB)</p>
+            <p style="margin: 0.25rem 0;">Argentina (ARG)</p>
+            <p style="margin: 0.25rem 0;">Brazil (BRA)</p>
+            <p style="margin: 0.25rem 0;">Bulgaria (BGR)</p>
+            <p style="margin: 0.25rem 0;">China (CHN)*</p>
+            <p style="margin: 0.25rem 0;">Croatia (HRV)</p>
+            <p style="margin: 0.25rem 0;">Hong Kong (HKG)</p>
+            <p style="margin: 0.25rem 0;">India (IND)*</p>
+            <p style="margin: 0.25rem 0;">Indonesia (IDN)</p>
+            <p style="margin: 0.25rem 0;">Jordan (JOR)</p>
+            <p style="margin: 0.25rem 0;">Kazakhstan (KAZ)</p>
+            <p style="margin: 0.25rem 0;">Macao (MAC)</p>
+            <p style="margin: 0.25rem 0;">Malaysia (MYS)</p>
+            <p style="margin: 0.25rem 0;">Peru (PER)</p>
+            <p style="margin: 0.25rem 0;">Qatar (QAT)</p>
+            <p style="margin: 0.25rem 0;">Romania (ROU)</p>
+            <p style="margin: 0.25rem 0;">Russia (RUS)</p>
+            <p style="margin: 0.25rem 0;">Serbia (SRB)</p>
+            <p style="margin: 0.25rem 0;">Singapore (SGP)</p>
+            <p style="margin: 0.25rem 0;">Chinese Taipei (TWN)</p>
+            <p style="margin: 0.25rem 0;">Thailand (THA)</p>
+            <p style="margin: 0.25rem 0;">Uruguay (URY)</p>
+            <p style="margin: 0.25rem 0;">Vietnam (VNM)</p>
+        </div>
+        <p style="margin-top: 1rem;"><em>* Note: Some countries participate through specific regions or provinces rather than nationally</em></p>
+
+        <h2>10. References and Further Reading</h2>
+
+        <h3>10.1 Primary Sources</h3>
+        <ol>
+            <li>OECD. (2023). <em>PISA 2022 database</em>. Organisation for Economic Co-operation and Development. <a href="https://www.oecd.org/pisa/data/" class="external-link" target="_blank">https://www.oecd.org/pisa/data/</a></li>
+            <li>OECD. (2019). <em>PISA 2018 technical report</em>. OECD Publishing. <a href="https://www.oecd.org/pisa/data/pisa2018technicalreport/" class="external-link" target="_blank">Technical Report</a></li>
+            <li>Vaughan, B., Stanke, L., Teng, T., Hyndman, R., & O'Hara-Wild, E. (2021). <em>learningtower: OECD PISA datasets from 2000-2018 in an easy-to-use format</em> (R package version 1.0.1). <a href="https://CRAN.R-project.org/package=learningtower" class="external-link" target="_blank">CRAN</a></li>
+        </ol>
+
+        <h3>10.2 Methodological References</h3>
+        <ol start="4">
+            <li>OECD. (2009). <em>PISA data analysis manual: SPSS</em> (2nd ed.). OECD Publishing. <a href="https://doi.org/10.1787/9789264056275-en" class="external-link" target="_blank">https://doi.org/10.1787/9789264056275-en</a></li>
+            <li>OECD. (2017). <em>PISA 2015 assessment and analytical framework</em>. OECD Publishing. <a href="https://doi.org/10.1787/9789264281820-en" class="external-link" target="_blank">https://doi.org/10.1787/9789264281820-en</a></li>
+        </ol>
+
+        <h3>10.3 Documentation in This Application</h3>
+        <ul>
+            <li><a href="methodology.html" class="external-link">Methodology Documentation</a> - Statistical methods and formulas</li>
+            <li><a href="citation.html" class="external-link">How to Cite</a> - Citation guide for academic use</li>
+        </ul>
+
+        <a href="../index.html" class="back-link">← Back to Application</a>
+    </div>
+</body>
+</html>
