@@ -1,121 +1,96 @@
 /**
  * Data Export Module
- * Exports filtered/analyzed datasets with provenance metadata
+ * Exports aggregated statistics and analysis results (not micro-level data)
  * Author: Kevin Schoenholzer
  * Date: 2025-12-16
+ *
+ * Note: Per OECD Terms of Use for PISA Public Use Files, micro-level
+ * student data must not be distributed. This module exports only
+ * aggregated statistics, summaries, and computed estimates.
  */
 
 /**
- * Get predictor value from a record, handling parent_edu ISCED codes
- * @param {Object} record - Student record
- * @param {String} predictorVar - Predictor variable name
- * @returns {Number|null} Numeric predictor value or null if missing
- */
-function getPredictorValue(record, predictorVar) {
-    if (predictorVar === 'parent_edu') {
-        return parseParentEducation(record);
-    }
-    const value = +record[predictorVar];
-    return isFinite(value) ? value : null;
-}
-
-/**
- * Parse parental education from ISCED codes
- * @param {Object} record - Student record
- * @returns {Number|null} Numeric education level
- */
-function parseParentEducation(record) {
-    const parseISCED = (val) => {
-        if (typeof val === 'number' && isFinite(val)) return val;
-        const numVal = Number(val);
-        if (isFinite(numVal)) return numVal;
-
-        if (typeof val === 'string') {
-            const upper = val.toUpperCase().trim();
-            if (upper === 'NONE' || upper === 'NA' || upper === 'N/A' || upper === '') return null;
-            const match = upper.match(/ISCED\s*(\d)/i);
-            if (match) return parseInt(match[1], 10);
-        }
-        return null;
-    };
-
-    const motherEduc = parseISCED(record.mother_educ);
-    const fatherEduc = parseISCED(record.father_educ);
-
-    if (motherEduc !== null && fatherEduc !== null) {
-        return Math.max(motherEduc, fatherEduc);
-    }
-    return motherEduc !== null ? motherEduc : fatherEduc;
-}
-
-/**
- * Export current dataset to CSV with provenance header
+ * Export aggregated country-year summary statistics from loaded data.
+ * Computes weighted means, SDs, and sample sizes per country-year.
+ * Does NOT export micro-level student records (per OECD Terms of Use).
+ *
  * @param {Array} data - Student data array
  * @param {Object} state - Application state
  * @param {String} filename - Optional filename
  */
-export function exportCurrentDataset(data, state, filename = 'pisa_data_export.csv') {
+export function exportAggregatedSummary(data, state, filename = 'pisa_aggregated_summary.csv') {
     if (!data || data.length === 0) {
         console.warn('No data to export');
         alert('No data available to export. Please load data first.');
         return;
     }
 
+    // Group data by country-year
+    const groups = {};
+    data.forEach(record => {
+        const key = `${record.country}_${record.year}`;
+        if (!groups[key]) {
+            groups[key] = { country: record.country, year: record.year, records: [] };
+        }
+        groups[key].records.push(record);
+    });
+
     // Build provenance header
-    let csv = '# Educational Stratification in PISA - Data Export\n';
+    let csv = '# Educational Stratification in PISA - Aggregated Summary Statistics\n';
     csv += `# Generated: ${new Date().toISOString()}\n`;
     csv += `# Data Source: OECD PISA via learningtower R package\n`;
-    csv += `# Citation: OECD (2023). PISA Database. https://www.oecd.org/pisa/data/\n`;
+    csv += `# Citation: OECD (2024). Programme for International Student Assessment (PISA) Database. Paris: OECD. Available at: https://www.oecd.org/pisa/\n`;
+    csv += '#\n';
+    csv += '# Note: This file contains aggregated country-year statistics only.\n';
+    csv += '# Micro-level student data is not exported per OECD Terms of Use.\n';
     csv += '#\n';
     csv += `# Selection Criteria:\n`;
     csv += `#   Countries: ${state.selectedCountries?.join(', ') || 'All'}\n`;
     csv += `#   Years: ${state.selectedYears?.join(', ') || 'All'}\n`;
     csv += `#   Total Students: ${data.length}\n`;
     csv += '#\n';
-    csv += `# Variables:\n`;
-
-    // Get variable names from first record
-    if (data.length === 0) {
-        console.warn('No data records to export');
-        return;
-    }
-
-    const sampleRecord = data[0];
-    const variables = Object.keys(sampleRecord);
-
-    variables.forEach(varName => {
-        const description = getVariableDescription(varName);
-        csv += `#   ${varName}: ${description}\n`;
-    });
-
-    csv += '#\n';
     csv += '# ===== DATA BEGINS BELOW THIS LINE =====\n';
 
     // Column headers
-    csv += variables.join(',') + '\n';
+    csv += 'Country,Year,N_Students,Math_Mean,Math_SD,Reading_Mean,Reading_SD,Science_Mean,Science_SD,ESCS_Mean,ESCS_SD\n';
 
-    // Data rows
-    data.forEach(record => {
-        const row = variables.map(varName => {
-            const value = record[varName];
+    // Compute aggregated statistics for each country-year
+    const sortedKeys = Object.keys(groups).sort();
+    sortedKeys.forEach(key => {
+        const group = groups[key];
+        const records = group.records;
+        const n = records.length;
 
-            // Handle different data types
-            if (value === null || value === undefined) {
-                return '';
-            } else if (typeof value === 'string') {
-                // Escape quotes and wrap in quotes if contains comma
-                const escaped = value.replace(/"/g, '""');
-                return value.includes(',') || value.includes('"') ? `"${escaped}"` : value;
-            } else {
-                return value;
-            }
-        });
+        const computeWeightedStats = (varName) => {
+            let sumW = 0, sumWX = 0;
+            const valid = [];
+            records.forEach(r => {
+                const val = +r[varName];
+                const w = +r.stu_wgt || 1;
+                if (isFinite(val) && isFinite(w) && w > 0) {
+                    sumW += w;
+                    sumWX += w * val;
+                    valid.push({ val, w });
+                }
+            });
+            if (sumW === 0 || valid.length === 0) return { mean: '', sd: '' };
+            const mean = sumWX / sumW;
+            let sumWD2 = 0;
+            valid.forEach(({ val, w }) => { sumWD2 += w * (val - mean) ** 2; });
+            const sd = Math.sqrt(sumWD2 / sumW);
+            return { mean: mean.toFixed(2), sd: sd.toFixed(2) };
+        };
 
-        csv += row.join(',') + '\n';
+        const math = computeWeightedStats('math');
+        const reading = computeWeightedStats('reading');
+        const science = computeWeightedStats('science');
+        const escs = computeWeightedStats('escs');
+
+        csv += `${group.country},${group.year},${n},${math.mean},${math.sd},${reading.mean},${reading.sd},${science.mean},${science.sd},${escs.mean},${escs.sd}\n`;
     });
 
     downloadCSV(csv, filename);
-    console.log(`✓ Dataset exported: ${filename} (${data.length} records, ${variables.length} variables)`);
+    console.log(`✓ Aggregated summary exported: ${filename} (${sortedKeys.length} country-year groups, ${data.length} students summarized)`);
 }
 
 /**
@@ -181,76 +156,6 @@ export function exportDataDictionary(data, filename = 'data_dictionary.csv') {
     console.log(`✓ Data dictionary exported: ${filename}`);
 }
 
-/**
- * Export subset of data by country or year
- * @param {Array} data - Full dataset
- * @param {String} filterType - 'country' or 'year'
- * @param {String|Number} filterValue - Country code or year
- * @param {String} filename - Optional filename
- */
-export function exportDataSubset(data, filterType, filterValue, filename = null) {
-    if (!data || data.length === 0) {
-        console.warn('No data to filter');
-        return;
-    }
-
-    const filteredData = data.filter(d => d[filterType] === filterValue);
-
-    if (filteredData.length === 0) {
-        alert(`No data found for ${filterType} = ${filterValue}`);
-        return;
-    }
-
-    const fname = filename || `pisa_data_${filterType}_${filterValue}.csv`;
-
-    // Create minimal state for provenance
-    const state = {
-        selectedCountries: filterType === 'country' ? [filterValue] : [...new Set(filteredData.map(d => d.country))],
-        selectedYears: filterType === 'year' ? [filterValue] : [...new Set(filteredData.map(d => d.year))]
-    };
-
-    exportCurrentDataset(filteredData, state, fname);
-}
-
-/**
- * Export data with computed variables (e.g., achievement quartiles, SES categories)
- * @param {Array} data - Original data
- * @param {Object} state - Application state
- * @param {String} filename - Optional filename
- */
-export function exportEnrichedDataset(data, state, filename = 'pisa_data_enriched.csv') {
-    if (!data || data.length === 0) {
-        console.warn('No data to export');
-        return;
-    }
-
-    // Create enriched version with computed variables
-    const enrichedData = data.map(record => {
-        const newRecord = { ...record };
-
-        // Add outcome variable (if different from original field names)
-        const outcomeVar = state.currentOutcome || 'math';
-        newRecord.outcome_variable = outcomeVar;
-        newRecord.outcome_value = record[outcomeVar];
-
-        // Add predictor variable (using helper to handle parent_edu ISCED codes)
-        const predictorVar = state.currentPredictor || 'escs';
-        newRecord.predictor_variable = predictorVar;
-        newRecord.predictor_value = getPredictorValue(record, predictorVar);
-
-        // Calculate SES quartile
-        // This is simplified - full implementation would need proper weighted quartiles
-        const sesValue = newRecord.predictor_value;
-        if (sesValue !== null && isFinite(sesValue)) {
-            // Placeholder quartile assignment
-            newRecord.ses_quartile = 'Q2'; // Would need proper calculation
-        }
-
-        return newRecord;
-    });
-
-    exportCurrentDataset(enrichedData, state, filename);
-}
 
 /**
  * Get variable description for data dictionary
@@ -321,9 +226,7 @@ function downloadCSV(csvContent, filename) {
 }
 
 export default {
-    exportCurrentDataset,
+    exportAggregatedSummary,
     exportAggregatedData,
-    exportDataDictionary,
-    exportDataSubset,
-    exportEnrichedDataset
+    exportDataDictionary
 };

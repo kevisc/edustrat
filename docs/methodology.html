@@ -166,7 +166,7 @@
         <p>PISA does not administer a single test to all students. Instead, students receive booklets containing different combinations of test items. To account for this design, PISA uses <em>plausible values</em> – a set of imputed values that represent the range of abilities a student might have demonstrated had they taken the full assessment (OECD, 2009).</p>
 
         <div class="note">
-            <strong>Note:</strong> The current implementation uses the first plausible value for each domain for simplicity. Full analyses should use all plausible values and combine results using Rubin's rules (Rubin, 1987).
+            <strong>Note:</strong> The <code>learningtower</code> R package provides only the first plausible value (PV1) for each domain, and EduStrat therefore uses PV1 throughout. Full publication-grade analyses should use all plausible values (5 in earlier cycles, 10 from PISA 2015 onward) and combine results using Rubin's rules (Rubin, 1987). See <a href="https://www.oecd.org/en/about/programmes/pisa/how-to-prepare-and-analyse-the-pisa-database.html">OECD guidance on analysing the PISA database</a>.
         </div>
 
         <p>Achievement scores are scaled to have an international mean of 500 and standard deviation of 100 in the first assessment cycle when a domain was the major focus.</p>
@@ -458,7 +458,7 @@ where:
         <p>All analyses account for sampling weights, which adjust for unequal selection probabilities and nonresponse. However, the current implementation does not account for clustering (students within schools) when computing standard errors, which may underestimate uncertainty. For publication-quality inference, cluster-robust standard errors or BRR should be used.</p>
 
         <h3>4.4 Measurement Error</h3>
-        <p>Achievement scores are measured with error. PISA addresses this through plausible values, but the current implementation uses only the first plausible value. Full uncertainty quantification requires analyzing all plausible values and combining results (Rubin, 1987).</p>
+        <p>Achievement scores are measured with error. PISA addresses this through plausible values, but the <code>learningtower</code> R package provides only the first plausible value (PV1) for each domain, and EduStrat is therefore constrained to PV1. Full uncertainty quantification requires analyzing all plausible values and combining results using Rubin's rules (Rubin, 1987). See <a href="https://www.oecd.org/en/about/programmes/pisa/how-to-prepare-and-analyse-the-pisa-database.html">OECD guidance on analysing the PISA database</a>.</p>
 
         <h3>4.5 Comparability Across Cycles</h3>
         <p>While PISA attempts to maintain comparability across assessment cycles through linking procedures, changes in test design, sampling, and country participation may affect trend estimates. Caution is advised when interpreting changes over time, particularly for countries that altered their sampling procedures.</p>
@@ -516,6 +516,10 @@ Cohen, J. (1988). <em>Statistical Power Analysis for the Behavioral Sciences</em
         </div>
 
         <div class="reference">
+Hausman, J. A. (1978). Specification tests in econometrics. <em>Econometrica, 46</em>(6), 1251&ndash;1271. https://doi.org/10.2307/1913827
+        </div>
+
+        <div class="reference">
 Mislevy, R. J., Beaton, A. E., Kaplan, B., &amp; Sheehan, K. M. (1992). Estimating population characteristics from sparse matrix samples of item responses. <em>Journal of Educational Measurement, 29</em>(2), 133–161. https://doi.org/10.1111/j.1745-3984.1992.tb00371.x
         </div>
 
@@ -524,7 +528,7 @@ OECD (2009). <em>PISA Data Analysis Manual: SPSS</em> (2nd ed.). OECD Publishing
         </div>
 
         <div class="reference">
-OECD (2024). <em>PISA 2022 Technical Report</em>. OECD Publishing. https://doi.org/10.1787/01820d6d-en
+OECD (2024). <em>Programme for International Student Assessment (PISA) Database</em>. Paris: OECD. Available at: <a href="https://www.oecd.org/pisa/">https://www.oecd.org/pisa/</a>
         </div>
 
         <div class="reference">

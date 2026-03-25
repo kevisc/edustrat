@@ -116,7 +116,7 @@ metadata <- list(
   version = "1.0.0",
   source = "learningtower R package (OECD PISA data)",
   citations = list(
-    data_source = "OECD (2024). PISA 2022 Technical Report. OECD Publishing. https://doi.org/10.1787/01820d6d-en",
+    data_source = "OECD (2024). Programme for International Student Assessment (PISA) Database. Paris: OECD. Available at: https://www.oecd.org/pisa/",
     r_package = "Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., & Chen, G. (2024). learningtower: OECD PISA Datasets from 2000-2022 in an Easy-to-Use Format. R package version 1.1.0. https://doi.org/10.32614/CRAN.package.learningtower"
   ),
   years_available = YEARS,

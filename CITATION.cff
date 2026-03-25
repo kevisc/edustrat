@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "EduStrat: A Browser-Based Tool for Exploratory Analysis of Socioeconomic Stratification in PISA Microdata"
+title: "EduStrat: A Browser-Based Tool for Teaching Quantitative Analysis of Educational Inequality with PISA Microdata"
 authors:
   - family-names: Schoenholzer
     given-names: Kevin
@@ -9,7 +9,7 @@ authors:
     affiliation: "Università della Svizzera italiana (USI)"
     email: kevin.schoenholzer@usi.ch
 version: "1.0.0"
-date-released: "2026-02-11"
+date-released: "2026-03-25"
 license: MIT
 url: "https://kevinschoenholzer.com/edustrat/"
 repository-code: "https://github.com/kevisc/edustrat"

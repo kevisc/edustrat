@@ -439,7 +439,7 @@ Oaxaca, R. (1973). Male-female wage differentials in urban labor markets. *Inter
 
 OECD (2009). *PISA data analysis manual: SPSS* (2nd ed.). OECD Publishing. https://doi.org/10.1787/9789264056275-en
 
-OECD (2024). *PISA 2022 Technical Report*. OECD Publishing. https://doi.org/10.1787/01820d6d-en
+OECD (2024). *Programme for International Student Assessment (PISA) Database*. Paris: OECD. Available at: https://www.oecd.org/pisa/
 
 von Davier, M., Gonzalez, E., & Mislevy, R. (2009). What are plausible values and why are they useful? *IERI Monograph Series: Issues and Methodologies in Large-Scale Assessments*, 2, 9--36.
 

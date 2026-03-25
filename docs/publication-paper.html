@@ -212,16 +212,16 @@
 </head>
 <body>
     <div class="container">
-        <p class="section-label">Working Paper</p>
+        <p class="section-label">Extended Software Paper</p>
 
-        <h1>EduStrat: A Browser-Based Tool for Exploratory Analysis of Educational Stratification in PISA Microdata, 2000&ndash;2022</h1>
+        <h1>EduStrat: A Browser-Based Tool for Teaching Quantitative Analysis of Educational Inequality with PISA Microdata</h1>
 
         <div class="metadata">
             <p><strong>Author:</strong> Kevin Schoenholzer<sup>1</sup></p>
             <p><strong>Affiliation:</strong> <sup>1</sup> Institute of Communication and Public Policy, Universit&agrave; della Svizzera italiana (USI), Lugano, Switzerland</p>
             <p><strong>Correspondence:</strong> <a href="mailto:kevin.schoenholzer@usi.ch">kevin.schoenholzer@usi.ch</a> &middot; <a href="https://kevinschoenholzer.com">kevinschoenholzer.com</a></p>
             <p><strong>ORCID:</strong> <a href="https://orcid.org/0000-0001-9892-5869">0000-0001-9892-5869</a></p>
-            <p><strong>Status:</strong> Draft &mdash; February 2026. Not yet peer-reviewed.</p>
+            <p><strong>Status:</strong> March 2026. This is the extended companion to the JOSE submission (<a href="../paper.md">paper.md</a>).</p>
         </div>
 
         <div class="abstract">
@@ -287,11 +287,12 @@
 
         <p>A practical design priority is that every analysis should be exportable with sufficient metadata to document and reproduce the analytic choices. EduStrat provides four export channels:</p>
         <ul>
-            <li><strong>CSV:</strong> Summary statistics, regression coefficient tables, and comparative analyses with headers encoding all specification details.</li>
+            <li><strong>CSV:</strong> Summary statistics, regression coefficient tables, aggregated country-year statistics, and comparative analyses with headers encoding all specification details.</li>
             <li><strong>Figures:</strong> Publication-quality PNG (1200 &times; 800 px, 2&times; scaling) and SVG vector graphics.</li>
             <li><strong>HTML reports:</strong> Self-contained documents embedding all tables, figures (as base64 images), and methodology notes.</li>
-            <li><strong>Data subsets:</strong> Filtered microdata with provenance headers documenting the source, selection criteria, and variable definitions.</li>
+            <li><strong>Aggregated data:</strong> Country-year level summary statistics (weighted means, standard deviations, sample sizes) with provenance metadata.</li>
         </ul>
+        <p>In accordance with the OECD Terms of Use for PISA Public Use Files, micro-level student data are not redistributed through the application&rsquo;s export functions. All exports provide computed estimates, aggregated statistics, and visualizations only. Users requiring the underlying microdata should obtain it directly from the OECD PISA Data Portal (2).</p>
         <p>All exports encode the selected countries, years, outcome domain, predictor variables, control choices, weighting scheme, and estimator family, so that results can be traced to specific specifications. This supports the minimum standard for computational reproducibility in exploratory work: that analytic choices are recorded and can be re-executed in a more formal environment (9).</p>
 
         <h3>Quality control</h3>
@@ -445,7 +446,7 @@
 
         <p class="reference">[1] OECD. PISA data analysis manual: SPSS. 2nd ed. Paris: OECD Publishing; 2009. DOI: <a href="https://doi.org/10.1787/9789264056275-en">10.1787/9789264056275-en</a></p>
 
-        <p class="reference">[2] OECD. PISA 2022 Technical Report. Paris: OECD Publishing; 2024. DOI: <a href="https://doi.org/10.1787/01820d6d-en">10.1787/01820d6d-en</a></p>
+        <p class="reference">[2] OECD. Programme for International Student Assessment (PISA) Database. Paris: OECD; 2024. Available at: <a href="https://www.oecd.org/pisa/">https://www.oecd.org/pisa/</a></p>
 
         <p class="reference">[3] Sirin SR. Socioeconomic status and academic achievement: A meta-analytic review of research. Review of Educational Research. 2005; 75(3): 417&ndash;453. DOI: <a href="https://doi.org/10.3102/00346543075003417">10.3102/00346543075003417</a></p>
 
@@ -455,7 +456,7 @@
 
         <p class="reference">[6] Wang K, Yacobellis P, Siregar E, Romanes S, Fitter K, Dalla Riva GV, Cook D, Tierney N, Dingorkar P, Sai Subramanian S, Chen G. learningtower: OECD PISA datasets from 2000&ndash;2022 in an easy-to-use format [R package, version 1.1.0]. 2024. DOI: <a href="https://doi.org/10.32614/CRAN.package.learningtower">10.32614/CRAN.package.learningtower</a></p>
 
-        <p class="reference">[7] Wuyts C. The measurement of socio-economic status in PISA. Paris: OECD; 2024.</p>
+        <p class="reference">[7] Avvisati F, Wuyts C. The measurement of socio-economic status in PISA. OECD Education Working Papers, No. 321. Paris: OECD Publishing; 2024. DOI: <a href="https://doi.org/10.1787/0c5b793c-en">10.1787/0c5b793c-en</a></p>
 
         <p class="reference">[8] Rubin DB. Multiple imputation for nonresponse in surveys. New York: John Wiley &amp; Sons; 1987. DOI: <a href="https://doi.org/10.1002/9780470316696">10.1002/9780470316696</a></p>
 

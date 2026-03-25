@@ -42,7 +42,7 @@ import {
 
 // Import export modules
 import { exportComprehensiveSummary, exportDescriptiveStats, exportAllRegressionModels } from './export/csv-export.js';
-import { exportCurrentDataset } from './export/data-export.js';
+import { exportAggregatedSummary } from './export/data-export.js';
 import { exportAllAnalysisCharts } from './export/figure-export.js';
 import { generateFullReport } from './export/report-export.js';
 
@@ -1403,7 +1403,7 @@ function handleExportData() {
         return;
     }
 
-    exportCurrentDataset(state.mergedData, state);
+    exportAggregatedSummary(state.mergedData, state);
 }
 
 async function handleExportCharts() {

@@ -1030,9 +1030,12 @@ function buildMethodologySection() {
             <h3>Assumptions & Limitations</h3>
             <ul>
                 <li>Cross-sectional design precludes causal inference</li>
+                <li>Single plausible value (PV1) per domain used (a constraint of the <em>learningtower</em> R package); full analyses should use all PVs and Rubin's rules</li>
+                <li>Replicate-weight variance estimation (BRR) not implemented; standard errors may understate uncertainty</li>
                 <li>Missing data handled via listwise deletion</li>
                 <li>Sampling weights account for complex survey design</li>
                 <li>Results represent participating countries only</li>
+                <li>Per OECD Terms of Use, micro-level student data are not redistributed</li>
             </ul>
         </div>
     `;
@@ -1049,7 +1052,7 @@ function buildCitationSection() {
             <p>Schoenholzer, K. (2026). EduStrat: A browser-based tool for teaching quantitative analysis of educational inequality with PISA microdata [Working paper]. https://github.com/kevisc/edustrat</p>
 
             <h3>Data Source</h3>
-            <p>OECD (2024). <em>PISA 2022 Technical Report</em>. OECD Publishing. https://doi.org/10.1787/01820d6d-en</p>
+            <p>OECD (2024). <em>Programme for International Student Assessment (PISA) Database</em>. Paris: OECD. Available at: https://www.oecd.org/pisa/</p>
 
             <h3>R Package</h3>
             <p>Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., & Chen, G. (2024). <em>learningtower: OECD PISA datasets from 2000–2022 in an easy-to-use format</em>. R package version 1.1.0. https://doi.org/10.32614/CRAN.package.learningtower</p>
@@ -1064,7 +1067,7 @@ function buildFooter() {
     return `
         <div class="footer">
             <img src="pisa-app-icon.png" alt="PISA App Icon" style="width: 40px; height: 40px; object-fit: contain; margin-bottom: 0.5rem;">
-            <p>Educational Stratification in PISA | Generated with Claude Code</p>
+            <p>Educational Stratification in PISA | Generated with EduStrat</p>
             <p>Kevin Schoenholzer © 2026</p>
             <p style="margin-top: 1rem; font-size: 0.75rem;">
                 This report was generated automatically from Educational Stratification in PISA.<br>
