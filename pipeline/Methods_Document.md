@@ -478,7 +478,7 @@ Wuyts, C. (2024). The measurement of socio-economic status in PISA. OECD.
 
 When using this tool in research, please cite as:
 
-Schoenholzer, K. (2026). EduStrat: A browser-based tool for teaching quantitative analysis of educational inequality with PISA microdata. *Journal of Open Source Education*. https://github.com/kevisc/edustrat
+Schoenholzer, K. (2026). EduStrat: A browser-based tool for teaching quantitative analysis of educational inequality with PISA microdata [Working paper]. https://github.com/kevisc/edustrat
 
 ### 14.2 Data Citation
 

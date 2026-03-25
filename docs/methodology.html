@@ -133,16 +133,16 @@
 <body>
     <div class="container">
         <h1>Methodology</h1>
-        <p><strong>Educational Stratification in PISA</strong><br>
+        <p><strong>EduStrat — Educational Stratification in PISA</strong><br>
         Statistical Methods and Technical Documentation</p>
-        <p>This documentation describes the statistical methods used in the tool to study the intergenerational transmission of educational achievement—specifically, how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
+        <p>This documentation describes the statistical methods used in EduStrat to study the intergenerational transmission of educational achievement—specifically, how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
 
         <h2>1. Data Sources</h2>
 
         <h3>1.1 PISA Programme</h3>
-        <p>This application uses data from the Programme for International Student Assessment (PISA), a triennial international survey coordinated by the Organisation for Economic Co-operation and Development (OECD). PISA assesses 15-year-old students' proficiency in reading, mathematics, and science, and has been conducted every three years since 2000 (OECD, 2019).</p>
+        <p>This application uses data from the Programme for International Student Assessment (PISA), a triennial international survey coordinated by the Organisation for Economic Co-operation and Development (OECD). PISA assesses 15-year-old students' proficiency in reading, mathematics, and science, and has been conducted every three years since 2000 (OECD, 2024).</p>
 
-        <p>PISA employs a two-stage stratified sampling design. In the first stage, schools are sampled with probability proportional to size. In the second stage, students within schools are randomly selected. This design ensures representative samples of the target population in each participating country while maintaining statistical efficiency (OECD, 2017).</p>
+        <p>PISA employs a two-stage stratified sampling design. In the first stage, schools are sampled with probability proportional to size. In the second stage, students within schools are randomly selected. This design ensures representative samples of the target population in each participating country while maintaining statistical efficiency (OECD, 2024).</p>
 
         <h3>1.2 learningtower R Package</h3>
         <p>Data are accessed via the <code>learningtower</code> R package (Wang et al., 2024), which provides cleaned and harmonized PISA data from 2000-2022 in an easy-to-use format. The package standardizes variable names across assessment cycles and handles missing data codes according to OECD specifications.</p>
@@ -179,7 +179,7 @@
             <li><strong>Home possessions (HOMEPOS):</strong> An index of household wealth, cultural possessions (books, art), and home educational resources (desk, computer, internet access). This captures both material resources and cultural capital available to the student.</li>
         </ol>
 
-        <p>These components are combined using principal components analysis and standardized to have an OECD mean of 0 and standard deviation of 1 (OECD, 2017). When analyzing ESCS gradients or quartile gaps, researchers are directly measuring the strength of intergenerational transmission—how strongly these parental characteristics predict their children's academic performance at age 15.</p>
+        <p>These components are combined using principal components analysis and standardized to have an OECD mean of 0 and standard deviation of 1 (Avvisati &amp; Wuyts, 2024). When analyzing ESCS gradients or quartile gaps, researchers are directly measuring the strength of intergenerational transmission—how strongly these parental characteristics predict their children's academic performance at age 15.</p>
 
         <div class="formula">
 ESCS<sub>i</sub> = PCA(HISEI<sub>i</sub>, PARED<sub>i</sub>, HOMEPOS<sub>i</sub>)
@@ -220,7 +220,7 @@ where:
             </tbody>
         </table>
 
-        <p>The default analysis uses final student weights (<code>W_FSTUWT</code>) following OECD technical standards (OECD, 2023).</p>
+        <p>The default analysis uses final student weights (<code>W_FSTUWT</code>) following OECD technical standards (OECD, 2009). In the learningtower package, this variable is named <code>stu_wgt</code>. EduStrat uses only the final student weight; senate weights and replicate weights are not included in the application's data files.</p>
 
         <h2>3. Statistical Methods</h2>
 
@@ -248,15 +248,15 @@ where:
         <p>These measures summarize the spread of achievement distributions within countries. While not direct measures of intergenerational transmission, they provide context for understanding achievement variation and can be compared across countries and over time.</p>
 
         <h4>Gini Coefficient</h4>
-        <p>The Gini coefficient measures dispersion in achievement distribution, ranging from 0 (all students have identical scores) to 1 (maximum dispersion). For a sorted vector of achievement scores:</p>
+        <p>The Gini coefficient measures dispersion in achievement distribution, ranging from 0 (all students have identical scores) to 1 (maximum dispersion). When sampling weights are available, EduStrat computes the weighted Gini coefficient. Observations are sorted in ascending order by score, and cumulative weight shares are used in place of ranks:</p>
 
         <div class="formula">
-G = [2 · Σ(i · y<sub>i</sub>)] / (n · Σ y<sub>i</sub>) - (n + 1) / n
+G = 1 - Σ<sub>i</sub> w<sub>i</sub> · (S<sub>i-1</sub> + S<sub>i</sub>) / S<sub>n</sub>
 
 where:
-  y<sub>i</sub> = achievement scores sorted in ascending order
-  i = rank of observation (1, 2, ..., n)
-  n = sample size
+  w<sub>i</sub> = normalized sampling weight for observation i (w<sub>i</sub> = stu_wgt<sub>i</sub> / Σ stu_wgt)
+  S<sub>i</sub> = cumulative weighted sum of scores up to observation i
+  S<sub>n</sub> = total weighted sum of all scores
         </div>
 
         <h4>Coefficient of Variation</h4>
@@ -393,14 +393,19 @@ H<sub>1</sub>: E(u<sub>j</sub> | X) ≠ 0 (only FE is consistent)
         <p>If p < 0.05, reject random effects in favor of fixed effects.</p>
 
         <h3>3.6 Variance Decomposition</h3>
-        <p>The intraclass correlation coefficient (ICC) partitions total variance into within-country and between-country components:</p>
+        <p>The intraclass correlation coefficient (ICC) partitions total variance into within-country and between-country components. All means and variances in the decomposition are computed using the final student sampling weights (<code>stu_wgt</code>), so that each country's contribution is population-representative:</p>
 
         <div class="formula">
 ICC (ρ) = τ² / (τ² + σ²)
 
 where:
-  τ² = between-country variance
-  σ² = within-country variance
+  τ² = between-country variance = Σ<sub>c</sub> (W<sub>c</sub> / W) · (Ȳ<sub>c</sub> - Ȳ)²
+  σ² = within-country variance = Var<sub>w</sub>(Y) - τ²
+  W<sub>c</sub> = sum of sampling weights in country c
+  W = total sum of sampling weights across all countries
+  Ȳ<sub>c</sub> = weighted mean of scores in country c
+  Ȳ = overall weighted mean
+  Var<sub>w</sub>(Y) = overall weighted variance
         </div>
 
         <p>The ICC represents the proportion of total variance in achievement that is due to differences between countries. An ICC of 0.15 means 15% of variance is between countries and 85% is within countries.</p>
@@ -422,7 +427,7 @@ where:
         <p>Effect sizes are interpreted using Cohen's conventions: small (0.2), medium (0.5), large (0.8) (Cohen, 1988).</p>
 
         <h3>3.8 Standard Errors</h3>
-        <p>For most analyses, standard errors are computed using classical formulas with sampling weights. For robust inference, the application supports balanced repeated replication (BRR) using the 80 replicate weights provided by PISA:</p>
+        <p>Standard errors are computed using classical analytical formulas with sampling weights. The OECD recommends balanced repeated replication (BRR) using 80 replicate weights for design-consistent variance estimation (OECD, 2009):</p>
 
         <div class="formula">
 SE(θ̂) = √[Σ<sub>r=1</sub><sup>R</sup> (θ̂<sub>r</sub> - θ̂)² / R]
@@ -431,6 +436,10 @@ where:
   θ̂ = estimate using final weights
   θ̂<sub>r</sub> = estimate using replicate weight r
   R = 80 replicate weights
+        </div>
+
+        <div class="warning">
+            <strong>Limitation:</strong> EduStrat does not currently implement replicate-weight variance estimation. Standard errors are computed using analytical formulas and may understate uncertainty, particularly for subgroup analyses. Users requiring publication-grade inference should replicate analyses using BRR or jackknife procedures in R or Stata.
         </div>
 
         <h2>4. Assumptions and Limitations</h2>
@@ -495,39 +504,35 @@ where λ = 10⁻¹⁰ · trace(X'WX)
         <h2>6. References</h2>
 
         <div class="reference">
+Avvisati, F. &amp; Wuyts, C. (2024). The measurement of socio-economic status in PISA. <em>OECD Education Working Papers</em>, No. 321. OECD Publishing. https://doi.org/10.1787/0c5b793c-en
+        </div>
+
+        <div class="reference">
+Burnham, K. P. &amp; Anderson, D. R. (2004). Multimodel inference: Understanding AIC and BIC in model selection. <em>Sociological Methods &amp; Research, 33</em>(2), 261–304. https://doi.org/10.1177/0049124104268644
+        </div>
+
+        <div class="reference">
 Cohen, J. (1988). <em>Statistical Power Analysis for the Behavioral Sciences</em> (2nd ed.). Lawrence Erlbaum Associates.
         </div>
 
         <div class="reference">
-Mislevy, R. J., Beaton, A. E., Kaplan, B., & Sheehan, K. M. (1992). Estimating population characteristics from sparse matrix samples of item responses. <em>Journal of Educational Measurement, 29</em>(2), 133–161. https://doi.org/10.1111/j.1745-3984.1992.tb00371.x
+Mislevy, R. J., Beaton, A. E., Kaplan, B., &amp; Sheehan, K. M. (1992). Estimating population characteristics from sparse matrix samples of item responses. <em>Journal of Educational Measurement, 29</em>(2), 133–161. https://doi.org/10.1111/j.1745-3984.1992.tb00371.x
         </div>
 
         <div class="reference">
-OECD (2009). <em>PISA Data Analysis Manual: SPSS, Second Edition</em>. OECD Publishing, Paris. https://doi.org/10.1787/9789264056275-en
+OECD (2009). <em>PISA Data Analysis Manual: SPSS</em> (2nd ed.). OECD Publishing. https://doi.org/10.1787/9789264056275-en
         </div>
 
         <div class="reference">
-OECD (2017). <em>PISA 2015 Technical Report</em>. OECD Publishing, Paris. https://www.oecd.org/pisa/data/2015-technical-report/
+OECD (2024). <em>PISA 2022 Technical Report</em>. OECD Publishing. https://doi.org/10.1787/01820d6d-en
         </div>
 
         <div class="reference">
-OECD (2019). <em>PISA 2018 Assessment and Analytical Framework</em>. OECD Publishing, Paris. https://doi.org/10.1787/b25efab8-en
+Rubin, D. B. (1987). <em>Multiple Imputation for Nonresponse in Surveys</em>. John Wiley &amp; Sons. https://doi.org/10.1002/9780470316696
         </div>
 
         <div class="reference">
-OECD (2023). <em>PISA 2022 Technical Report</em>. OECD Publishing, Paris. https://www.oecd.org/pisa/data/pisa2022technicalreport/
-        </div>
-
-        <div class="reference">
-Reardon, S. F. (2011). The widening academic achievement gap between the rich and the poor: New evidence and possible explanations. In R. Murnane & G. Duncan (Eds.), <em>Whither Opportunity? Rising Inequality, Schools, and Children's Life Chances</em> (pp. 91–116). Russell Sage Foundation.
-        </div>
-
-        <div class="reference">
-Rubin, D. B. (1987). <em>Multiple Imputation for Nonresponse in Surveys</em>. John Wiley & Sons.
-        </div>
-
-        <div class="reference">
-Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., & Chen, G. (2024). <em>learningtower: OECD PISA datasets from 2000–2022 in an easy-to-use format</em> (R package, Version 1.1.0). https://doi.org/10.32614/CRAN.package.learningtower
+Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., &amp; Chen, G. (2024). <em>learningtower: OECD PISA datasets from 2000–2022 in an easy-to-use format</em> (R package, Version 1.1.0). https://doi.org/10.32614/CRAN.package.learningtower
         </div>
 
         <div class="reference">
@@ -536,10 +541,6 @@ Wooldridge, J. M. (2010). <em>Econometric Analysis of Cross Section and Panel Da
 
         <div class="reference">
 Wu, M. (2005). The role of plausible values in large-scale surveys. <em>Studies in Educational Evaluation, 31</em>(2–3), 114–128. https://doi.org/10.1016/j.stueduc.2005.05.005
-        </div>
-
-        <div class="reference">
-Wuyts, C. (2024). The measurement of socio-economic status in PISA. OECD.
         </div>
 
         <a href="../index.html" class="back-link">← Back to Application</a>

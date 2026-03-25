@@ -146,8 +146,8 @@
 <body>
     <div class="container">
         <h1>Data Sources</h1>
-        <p>Comprehensive guide to the PISA data underlying the Educational Stratification in PISA tool</p>
-        <p>This application is designed to study the intergenerational transmission of educational achievement—specifically, how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
+        <p>Comprehensive guide to the PISA data underlying EduStrat (Educational Stratification in PISA)</p>
+        <p>EduStrat is designed to study the intergenerational transmission of educational achievement—specifically, how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
 
         <h2>1. The PISA Programme</h2>
 
@@ -308,7 +308,7 @@
         <p>PISA provides several types of sampling weights to ensure representative estimates:</p>
 
         <ul>
-            <li><strong>Student Weight (W_FSTUWT):</strong> Adjusts for unequal probability of selection and non-response. Use this for most analyses.</li>
+            <li><strong>Student Weight (W_FSTUWT):</strong> Adjusts for unequal probability of selection and non-response. Use this for most analyses. In the learningtower package this variable is named <span class="code">stu_wgt</span>.</li>
             <li><strong>Senate Weight (W_FSENWT):</strong> Gives each country equal weight regardless of population size. Use for cross-country comparisons where you want each country to contribute equally.</li>
             <li><strong>Replicate Weights (W_FSTR1-W_FSTR80):</strong> Used for balanced repeated replication (BRR) variance estimation.</li>
         </ul>
@@ -316,7 +316,7 @@
         <h2>4. The learningtower R Package</h2>
 
         <h3>4.1 Package Overview</h3>
-        <p>This application uses data processed through the <span class="code">learningtower</span> R package (Vaughan et al., 2021), which provides harmonized, analysis-ready PISA data in a consistent format.</p>
+        <p>EduStrat uses data processed through the <span class="code">learningtower</span> R package (Wang et al., 2024), which provides harmonized, analysis-ready PISA data in a consistent format.</p>
 
         <div class="info-box">
             <strong>learningtower Package Benefits:</strong>
@@ -348,13 +348,13 @@ codebook <- load_codebook()</code></pre>
         <h3>4.4 Package Citation</h3>
         <p>If you use data from this application, please cite the learningtower package:</p>
         <div class="info-box">
-            <p>Vaughan, B., Stanke, L., Teng, T., Hyndman, R., & O'Hara-Wild, E. (2021). <em>learningtower: OECD PISA datasets from 2000-2018 in an easy-to-use format</em> (R package version 1.0.1). https://CRAN.R-project.org/package=learningtower</p>
+            <p>Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., &amp; Chen, G. (2024). <em>learningtower: OECD PISA datasets from 2000–2022 in an easy-to-use format</em> (R package version 1.1.0). https://doi.org/10.32614/CRAN.package.learningtower</p>
         </div>
 
         <h2>5. Data Structure in This Application</h2>
 
         <h3>5.1 JSON Chunk Format</h3>
-        <p>This application pre-generates 513 country-year specific JSON files (e.g., <span class="code">USA_2018.json</span>) for efficient progressive loading. Each chunk contains:</p>
+        <p>EduStrat pre-generates 513 country-year specific JSON files (e.g., <span class="code">USA_2018.json</span>) for efficient progressive loading. Each chunk contains:</p>
 
         <pre style="background: #1e293b; color: #f1f5f9; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0;"><code>{
   "country": "USA",
@@ -369,25 +369,38 @@ codebook <- load_codebook()</code></pre>
   },
   "students": [
     {
-      "student_id": "USA_2018_00001",
-      "math": 498.5,
-      "reading": 505.2,
-      "science": 502.9,
-      "escs": 0.23,
+      "year": 2018,
+      "country": "USA",
+      "school_id": "USA_2018_84000001",
+      "student_id": "USA_2018_84000250",
+      "mother_educ": "ISCED 3A",
+      "father_educ": "ISCED 3A",
       "gender": "male",
-      "age": 15.5,
-      ...
+      "computer": "yes",
+      "internet": "yes",
+      "math": 534.751,
+      "science": 488.669,
+      "stu_wgt": 646.6246,
+      "desk": "yes",
+      "room": "no",
+      "television": "3+",
+      "computer_n": "1",
+      "car": "3+",
+      "book": "11-25",
+      "wealth": 0.7125,
+      "escs": -0.4811,
+      "reading": 590.33
     }
   ]
 }</code></pre>
 
         <h3>5.2 File Organization</h3>
         <ul>
-            <li><strong>Location:</strong> <span class="code">pisa/data/country-year/</span></li>
+            <li><strong>Location:</strong> <span class="code">data/country-year/</span></li>
             <li><strong>Naming Convention:</strong> <span class="code">{COUNTRY}_{YEAR}.json</span> (e.g., USA_2018.json, DEU_2022.json)</li>
-            <li><strong>Total Files:</strong> 320 files</li>
-            <li><strong>File Size Range:</strong> 2-5 MB per file</li>
-            <li><strong>Total Data Size:</strong> ~1 GB</li>
+            <li><strong>Total Files:</strong> 513 files</li>
+            <li><strong>File Size Range:</strong> 0.1–15 MB per file</li>
+            <li><strong>Total Data Size:</strong> ~1.25 GB</li>
         </ul>
 
         <h3>5.3 Metadata File</h3>
@@ -405,8 +418,9 @@ codebook <- load_codebook()</code></pre>
 }</code></pre>
 
         <h2>6. Variable Codebook</h2>
+        <p>All variable names in the JSON data files are taken directly from the <span class="code">learningtower</span> R package (Wang et al., 2024), with the sole exception that <span class="code">read</span> is renamed to <span class="code">reading</span> during chunk generation. The following variables are used by EduStrat in its analyses. The JSON data files also contain additional learningtower fields (<span class="code">wealth</span>, <span class="code">computer</span>, <span class="code">internet</span>, <span class="code">desk</span>, <span class="code">room</span>, <span class="code">book</span>, <span class="code">television</span>, <span class="code">car</span>, <span class="code">computer_n</span>) that are not currently used by the application.</p>
 
-        <h3>6.1 Achievement Variables</h3>
+        <h3>6.1 Outcome Variables</h3>
         <div class="variable-grid">
             <div class="variable-card">
                 <strong>math</strong>
@@ -422,69 +436,42 @@ codebook <- load_codebook()</code></pre>
             </div>
         </div>
 
-        <p><em>Note: PISA uses plausible values to account for measurement error. This application uses the first plausible value (PV1) for each domain for simplicity. Advanced analyses should consider all 10 plausible values.</em></p>
+        <p><em>Note: PISA uses plausible values to account for measurement error. EduStrat uses the first plausible value (PV1) for each domain. Full analyses should consider all plausible values (5 in earlier cycles, 10 from PISA 2015 onward) and combine results using Rubin's rules.</em></p>
 
-        <h3>6.2 Socioeconomic Status Variables</h3>
+        <h3>6.2 Predictor Variables</h3>
         <div class="variable-grid">
             <div class="variable-card">
                 <strong>escs</strong>
-                <span>PISA index of economic, social and cultural status (standardized to mean 0, SD 1 across OECD countries)</span>
+                <span>PISA index of economic, social and cultural status (standardized to mean 0, SD 1 across OECD countries). Primary predictor variable.</span>
             </div>
-            <div class="variable-card">
-                <strong>wealth</strong>
-                <span>Family wealth index derived from household possessions</span>
-            </div>
-            <div class="variable-card">
-                <strong>books</strong>
-                <span>Number of books at home (categorical: 0-10, 11-25, 26-100, 101-200, 201-500, 500+)</span>
-            </div>
-        </div>
-
-        <h3>6.3 Parental Education Variables</h3>
-        <div class="variable-grid">
             <div class="variable-card">
                 <strong>mother_educ</strong>
-                <span>Mother's education level (ISCED classification)</span>
+                <span>Mother's education level (ISCED classification, e.g., "ISCED 2", "ISCED 3A")</span>
             </div>
             <div class="variable-card">
                 <strong>father_educ</strong>
                 <span>Father's education level (ISCED classification)</span>
             </div>
-            <div class="variable-card">
-                <strong>parent_edu</strong>
-                <span>Highest parental education (years of schooling)</span>
-            </div>
         </div>
+        <p><em>Note: EduStrat derives a <span class="code">parent_edu</span> variable at runtime by taking the higher of <span class="code">mother_educ</span> and <span class="code">father_educ</span> (converted to years of schooling via ISCED mapping). This serves as the alternative predictor option in the application.</em></p>
 
-        <h3>6.4 Demographic Variables</h3>
+        <h3>6.3 Demographic Variables</h3>
         <div class="variable-grid">
             <div class="variable-card">
                 <strong>gender</strong>
-                <span>Student gender (male/female)</span>
-            </div>
-            <div class="variable-card">
-                <strong>age</strong>
-                <span>Student age in years</span>
-            </div>
-            <div class="variable-card">
-                <strong>computer</strong>
-                <span>Has computer at home (yes/no)</span>
+                <span>Student gender ("male" / "female"). Available as a control variable in regression analyses.</span>
             </div>
         </div>
 
-        <h3>6.5 Sampling Weights</h3>
+        <h3>6.4 Sampling Weight</h3>
         <div class="variable-grid">
             <div class="variable-card">
-                <strong>w_fstuwt</strong>
-                <span>Final student weight (use for most analyses)</span>
-            </div>
-            <div class="variable-card">
-                <strong>w_fsenwt</strong>
-                <span>Senate weight (equal country weighting)</span>
+                <strong>stu_wgt</strong>
+                <span>Final student sampling weight (W_FSTUWT). Adjusts for unequal selection probability and non-response. Used in all weighted analyses.</span>
             </div>
         </div>
 
-        <h3>6.6 Identification Variables</h3>
+        <h3>6.5 Identification Variables</h3>
         <div class="variable-grid">
             <div class="variable-card">
                 <strong>country</strong>
@@ -492,7 +479,7 @@ codebook <- load_codebook()</code></pre>
             </div>
             <div class="variable-card">
                 <strong>year</strong>
-                <span>PISA assessment year (2000-2022)</span>
+                <span>PISA assessment year (2000, 2003, 2006, 2009, 2012, 2015, 2018, 2022)</span>
             </div>
             <div class="variable-card">
                 <strong>student_id</strong>
@@ -500,7 +487,7 @@ codebook <- load_codebook()</code></pre>
             </div>
             <div class="variable-card">
                 <strong>school_id</strong>
-                <span>School identifier (for clustering standard errors)</span>
+                <span>School identifier</span>
             </div>
         </div>
 
@@ -634,15 +621,15 @@ codebook <- load_codebook()</code></pre>
 
         <h3>10.1 Primary Sources</h3>
         <ol>
-            <li>OECD. (2023). <em>PISA 2022 database</em>. Organisation for Economic Co-operation and Development. <a href="https://www.oecd.org/pisa/data/" class="external-link" target="_blank">https://www.oecd.org/pisa/data/</a></li>
-            <li>OECD. (2019). <em>PISA 2018 technical report</em>. OECD Publishing. <a href="https://www.oecd.org/pisa/data/pisa2018technicalreport/" class="external-link" target="_blank">Technical Report</a></li>
-            <li>Vaughan, B., Stanke, L., Teng, T., Hyndman, R., & O'Hara-Wild, E. (2021). <em>learningtower: OECD PISA datasets from 2000-2018 in an easy-to-use format</em> (R package version 1.0.1). <a href="https://CRAN.R-project.org/package=learningtower" class="external-link" target="_blank">CRAN</a></li>
+            <li>OECD. (2024). <em>PISA 2022 Technical Report</em>. OECD Publishing. <a href="https://doi.org/10.1787/01820d6d-en" class="external-link" target="_blank">https://doi.org/10.1787/01820d6d-en</a></li>
+            <li>OECD. (2009). <em>PISA data analysis manual: SPSS</em> (2nd ed.). OECD Publishing. <a href="https://doi.org/10.1787/9789264056275-en" class="external-link" target="_blank">https://doi.org/10.1787/9789264056275-en</a></li>
+            <li>Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., &amp; Chen, G. (2024). <em>learningtower: OECD PISA datasets from 2000–2022 in an easy-to-use format</em> (R package version 1.1.0). <a href="https://doi.org/10.32614/CRAN.package.learningtower" class="external-link" target="_blank">https://doi.org/10.32614/CRAN.package.learningtower</a></li>
         </ol>
 
         <h3>10.2 Methodological References</h3>
         <ol start="4">
-            <li>OECD. (2009). <em>PISA data analysis manual: SPSS</em> (2nd ed.). OECD Publishing. <a href="https://doi.org/10.1787/9789264056275-en" class="external-link" target="_blank">https://doi.org/10.1787/9789264056275-en</a></li>
-            <li>OECD. (2017). <em>PISA 2015 assessment and analytical framework</em>. OECD Publishing. <a href="https://doi.org/10.1787/9789264281820-en" class="external-link" target="_blank">https://doi.org/10.1787/9789264281820-en</a></li>
+            <li>Avvisati, F. &amp; Wuyts, C. (2024). The measurement of socio-economic status in PISA. <em>OECD Education Working Papers</em>, No. 321. OECD Publishing. <a href="https://doi.org/10.1787/0c5b793c-en" class="external-link" target="_blank">https://doi.org/10.1787/0c5b793c-en</a></li>
+            <li>Wu, M. (2005). The role of plausible values in large-scale surveys. <em>Studies in Educational Evaluation, 31</em>(2–3), 114–128. <a href="https://doi.org/10.1016/j.stueduc.2005.05.005" class="external-link" target="_blank">https://doi.org/10.1016/j.stueduc.2005.05.005</a></li>
         </ol>
 
         <h3>10.3 Documentation in This Application</h3>

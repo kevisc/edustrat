@@ -5,7 +5,7 @@
  * Date: 2025-12-16
  */
 
-import { weightedMean } from '../core/utils.js';
+import { weightedMean, weightedVariance } from '../core/utils.js';
 
 /**
  * Get predictor value from a record
@@ -419,7 +419,7 @@ export function runRandomEffects(data, outcomeVar, predictorVar, controls = [], 
 
     // Estimate ICC and variance components
     const groups = [...new Set(dm.groupIndex)];
-    const { icc, totalVar } = estimateICCAndSizes(data, outcomeVar, groups);
+    const { icc, totalVar } = estimateICCAndSizes(data, outcomeVar, groups, weightType);
 
     // Quasi-demean transformation for RE
     const { yStar, XStar } = quasiDemeanRE(dm.y, dm.X, groups, dm.groupIndex, icc, totalVar);
@@ -460,33 +460,43 @@ export function runRandomEffects(data, outcomeVar, predictorVar, controls = [], 
  * @param {Array} groups - Array of group identifiers
  * @returns {Object} ICC and variance components
  */
-function estimateICCAndSizes(data, outcomeVar, groups) {
-    const values = data.map(d => +d[outcomeVar]).filter(isFinite);
-    const overallMean = ss.mean(values);
-    const totalVar = ss.variance(values);
-
-    const byG = {};
-    groups.forEach(g => { byG[g] = []; });
+function estimateICCAndSizes(data, outcomeVar, groups, weightType = 'student') {
+    const values = [];
+    const wts = [];
     data.forEach(d => {
         const val = +d[outcomeVar];
         if (isFinite(val)) {
-            byG[d.country]?.push(val);
+            values.push(val);
+            wts.push(getWeight(d, weightType));
+        }
+    });
+    const overallMean = weightedMean(values, wts);
+    const totalVar = weightedVariance(values, wts);
+
+    const byG = {};
+    groups.forEach(g => { byG[g] = { scores: [], weights: [] }; });
+    data.forEach(d => {
+        const val = +d[outcomeVar];
+        if (isFinite(val) && d.country && byG[d.country]) {
+            byG[d.country].scores.push(val);
+            byG[d.country].weights.push(getWeight(d, weightType));
         }
     });
 
-    // Between variance (weighted by group size)
-    const N = values.length;
+    // Between variance (weighted by sum of sampling weights)
+    const totalWeight = wts.reduce((s, w) => s + w, 0);
     const between = groups.reduce((s, g) => {
-        const arr = byG[g] || [];
-        if (!arr.length) return s;
-        const m = ss.mean(arr);
-        return s + (arr.length / N) * Math.pow(m - overallMean, 2);
+        const group = byG[g];
+        if (!group || !group.scores.length) return s;
+        const m = weightedMean(group.scores, group.weights);
+        const groupWeight = group.weights.reduce((sw, w) => sw + w, 0) / totalWeight;
+        return s + groupWeight * Math.pow(m - overallMean, 2);
     }, 0);
 
     const within = Math.max(totalVar - between, 0);
     const icc = (totalVar > 0) ? (between / totalVar) : 0;
 
-    return { icc, totalVar, between, within, groupSizes: groups.map(g => (byG[g] || []).length) };
+    return { icc, totalVar, between, within, groupSizes: groups.map(g => (byG[g]?.scores || []).length) };
 }
 
 /**
@@ -719,8 +729,8 @@ function getWeight(record, weightType) {
         return 1;
     }
 
-    // Default: student weight
-    const v = record.w_fstuwt || record.studentWeight || record.W_FSTUWT || record.weight;
+    // Default: student weight (stu_wgt is the learningtower field name for W_FSTUWT)
+    const v = record.stu_wgt || record.w_fstuwt || record.studentWeight || record.W_FSTUWT || record.weight;
     if (v && isFinite(+v) && +v > 0) return +v;
 
     return 1;

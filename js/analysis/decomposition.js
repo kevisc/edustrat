@@ -5,7 +5,7 @@
  * Date: 2025-12-16
  */
 
-import { weightedMean } from '../core/utils.js';
+import { weightedMean, weightedVariance } from '../core/utils.js';
 
 /**
  * Get predictor value from a record, handling parent_edu ISCED codes
@@ -57,7 +57,7 @@ function parseParentEducation(record) {
  * @param {Array} countries - Array of country codes
  * @returns {Object} Variance decomposition results
  */
-export function calculateVarianceDecomposition(data, outcomeVar = 'math', countries = null) {
+export function calculateVarianceDecomposition(data, outcomeVar = 'math', countries = null, weightType = 'student') {
     if (!data || data.length === 0) {
         return null;
     }
@@ -67,32 +67,43 @@ export function calculateVarianceDecomposition(data, outcomeVar = 'math', countr
         countries = [...new Set(data.map(d => d.country))];
     }
 
-    // Overall mean and variance
-    const allScores = data.map(d => +d[outcomeVar]).filter(isFinite);
-    const overallMean = ss.mean(allScores);
-    const totalVariance = ss.variance(allScores);
-
-    // Group data by country
-    const byCountry = {};
-    countries.forEach(c => { byCountry[c] = []; });
-
+    // Extract scores and weights for all valid records
+    const allScores = [];
+    const allWeights = [];
     data.forEach(d => {
         const val = +d[outcomeVar];
-        if (isFinite(val) && d.country) {
-            byCountry[d.country]?.push(val);
+        if (isFinite(val)) {
+            allScores.push(val);
+            allWeights.push(getWeight(d, weightType));
         }
     });
 
-    // Calculate between-country variance (weighted by group size)
-    const N = allScores.length;
+    // Overall weighted mean and variance
+    const overallMean = weightedMean(allScores, allWeights);
+    const totalVariance = weightedVariance(allScores, allWeights);
+
+    // Group data by country (scores and weights)
+    const byCountry = {};
+    countries.forEach(c => { byCountry[c] = { scores: [], weights: [] }; });
+
+    data.forEach(d => {
+        const val = +d[outcomeVar];
+        if (isFinite(val) && d.country && byCountry[d.country]) {
+            byCountry[d.country].scores.push(val);
+            byCountry[d.country].weights.push(getWeight(d, weightType));
+        }
+    });
+
+    // Calculate between-country variance (weighted by sum of sampling weights)
+    const totalWeight = allWeights.reduce((s, w) => s + w, 0);
     let betweenVariance = 0;
 
     countries.forEach(country => {
-        const countryScores = byCountry[country] || [];
-        if (countryScores.length > 0) {
-            const countryMean = ss.mean(countryScores);
-            const weight = countryScores.length / N;
-            betweenVariance += weight * Math.pow(countryMean - overallMean, 2);
+        const group = byCountry[country];
+        if (group.scores.length > 0) {
+            const countryMean = weightedMean(group.scores, group.weights);
+            const countryWeight = group.weights.reduce((s, w) => s + w, 0) / totalWeight;
+            betweenVariance += countryWeight * Math.pow(countryMean - overallMean, 2);
         }
     });
 
@@ -265,10 +276,18 @@ export function calculateMultilevelDecomposition(data, outcomeVar = 'math', grou
             groups2.forEach(g2 => {
                 const cellData = data.filter(d => d[var1] === g1 && d[var2] === g2);
                 if (cellData.length > 0) {
-                    const scores = cellData.map(d => +d[outcomeVar]).filter(isFinite);
+                    const scores = [];
+                    const wts = [];
+                    cellData.forEach(d => {
+                        const val = +d[outcomeVar];
+                        if (isFinite(val)) {
+                            scores.push(val);
+                            wts.push(getWeight(d, 'student'));
+                        }
+                    });
                     if (scores.length > 0) {
                         cellMeans[g1][g2] = {
-                            mean: ss.mean(scores),
+                            mean: weightedMean(scores, wts),
                             n: scores.length
                         };
                     }
@@ -388,8 +407,8 @@ function getWeight(record, weightType) {
         return 1;
     }
 
-    // Default: student weight
-    const v = record.w_fstuwt || record.studentWeight || record.W_FSTUWT || record.weight;
+    // Default: student weight (stu_wgt is the learningtower field name for W_FSTUWT)
+    const v = record.stu_wgt || record.w_fstuwt || record.studentWeight || record.W_FSTUWT || record.weight;
     if (v && isFinite(+v) && +v > 0) return +v;
 
     return 1;

@@ -7,7 +7,6 @@ A browser-based statistical tool for exploratory analysis of how parental socioe
 [![Status](https://img.shields.io/badge/status-complete-success)](https://github.com/kevisc/edustrat)
 [![Data Source](https://img.shields.io/badge/data-OECD%20PISA-blue)](https://www.oecd.org/pisa/data/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![JOSE](https://img.shields.io/badge/JOSE-submitted-yellow)](https://jose.theoj.org/)
 
 ## Overview
 
@@ -961,15 +960,16 @@ OECD. (2023). PISA 2022 database. Organisation for Economic Co-operation and Dev
 
 **APA Format:**
 ```
-Vaughan, B., Stanke, L., Teng, T., Hyndman, R., & O'Hara-Wild, E. (2021).
-    learningtower: OECD PISA datasets from 2000-2018 in an easy-to-use format
-    (R package version 1.0.1). https://CRAN.R-project.org/package=learningtower
+Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V.,
+    Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., & Chen, G. (2024).
+    learningtower: OECD PISA datasets from 2000-2022 in an easy-to-use format
+    (R package version 1.1.0). https://doi.org/10.32614/CRAN.package.learningtower
 ```
 
 ### Example Citation in Paper
 
 **Methods Section:**
-> Data were analyzed using the Educational Inequality Data Explorer (Schoenholzer, 2025), a web-based application for analyzing PISA assessment data. The application uses data from the OECD PISA database (OECD, 2023), accessed via the learningtower R package (Vaughan et al., 2021). All analyses employ survey-weighted estimation following OECD (2023) technical standards.
+> Data were analyzed using EduStrat (Schoenholzer, 2026), a browser-based tool for exploratory analysis of educational inequality with PISA microdata. The application uses data from the OECD PISA database (OECD, 2024), accessed via the learningtower R package (Wang et al., 2024). All analyses employ survey-weighted estimation following OECD (2009) technical standards.
 
 See [docs/citation.html](docs/citation.html) for complete citation guide.
 
@@ -1173,9 +1173,9 @@ If you use EduStrat in your research, please cite:
 @article{schoenholzer2026edustrat,
   title   = {EduStrat: A Browser-Based Tool for Teaching Quantitative Analysis of Educational Inequality with PISA Microdata},
   author  = {Schoenholzer, Kevin},
-  journal = {Journal of Open Source Education},
+  note    = {Working paper},
   year    = {2026},
-  doi     = {pending}
+  url     = {https://github.com/kevisc/edustrat}
 }
 ```
 

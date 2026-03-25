@@ -1017,11 +1017,11 @@ function buildMethodologySection() {
         <h2>9. Methodology</h2>
         <div class="methodology">
             <h3>Data Source</h3>
-            <p>OECD Programme for International Student Assessment (PISA), accessed via the learningtower R package (Vaughan et al., 2021).</p>
+            <p>OECD Programme for International Student Assessment (PISA), accessed via the learningtower R package (Wang et al., 2024).</p>
 
             <h3>Statistical Methods</h3>
             <ul>
-                <li><strong>Weighted Statistics:</strong> All analyses use student sampling weights (W_FSTUWT) following OECD (2023) technical standards.</li>
+                <li><strong>Weighted Statistics:</strong> All analyses use student sampling weights (W_FSTUWT) following OECD (2009) technical standards.</li>
                 <li><strong>Gini Coefficient:</strong> Measures dispersion in achievement distribution (0 = all identical, 1 = maximum dispersion).</li>
                 <li><strong>SES Gradient:</strong> Regression slope of achievement on ESCS index, indicating score points gained per unit increase in socioeconomic status.</li>
                 <li><strong>Variance Decomposition:</strong> Partitioning of total variance into within-country and between-country components using intraclass correlation (ICC).</li>
@@ -1046,19 +1046,13 @@ function buildCitationSection() {
         <h2>10. How to Cite</h2>
         <div class="citation">
             <h3>This Tool</h3>
-            <p>Schoenholzer, K. (2026). <em>Educational Stratification in PISA</em> [Web application]. https://kevinschoenholzer.com/edustrat/</p>
+            <p>Schoenholzer, K. (2026). EduStrat: A browser-based tool for teaching quantitative analysis of educational inequality with PISA microdata [Working paper]. https://github.com/kevisc/edustrat</p>
 
             <h3>Data Source</h3>
-            <p>OECD (2023). <em>PISA Database</em>. Organisation for Economic Co-operation and Development. https://www.oecd.org/pisa/data/</p>
+            <p>OECD (2024). <em>PISA 2022 Technical Report</em>. OECD Publishing. https://doi.org/10.1787/01820d6d-en</p>
 
             <h3>R Package</h3>
-            <p>Vaughan, B., Stanke, L., Teng, T., Hyndman, R., & O'Hara-Wild, E. (2021). <em>learningtower: OECD PISA Datasets from 2000-2018 in an Easy-to-Use Format</em>. R package version 1.0.1.</p>
-
-            <h3>Key References</h3>
-            <ul>
-                <li>OECD (2019). <em>PISA 2018 Technical Report</em>. OECD Publishing.</li>
-                <li>Reardon, S. F. (2011). The widening academic achievement gap between the rich and the poor: New evidence and possible explanations. In R. Murnane & G. Duncan (Eds.), <em>Whither Opportunity?</em> (pp. 91–116). Russell Sage Foundation.</li>
-            </ul>
+            <p>Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., & Chen, G. (2024). <em>learningtower: OECD PISA datasets from 2000–2022 in an easy-to-use format</em>. R package version 1.1.0. https://doi.org/10.32614/CRAN.package.learningtower</p>
         </div>
     `;
 }

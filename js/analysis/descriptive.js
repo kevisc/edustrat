@@ -125,12 +125,14 @@ export function calculateInequalityMeasures(data, outcomeVar = 'math', weightTyp
         return null;
     }
 
-    // Extract values
+    // Extract values and weights
     const values = [];
+    const weights = [];
     data.forEach(d => {
         const value = +d[outcomeVar];
         if (isFinite(value)) {
             values.push(value);
+            weights.push(getWeight(d, weightType));
         }
     });
 
@@ -138,8 +140,8 @@ export function calculateInequalityMeasures(data, outcomeVar = 'math', weightTyp
         return null;
     }
 
-    // Calculate Gini coefficient
-    const gini = calculateGini(values);
+    // Calculate Gini coefficient (weighted)
+    const gini = calculateGini(values, weightType !== 'none' ? weights : null);
 
     // Calculate descriptive stats for other measures
     const descriptive = calculateDescriptiveStats(data, outcomeVar, weightType);
@@ -368,8 +370,8 @@ function getWeight(record, weightType) {
         return 1;
     }
 
-    // Default: student weight
-    const studentWeight = record.w_fstuwt || record.studentWeight || record.W_FSTUWT || record.weight;
+    // Default: student weight (stu_wgt is the learningtower field name for W_FSTUWT)
+    const studentWeight = record.stu_wgt || record.w_fstuwt || record.studentWeight || record.W_FSTUWT || record.weight;
     if (studentWeight && isFinite(+studentWeight) && +studentWeight > 0) {
         return +studentWeight;
     }

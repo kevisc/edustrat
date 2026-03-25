@@ -1,10 +1,10 @@
-# PISA Data Generation Scripts
+# EduStrat Data Pipeline
 
-This directory contains R scripts to generate country-year data chunks for the PISA educational inequality explorer web application.
+R scripts that generate the country-year JSON data files consumed by EduStrat from the [learningtower](https://CRAN.R-project.org/package=learningtower) R package.
 
 ## Prerequisites
 
-Ensure you have the following R packages installed:
+R 4.0+ with the following packages:
 
 ```r
 install.packages(c("learningtower", "dplyr", "jsonlite", "tidyr"))
@@ -12,149 +12,77 @@ install.packages(c("learningtower", "dplyr", "jsonlite", "tidyr"))
 
 ## Usage
 
-Run the scripts in order:
+Run the three scripts in order from this directory:
 
 ### 1. Generate Data Chunks
-
-This creates ~513 JSON files (one per country-year combination):
 
 ```r
 source("01-generate-chunks.R")
 ```
 
-**What it does:**
-- Loads PISA data for years 2000-2022 from learningtower package
-- Creates separate JSON file for each country-year
-- Includes all available variables from learningtower
-- Saves files to: `../../data/country-year/`
+Loads PISA data for all cycles (2000-2022) via learningtower and writes one JSON file per country-year combination.
 
-**Expected output:**
-- ~513 JSON files (2-5 MB each)
-- Total size: ~1.25 GB
-- Progress display with file sizes
-- Summary statistics table
-
-**Time to complete:** ~10-30 minutes (depending on your machine)
+- **Output:** ~513 JSON files in `../../data/country-year/`
+- **Total size:** ~1.25 GB
+- **Time:** ~10-30 minutes
 
 ### 2. Generate Metadata
-
-This creates the metadata catalog:
 
 ```r
 source("02-create-metadata.R")
 ```
 
-**What it does:**
-- Extracts list of all countries and years
-- Documents all variables
-- Calculates total data size
-- Creates metadata.json with data catalog
+Creates the metadata catalogue indexing all available country-year combinations and variable definitions.
 
-**Expected output:**
-- `../../data/metadata.json` (~20-50 KB)
-- Summary of countries, years, variables
-
-**Time to complete:** ~1-2 minutes
+- **Output:** `../../data/metadata.json`
+- **Time:** ~1-2 minutes
 
 ### 3. Validate Data Quality
 
-This verifies everything was generated correctly:
-
 ```r
 source("03-validate-chunks.R")
 ```
 
-**What it does:**
-- Checks metadata file exists and is valid
-- Verifies all chunk files exist
-- Validates JSON structure (random sample)
-- Checks file sizes are reasonable
-- Tests loading chunks in R
-- Reports any issues found
+Verifies structural integrity, variable completeness, plausible value ranges, and consistency with the metadata catalogue.
 
-**Expected output:**
-- Validation report with PASS/FAIL for each check
-- Warnings for any issues
-- Summary of data quality
+- **Output:** Validation report with PASS/FAIL for each check
+- **Time:** ~1-2 minutes
 
-**Time to complete:** ~1-2 minutes
+## Output Structure
+
+After running all scripts:
+
+```
+data/
+├── metadata.json              # Data catalogue
+├── chunk_summary.csv          # Summary of all chunks
+└── country-year/              # 513 individual data files
+    ├── ALB_2000.json
+    ├── ALB_2009.json
+    ├── ...
+    ├── USA_2022.json
+    └── VNM_2022.json
+```
 
 ## Troubleshooting
 
-### Error: Package 'learningtower' not found
-
-```r
-install.packages("learningtower")
-```
-
-### Error: Cannot create directory
-
-Check that the paths in the scripts match your system. Update the `OUTPUT_DIR` paths if needed.
-
-### Warning: Total size exceeds 1 GB
-
-This is expected. If deploying to GitHub Pages, monitor the repository size. You may need to:
-- Use GitHub Releases for data hosting
-- Or host data files on a CDN (AWS S3, Cloudflare R2)
-- Update `data-loader.js` to fetch from external URL
-
-### Validation fails
-
-Run the validation script to see specific issues:
-
-```r
-source("03-validate-chunks.R")
-```
-
-Fix any reported issues and re-run the generation scripts.
-
-## Output Files
-
-After running all scripts, you should have:
-
-```
-pisa/
-└── data/
-    ├── metadata.json              # Data catalog
-    ├── chunk_summary.csv          # Summary of all chunks
-    └── country-year/              # Individual data files
-        ├── USA_2000.json
-        ├── USA_2003.json
-        ├── USA_2018.json
-        ├── USA_2022.json
-        ├── DEU_2000.json
-        └── ... (507 more files)
-```
-
-## Next Steps
-
-Once validation passes:
-
-1. **Commit data files** to your Git repository:
-   ```bash
-   git add pisa/data/
-   git commit -m "feat: add PISA country-year data chunks and metadata"
-   ```
-
-2. **Proceed to Phase 2**: Core Application Refactoring
-   - Create modular JavaScript structure
-   - Build data loading system
-   - Extract current HTML into modules
+| Problem | Solution |
+|---------|----------|
+| `learningtower` not found | `install.packages("learningtower")` |
+| Cannot create directory | Update `OUTPUT_DIR` paths in scripts to match your system |
+| Total size > 1 GB | Expected. Ensure ~2 GB free disk space. |
+| Validation fails | Review the validation report for specific issues and re-run generation scripts. |
 
 ## Data Citations
 
-When using this data, please cite:
+When using data generated by this pipeline, please cite:
 
-**Data source:**
-OECD (2023). Programme for International Student Assessment (PISA) Database. https://www.oecd.org/pisa/data/
+**PISA data:**
+OECD (2024). *PISA 2022 Technical Report*. OECD Publishing. https://doi.org/10.1787/01820d6d-en
 
-**R package:**
-Vaughan, B., Molyneux, N., & Kleissl, M. (2021). learningtower: OECD PISA Datasets from 2000-2022 in an Easy-to-Use Format. R package version 1.0.1. https://CRAN.R-project.org/package=learningtower
+**learningtower R package:**
+Wang, K., Yacobellis, P., Siregar, E., Romanes, S., Fitter, K., Dalla Riva, G. V., Cook, D., Tierney, N., Dingorkar, P., Sai Subramanian, S., & Chen, G. (2024). *learningtower: OECD PISA datasets from 2000-2022 in an easy-to-use format* (R package version 1.1.0). https://doi.org/10.32614/CRAN.package.learningtower
 
 ## Support
 
-If you encounter issues:
-1. Check R package versions are up to date
-2. Verify file paths in scripts match your system
-3. Check available disk space (~2 GB needed)
-4. Review validation script output for specific errors
+Report issues at https://github.com/kevisc/edustrat/issues
