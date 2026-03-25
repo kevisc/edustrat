@@ -8,9 +8,25 @@
 import { getState, setMetadata, setLoading, clearMergedDataCache } from './state-manager.js';
 
 // Configuration
-const DATA_BASE_URL = 'data/';
+// Data is served from the live demo; local paths are used as fallback for local development
+const LIVE_DATA_URL = 'https://kevinschoenholzer.com/edustrat/data/';
+const LOCAL_DATA_URL = 'data/';
+const DATA_BASE_URL = detectDataBaseUrl();
 const METADATA_URL = `${DATA_BASE_URL}metadata.json`;
 const CHUNK_URL_TEMPLATE = `${DATA_BASE_URL}country-year/{COUNTRY}_{YEAR}.json`;
+
+/**
+ * Detect whether to use local or remote data URL.
+ * Uses local path if metadata.json exists locally; otherwise falls back to live demo.
+ */
+function detectDataBaseUrl() {
+    // If running on the live demo site, use relative paths
+    if (window.location.hostname === 'kevinschoenholzer.com') {
+        return LOCAL_DATA_URL;
+    }
+    // Otherwise, use the live demo as data source
+    return LIVE_DATA_URL;
+}
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // ms
 
