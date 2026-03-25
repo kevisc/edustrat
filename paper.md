@@ -59,6 +59,8 @@ The data architecture reflects a key constraint: serving approximately 3.5 milli
 
 # Acknowledgements
 
+EduStrat is archived on Zenodo [@schoenholzer2026edustrat] and a live demo is available at [kevinschoenholzer.com/edustrat](https://kevinschoenholzer.com/edustrat/).
+
 This work uses data from the OECD Programme for International Student Assessment [@oecd2024pisa], accessed via the `learningtower` R package [@wang2024]. The author thanks the OECD for making PISA data publicly available and the `learningtower` development team for their data harmonisation work. The author acknowledges support from the Università della Svizzera italiana. Generative AI tools (Claude, Anthropic) were used during development for code generation assistance and documentation drafting; all outputs were reviewed and validated by the author.
 
 # References
