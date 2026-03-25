@@ -13,6 +13,11 @@ date-released: "2026-03-25"
 license: MIT
 url: "https://kevinschoenholzer.com/edustrat/"
 repository-code: "https://github.com/kevisc/edustrat"
+doi: "10.5281/zenodo.19221284"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.19221284"
+    description: "Zenodo archive"
 keywords:
   - education
   - inequality

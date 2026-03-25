@@ -4,7 +4,7 @@ A browser-based statistical tool for exploratory analysis of how parental socioe
 
 **Live Demo:** [kevinschoenholzer.com/edustrat](https://kevinschoenholzer.com/edustrat/)
 
-[![DOI](https://img.shields.io/badge/DOI-pending-yellow)](https://github.com/kevisc/edustrat)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19221284.svg)](https://doi.org/10.5281/zenodo.19221284)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Data Source](https://img.shields.io/badge/data-OECD%20PISA-blue)](https://www.oecd.org/pisa/data/)
 
@@ -130,6 +130,7 @@ If you use EduStrat in your research or teaching, please cite:
   author  = {Schoenholzer, Kevin},
   year    = {2026},
   journal = {Journal of Open Source Education},
+  doi     = {10.5281/zenodo.19221284},
   url     = {https://github.com/kevisc/edustrat}
 }
 ```
