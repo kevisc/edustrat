@@ -11,55 +11,55 @@
 
 /* ===== Design Tokens ===== */
 :root {
-    /* Primary palette - sophisticated blue-violet */
-    --primary-50: #eef2ff;
-    --primary-100: #e0e7ff;
-    --primary-200: #c7d2fe;
-    --primary-300: #a5b4fc;
-    --primary-400: #818cf8;
-    --primary-500: #6366f1;
-    --primary-600: #4f46e5;
-    --primary-700: #4338ca;
+    /* Primary palette - restrained academic navy/slate */
+    --primary-50: #f4f6fa;
+    --primary-100: #e6eaf2;
+    --primary-200: #c8d2e2;
+    --primary-300: #9fadc6;
+    --primary-400: #6f82a3;
+    --primary-500: #45597e;
+    --primary-600: #364865;
+    --primary-700: #28374e;
 
-    /* Accent - warm coral/orange for highlights */
-    --accent-400: #fb923c;
-    --accent-500: #f97316;
-    --accent-600: #ea580c;
+    /* Accent - same family, used sparingly */
+    --accent-400: #6f82a3;
+    --accent-500: #45597e;
+    --accent-600: #364865;
 
-    /* Success/positive */
-    --success-400: #4ade80;
-    --success-500: #22c55e;
+    /* Success/positive - muted, same family */
+    --success-400: #6f82a3;
+    --success-500: #45597e;
 
     /* Semantic colors */
-    --primary-color: var(--primary-500);
-    --accent-color: var(--accent-500);
-    --success-color: var(--success-500);
+    --primary-color: var(--primary-600);
+    --accent-color: var(--primary-600);
+    --success-color: var(--primary-600);
 
-    /* Dark theme surfaces */
-    --background: #09090b;
-    --surface-1: #18181b;
-    --surface-2: #27272a;
-    --surface-3: #3f3f46;
+    /* Light theme surfaces */
+    --background: #fafbfc;
+    --surface-1: #f1f3f6;
+    --surface-2: #ffffff;
+    --surface-3: #eef0f4;
 
     /* Text */
-    --text-primary: #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
+    --text-primary: #1c2430;
+    --text-secondary: #55606f;
+    --text-muted: #8a93a1;
 
     /* Borders */
-    --border: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.15);
+    --border: #e4e7ec;
+    --border-hover: #cfd4dc;
 
-    /* Effects */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+    /* Effects - minimal, no glow */
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+    --shadow-md: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+    --shadow-lg: 0 4px 12px rgba(16, 24, 40, 0.06);
+    --shadow-xl: 0 8px 24px rgba(16, 24, 40, 0.08);
+    --shadow-glow: none;
 
-    /* Glass effect */
-    --glass-bg: rgba(24, 24, 27, 0.8);
-    --glass-border: rgba(255, 255, 255, 0.06);
+    /* Glass effect -> solid */
+    --glass-bg: rgba(255, 255, 255, 0.92);
+    --glass-border: #e4e7ec;
 
     /* Plotly */
     --plotly-bg: var(--surface-1);
@@ -76,11 +76,11 @@
     --space-10: 2.5rem;
     --space-12: 3rem;
 
-    /* Border radius */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    /* Border radius - restrained */
+    --radius-sm: 3px;
+    --radius-md: 5px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
     --radius-full: 9999px;
 
     /* Transitions */
@@ -101,20 +101,7 @@ body {
     overflow-x: hidden;
 }
 
-/* Subtle animated gradient background */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-        radial-gradient(ellipse 80% 50% at 20% -20%, rgba(99, 102, 241, 0.15), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(249, 115, 22, 0.08), transparent);
-    pointer-events: none;
-    z-index: -1;
-}
+/* Plain, flat background (no decorative gradients) */
 
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
@@ -131,10 +118,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ===== Header ===== */
 .header {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid var(--glass-border);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
     padding: var(--space-4) 0;
     position: sticky;
     top: 0;
@@ -157,10 +142,7 @@ h1, h2, h3, h4, h5, h6 {
 .header-text h1 {
     font-size: 1.5rem;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--text-primary), var(--primary-300));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
 }
 
 .subtitle {
@@ -218,9 +200,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .tab.active {
-    color: var(--text-primary);
+    color: #ffffff;
     background: var(--primary-600);
-    box-shadow: var(--shadow-md), 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
 .tab-content {
@@ -255,10 +236,7 @@ h1, h2, h3, h4, h5, h6 {
 .stat-value {
     font-size: 2.5rem;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-400), var(--accent-400));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary-600);
     line-height: 1.2;
 }
 
@@ -289,14 +267,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary, .btn {
-    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-    color: white;
-    box-shadow: var(--shadow-md), 0 0 20px rgba(99, 102, 241, 0.2);
+    background: var(--primary-600);
+    color: #ffffff;
+    box-shadow: none;
 }
 
 .btn-primary:hover, .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg), 0 0 30px rgba(99, 102, 241, 0.3);
+    background: var(--primary-700);
 }
 
 .btn-primary:active, .btn:active {
@@ -355,7 +332,7 @@ select:hover, input:hover {
 select:focus, input:focus {
     outline: none;
     border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 0 3px rgba(54, 72, 101, 0.12);
 }
 
 /* Checkbox styling */
@@ -475,9 +452,193 @@ input[type="checkbox"] {
 }
 
 .alert-info {
-    background: rgba(99, 102, 241, 0.1);
-    border-left-color: var(--primary-500);
-    color: var(--primary-200);
+    background: var(--primary-50);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary-500);
+    color: var(--text-primary);
+}
+
+.alert-info a {
+    color: var(--primary-600);
+}
+
+/* ===== Blocking load overlay ===== */
+#load-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250, 251, 252, 0.78);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 9999;
+}
+
+#load-overlay.active {
+    display: flex;
+}
+
+.load-overlay-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 2rem 2.5rem;
+    width: min(420px, 90vw);
+    text-align: center;
+}
+
+.load-overlay-spinner {
+    width: 38px;
+    height: 38px;
+    margin: 0 auto 1.1rem;
+    border: 3px solid var(--primary-100);
+    border-top-color: var(--primary-600);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.load-overlay-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+}
+
+.load-overlay-detail {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.load-overlay-track {
+    height: 8px;
+    background: var(--surface-3);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.load-overlay-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary-600);
+    border-radius: var(--radius-full);
+    transition: width 0.2s ease;
+}
+
+.load-overlay-hint {
+    margin-top: 0.85rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ===== Flow navigation (step through analysis tabs) ===== */
+.flow-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.flow-nav .btn {
+    width: auto;
+    min-width: 0;
+}
+
+.flow-step {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* ===== Guided tour ===== */
+.tour-backdrop {
+    position: fixed;
+    inset: 0;
+    display: none;
+    background: rgba(28, 36, 48, 0.45);
+    z-index: 10000;
+}
+
+.tour-ring {
+    position: fixed;
+    border: 2px solid var(--primary-400);
+    border-radius: 6px;
+    box-shadow: 0 0 0 4px rgba(111, 130, 163, 0.35);
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+.tour-card {
+    position: fixed;
+    display: none;
+    z-index: 10002;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 1.25rem 1.5rem;
+    width: min(360px, 92vw);
+}
+
+.tour-step-count {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary-600);
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.tour-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+}
+
+.tour-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 1.1rem;
+}
+
+.tour-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.tour-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tour-actions .btn {
+    width: auto;
+    min-width: 0;
+    padding: var(--space-2) var(--space-4);
+    font-size: 0.85rem;
+}
+
+.tour-skip {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.tour-skip:hover {
+    color: var(--text-secondary);
+    text-decoration: underline;
 }
 
 /* ===== Progress Bar ===== */
@@ -492,7 +653,7 @@ input[type="checkbox"] {
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary-500), var(--accent-500));
+    background: var(--primary-500);
     border-radius: var(--radius-full);
     transition: width var(--transition-slow);
     position: relative;
@@ -597,13 +758,13 @@ body.calculating, body.calculating * {
 }
 
 .doc-card:hover {
-    border-color: var(--primary-500);
-    box-shadow: var(--shadow-glow);
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-md);
 }
 
 .doc-card h3 {
     font-size: 1.125rem;
-    color: var(--primary-400);
+    color: var(--primary-600);
 }
 
 .doc-card-body {
@@ -689,8 +850,8 @@ body.calculating, body.calculating * {
 }
 
 .significant {
-    color: var(--accent-400);
-    font-weight: 600;
+    color: var(--text-primary);
+    font-weight: 700;
 }
 
 /* ===== Plotly Chart Containers ===== */
@@ -716,14 +877,14 @@ body.calculating, body.calculating * {
 
 /* ===== Methodology Notes ===== */
 .methodology-note {
-    background: rgba(99, 102, 241, 0.08);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: var(--primary-50);
+    border: 1px solid var(--border);
     border-left: 4px solid var(--primary-500);
     padding: var(--space-4) var(--space-5);
     border-radius: var(--radius-md);
     margin: var(--space-4) 0;
     font-size: 0.875rem;
-    color: var(--primary-200);
+    color: var(--text-secondary);
 }
 
 /* ===== Info & Help Text ===== */
@@ -768,7 +929,7 @@ body.calculating, body.calculating * {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, var(--primary-500), var(--accent-500));
+    background: var(--primary-500);
     opacity: 0;
     transition: opacity var(--transition-base);
 }
@@ -778,7 +939,7 @@ body.calculating, body.calculating * {
 }
 
 #home .stat-card h3 {
-    color: var(--primary-400);
+    color: var(--primary-600);
     margin-bottom: var(--space-3);
 }
 
@@ -786,7 +947,8 @@ body.calculating, body.calculating * {
 #home .stat-card > div:first-child {
     font-size: 2.5rem;
     margin-bottom: var(--space-4);
-    filter: grayscale(0.2);
+    filter: grayscale(1);
+    opacity: 0.7;
 }
 
 /* ===== Advanced Options Panel ===== */
@@ -953,13 +1115,13 @@ body.calculating, body.calculating * {
 
 /* ===== Links ===== */
 a {
-    color: var(--primary-400);
+    color: var(--primary-600);
     text-decoration: none;
     transition: color var(--transition-fast);
 }
 
 a:hover {
-    color: var(--primary-300);
+    color: var(--primary-700);
     text-decoration: underline;
 }
 
@@ -1058,7 +1220,7 @@ a:hover {
 
 /* ===== Selection ===== */
 ::selection {
-    background: rgba(99, 102, 241, 0.3);
+    background: rgba(54, 72, 101, 0.18);
     color: var(--text-primary);
 }
 

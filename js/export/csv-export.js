@@ -36,15 +36,23 @@ export function exportRegressionTable(model, filename = null) {
     }
 
     csv += '\n';
+    if (model.seMethod) csv += `Standard error method,"${model.seMethod}"\n`;
+
+    // Use the active standard errors (BRR replicate-weight errors when available).
+    const useBRR = model.seActive === 'BRR' && model.standardErrorsBRR;
+    const SE = useBRR ? model.standardErrorsBRR : model.standardErrors;
+    const TT = useBRR ? model.tStatisticsBRR : model.tStatistics;
+    const PP = useBRR ? model.pValuesBRR : model.pValues;
+
     csv += 'Variable,Coefficient,Std Error,t-statistic,p-value,CI_lower,CI_upper,Significant\n';
 
     // Export coefficients
     if (model.coefficients && model.variableNames) {
         model.coefficients.forEach((coef, i) => {
             if (i < model.variableNames.length) {
-                const se = model.standardErrors?.[i] || NaN;
-                const tStat = model.tStatistics?.[i] || (coef / se);
-                const pVal = model.pValues?.[i] || NaN;
+                const se = SE?.[i] ?? NaN;
+                const tStat = TT?.[i] ?? (coef / se);
+                const pVal = PP?.[i] ?? NaN;
 
                 // 95% confidence interval
                 const ci_lower = coef - 1.96 * se;
@@ -80,14 +88,19 @@ export function exportAllRegressionModels(models, filename = 'regression_models_
         csv += `\n${model.modelName}\n`;
         csv += `N = ${model.nobs}${model.ngroups ? `, Groups = ${model.ngroups}` : ''}\n`;
         csv += `R² = ${model.r2?.toFixed(4) || 'N/A'}, Adj R² = ${model.adjR2?.toFixed(4) || 'N/A'}\n`;
+        csv += `Standard errors: ${model.seMethod || 'Model-based'}\n`;
+        const useBRR = model.seActive === 'BRR' && model.standardErrorsBRR;
+        const SE = useBRR ? model.standardErrorsBRR : model.standardErrors;
+        const TT = useBRR ? model.tStatisticsBRR : model.tStatistics;
+        const PP = useBRR ? model.pValuesBRR : model.pValues;
         csv += 'Variable,Coefficient,Std Error,t-statistic,p-value\n';
 
         if (model.coefficients && model.variableNames) {
             model.coefficients.forEach((coef, i) => {
                 if (i < model.variableNames.length) {
-                    const se = model.standardErrors?.[i] || NaN;
-                    const tStat = model.tStatistics?.[i] || NaN;
-                    const pVal = model.pValues?.[i] || NaN;
+                    const se = SE?.[i] ?? NaN;
+                    const tStat = TT?.[i] ?? NaN;
+                    const pVal = PP?.[i] ?? NaN;
 
                     csv += `"${model.variableNames[i]}",${coef.toFixed(4)},${se.toFixed(4)},${tStat.toFixed(4)},${pVal.toFixed(6)}\n`;
                 }

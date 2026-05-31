@@ -1,0 +1,921 @@
+{
+  "generated": "2026-05-31T08:08:31.751Z",
+  "datasets": {
+    "SINGLE": [
+      "FIN_2018"
+    ],
+    "MULTI": [
+      "FIN_2018",
+      "USA_2018",
+      "DEU_2018",
+      "KOR_2018",
+      "MEX_2018"
+    ]
+  },
+  "runs": [
+    {
+      "id": "desc_math_student",
+      "method": "descriptive",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "weightType": "student"
+      },
+      "result": {
+        "mean": 507.8448539409783,
+        "sd": 83.11307814852461,
+        "min": 201.235,
+        "max": 799.765,
+        "median": 510.838,
+        "p10": 399.469,
+        "p25": 450.302,
+        "p50": 510.838,
+        "p75": 565.323,
+        "p90": 613.32,
+        "q1": 450.302,
+        "q3": 565.323,
+        "iqr": 115.02099999999996,
+        "n": 5649
+      }
+    },
+    {
+      "id": "ineq_math_student",
+      "method": "inequality",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "weightType": "student"
+      },
+      "result": {
+        "gini": 0.09256068434708342,
+        "cv": 0.16365840374978774,
+        "p90p10": 1.535338161409271,
+        "range": 598.53,
+        "iqr": 115.02099999999996
+      }
+    },
+    {
+      "id": "desc_math_none",
+      "method": "descriptive",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "weightType": "none"
+      },
+      "result": {
+        "mean": 508.1755231014324,
+        "sd": 82.75574269113294,
+        "min": 201.235,
+        "max": 799.765,
+        "median": 511.081,
+        "p10": 400.279,
+        "p25": 450.795,
+        "p50": 511.081,
+        "p75": 565.449,
+        "p90": 613.182,
+        "q1": 450.795,
+        "q3": 565.449,
+        "iqr": 114.65399999999994,
+        "n": 5649
+      }
+    },
+    {
+      "id": "ineq_math_none",
+      "method": "inequality",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "weightType": "none"
+      },
+      "result": {
+        "gini": 0.09209014364854218,
+        "cv": 0.16284873814084666,
+        "p90p10": 1.531886509159861,
+        "range": 598.53,
+        "iqr": 114.65399999999994
+      }
+    },
+    {
+      "id": "desc_reading_student",
+      "method": "descriptive",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "reading",
+        "weightType": "student"
+      },
+      "result": {
+        "mean": 519.6586086382131,
+        "sd": 99.8328203751269,
+        "min": 153.181,
+        "max": 812.093,
+        "median": 526.667,
+        "p10": 383.399,
+        "p25": 454.406,
+        "p50": 526.667,
+        "p75": 590.349,
+        "p90": 642.973,
+        "q1": 454.406,
+        "q3": 590.349,
+        "iqr": 135.94300000000004,
+        "n": 5649
+      }
+    },
+    {
+      "id": "ineq_reading_student",
+      "method": "inequality",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "reading",
+        "weightType": "student"
+      },
+      "result": {
+        "gini": 0.10841824571103786,
+        "cv": 0.19211231896406555,
+        "p90p10": 1.6770335864204131,
+        "range": 658.9119999999999,
+        "iqr": 135.94300000000004
+      }
+    },
+    {
+      "id": "desc_reading_none",
+      "method": "descriptive",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "reading",
+        "weightType": "none"
+      },
+      "result": {
+        "mean": 519.9439653035935,
+        "sd": 99.57150683279117,
+        "min": 153.181,
+        "max": 812.093,
+        "median": 526.771,
+        "p10": 384.708,
+        "p25": 455.073,
+        "p50": 526.771,
+        "p75": 590.141,
+        "p90": 642.826,
+        "q1": 455.073,
+        "q3": 590.141,
+        "iqr": 135.06799999999998,
+        "n": 5649
+      }
+    },
+    {
+      "id": "ineq_reading_none",
+      "method": "inequality",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "reading",
+        "weightType": "none"
+      },
+      "result": {
+        "gini": 0.10802493140577196,
+        "cv": 0.1915043033043988,
+        "p90p10": 1.670945236387078,
+        "range": 658.9119999999999,
+        "iqr": 135.06799999999998
+      }
+    },
+    {
+      "id": "desc_science_student",
+      "method": "descriptive",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "science",
+        "weightType": "student"
+      },
+      "result": {
+        "mean": 519.1510948900293,
+        "sd": 95.96753052367177,
+        "min": 139.976,
+        "max": 804.459,
+        "median": 524.41,
+        "p10": 388.568,
+        "p25": 456.281,
+        "p50": 524.41,
+        "p75": 588.075,
+        "p90": 639.833,
+        "q1": 456.281,
+        "q3": 588.075,
+        "iqr": 131.79400000000004,
+        "n": 5649
+      }
+    },
+    {
+      "id": "ineq_science_student",
+      "method": "inequality",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "science",
+        "weightType": "student"
+      },
+      "result": {
+        "gini": 0.10458238676781868,
+        "cv": 0.18485472046245105,
+        "p90p10": 1.646643573325647,
+        "range": 664.483,
+        "iqr": 131.79400000000004
+      }
+    },
+    {
+      "id": "desc_science_none",
+      "method": "descriptive",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "science",
+        "weightType": "none"
+      },
+      "result": {
+        "mean": 519.4270189414062,
+        "sd": 95.94515418877702,
+        "min": 139.976,
+        "max": 804.459,
+        "median": 524.412,
+        "p10": 388.763,
+        "p25": 457.006,
+        "p50": 524.412,
+        "p75": 588.261,
+        "p90": 640.286,
+        "q1": 457.006,
+        "q3": 588.261,
+        "iqr": 131.255,
+        "n": 5649
+      }
+    },
+    {
+      "id": "ineq_science_none",
+      "method": "inequality",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "science",
+        "weightType": "none"
+      },
+      "result": {
+        "gini": 0.10446905697533615,
+        "cv": 0.18471344518102567,
+        "p90p10": 1.6469828661678194,
+        "range": 664.483,
+        "iqr": 131.255
+      }
+    },
+    {
+      "id": "grad_student",
+      "method": "gradient",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "predictor": "escs",
+        "weightType": "student"
+      },
+      "result": {
+        "beta": 35.85251104731295
+      }
+    },
+    {
+      "id": "gap_student",
+      "method": "achievement_gap",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "sesVar": "escs",
+        "weightType": "student"
+      },
+      "result": {
+        "q1_mean": 471.8205113840944,
+        "q1_n": 1384,
+        "q4_mean": 547.8166931278706,
+        "q4_n": 1392,
+        "gap": 75.99618174377622,
+        "effect_size": 0.9697850224385265,
+        "pooled_sd": 78.36394663291836
+      }
+    },
+    {
+      "id": "dgap_student",
+      "method": "decompose_gap",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "sesVar": "escs",
+        "weightType": "student"
+      },
+      "result": {
+        "q1": {
+          "mean": 471.8205113840948,
+          "n": 1384,
+          "sd": 78.08722060191559,
+          "quartile": 1
+        },
+        "q2": {
+          "mean": 497.67713291752506,
+          "n": 1390,
+          "sd": 77.89235685893466,
+          "quartile": 2
+        },
+        "q3": {
+          "mean": 517.6673505553892,
+          "n": 1392,
+          "sd": 76.8119416037284,
+          "quartile": 3
+        },
+        "q4": {
+          "mean": 547.8110301005703,
+          "n": 1391,
+          "sd": 78.66661299405045,
+          "quartile": 4
+        },
+        "gap_q4_q1": 75.99051871647549,
+        "pooled_sd": 78.37745218265243,
+        "effect_size": 0.9695456614152961,
+        "gap_percent": 16.10581076552942
+      }
+    },
+    {
+      "id": "grad_none",
+      "method": "gradient",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "predictor": "escs",
+        "weightType": "none"
+      },
+      "result": {
+        "beta": 35.81514282423952
+      }
+    },
+    {
+      "id": "gap_none",
+      "method": "achievement_gap",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "sesVar": "escs",
+        "weightType": "none"
+      },
+      "result": {
+        "q1_mean": 472.18007769784214,
+        "q1_n": 1390,
+        "q4_mean": 547.7983043165473,
+        "q4_n": 1390,
+        "gap": 75.61822661870514,
+        "effect_size": 0.967399116544917,
+        "pooled_sd": 78.16652436977301
+      }
+    },
+    {
+      "id": "dgap_none",
+      "method": "decompose_gap",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "sesVar": "escs",
+        "weightType": "none"
+      },
+      "result": {
+        "q1": {
+          "mean": 472.1800776978416,
+          "n": 1390,
+          "sd": 78.14043125524142,
+          "quartile": 1
+        },
+        "q2": {
+          "mean": 497.9137336213114,
+          "n": 1389,
+          "sd": 77.23351521639205,
+          "quartile": 2
+        },
+        "q3": {
+          "mean": 518.2431439884809,
+          "n": 1389,
+          "sd": 76.64834308865106,
+          "quartile": 3
+        },
+        "q4": {
+          "mean": 547.8535773938082,
+          "n": 1389,
+          "sd": 78.19360107172238,
+          "quartile": 4
+        },
+        "gap_q4_q1": 75.6734996959666,
+        "pooled_sd": 78.16702068429747,
+        "effect_size": 0.9681000891872066,
+        "gap_percent": 16.02640671858073
+      }
+    },
+    {
+      "id": "vardecomp_student",
+      "method": "variance_decomposition",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "weightType": "student"
+      },
+      "result": {
+        "totalVariance": 9288.71169398614,
+        "betweenVariance": 1255.9979022271198,
+        "withinVariance": 8032.713791759021,
+        "percentBetween": 13.521766458100965,
+        "percentWithin": 86.47823354189903,
+        "icc": 0.13521766458100964,
+        "rho": 0.13521766458100964
+      }
+    },
+    {
+      "id": "vardecomp_none",
+      "method": "variance_decomposition",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "weightType": "none"
+      },
+      "result": {
+        "totalVariance": 9617.420971348316,
+        "betweenVariance": 1744.2481212107014,
+        "withinVariance": 7873.172850137615,
+        "percentBetween": 18.136339528102887,
+        "percentWithin": 81.86366047189712,
+        "icc": 0.18136339528102888,
+        "rho": 0.18136339528102888
+      }
+    },
+    {
+      "id": "ols_SINGLE_none",
+      "method": "pooled_ols",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [],
+        "weightType": "student"
+      },
+      "result": {
+        "variableNames": [
+          "Intercept",
+          "escs"
+        ],
+        "coefficients": [
+          498.10580354017793,
+          35.8525110778115
+        ],
+        "standardErrors": [
+          1.1118977809273645,
+          1.3124494839619545
+        ],
+        "tStatistics": [
+          447.97805345446324,
+          27.31725031395631
+        ],
+        "pValues": [
+          0,
+          0
+        ],
+        "r2": 0.11842638771184388,
+        "adjR2": 0.1182676885917201,
+        "aic": 61133.777071170094,
+        "bic": 61147.02269851665,
+        "nobs": 5557,
+        "df": 5555,
+        "ngroups": null,
+        "rho": null,
+        "icc": null
+      }
+    },
+    {
+      "id": "ols_SINGLE_gender",
+      "method": "pooled_ols",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [
+          "gender"
+        ],
+        "weightType": "student"
+      },
+      "result": {
+        "variableNames": [
+          "Intercept",
+          "escs",
+          "Female"
+        ],
+        "coefficients": [
+          496.2874870539877,
+          35.84068095976562,
+          3.6834913858057234
+        ],
+        "standardErrors": [
+          1.514289607449751,
+          1.3122153053291836,
+          2.0829308270126585
+        ],
+        "tStatistics": [
+          327.73617715688914,
+          27.313109985997755,
+          1.7684175288185593
+        ],
+        "pValues": [
+          0,
+          0,
+          0.07704600597774203
+        ],
+        "r2": 0.11892249751394468,
+        "adjR2": 0.1186052207755629,
+        "aic": 61132.64896235722,
+        "bic": 61152.51740337706,
+        "nobs": 5557,
+        "df": 5554,
+        "ngroups": null,
+        "rho": null,
+        "icc": null
+      }
+    },
+    {
+      "id": "ols_MULTI_none",
+      "method": "pooled_ols",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [],
+        "weightType": "student"
+      },
+      "result": {
+        "variableNames": [
+          "Intercept",
+          "escs"
+        ],
+        "coefficients": [
+          477.16860366314563,
+          37.12742644730397
+        ],
+        "standardErrors": [
+          0.5219499222041588,
+          0.43334757422270875
+        ],
+        "tStatistics": [
+          914.2038026332015,
+          85.67586080041885
+        ],
+        "pValues": [
+          0,
+          0
+        ],
+        "r2": 0.20724130970021715,
+        "adjR2": 0.20721307654767251,
+        "aic": 400716.1389777583,
+        "bic": 400732.6246746984,
+        "nobs": 28081,
+        "df": 28079,
+        "ngroups": null,
+        "rho": null,
+        "icc": null
+      }
+    },
+    {
+      "id": "ols_MULTI_gender",
+      "method": "pooled_ols",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [
+          "gender"
+        ],
+        "weightType": "student"
+      },
+      "result": {
+        "variableNames": [
+          "Intercept",
+          "escs",
+          "Female"
+        ],
+        "coefficients": [
+          481.6589552582044,
+          37.02114660696131,
+          -9.122262130273612
+        ],
+        "standardErrors": [
+          0.7264802687546633,
+          0.4329147038864726,
+          1.028068090586936
+        ],
+        "tStatistics": [
+          663.0034922818578,
+          85.51602954255331,
+          -8.873208120938378
+        ],
+        "pValues": [
+          0,
+          0,
+          0
+        ],
+        "r2": 0.20945807696279073,
+        "adjR2": 0.2094017665473027,
+        "aic": 400639.50693321694,
+        "bic": 400664.2354786271,
+        "nobs": 28081,
+        "df": 28078,
+        "ngroups": null,
+        "rho": null,
+        "icc": null
+      }
+    },
+    {
+      "id": "fe_student",
+      "method": "fixed_effects",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [],
+        "weightType": "student"
+      },
+      "result": {
+        "variableNames": [
+          "Intercept",
+          "escs",
+          "α_FIN",
+          "α_KOR",
+          "α_MEX",
+          "α_USA"
+        ],
+        "coefficients": [
+          509.61820065569964,
+          31.657392627999727,
+          -10.268645395173735,
+          13.500194482497136,
+          -63.21986185030846,
+          -34.813469744624854
+        ],
+        "standardErrors": [
+          1.542856067980679,
+          0.4694700665644057,
+          5.406165601078037,
+          2.3772550116639684,
+          1.9399703784728692,
+          1.6764798742817266
+        ],
+        "tStatistics": [
+          330.3083231365179,
+          67.4321855271186,
+          -1.899432269171717,
+          5.678900419289736,
+          -32.588055236222054,
+          -20.765814298570323
+        ],
+        "pValues": [
+          0,
+          0,
+          0.05751790658244782,
+          1.36901328051664e-8,
+          0,
+          0
+        ],
+        "r2": 0.2547408540465663,
+        "adjR2": 0.2546081275735559,
+        "aic": 398989.10185977793,
+        "bic": 399038.5589505982,
+        "nobs": 28081,
+        "df": 28075,
+        "ngroups": 5,
+        "rho": null,
+        "icc": null
+      }
+    },
+    {
+      "id": "fe_none",
+      "method": "fixed_effects",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [],
+        "weightType": "none"
+      },
+      "result": {
+        "variableNames": [
+          "Intercept",
+          "escs",
+          "α_FIN",
+          "α_KOR",
+          "α_MEX",
+          "α_USA"
+        ],
+        "coefficients": [
+          511.2686747815604,
+          31.404867488586518,
+          -11.579391693520165,
+          12.754033383937099,
+          -62.08191186559418,
+          -39.80956935128586
+        ],
+        "standardErrors": [
+          1.227260446139323,
+          0.5083351570622486,
+          1.6741221447256138,
+          1.60279216178876,
+          1.6841175276291906,
+          1.726040785262279
+        ],
+        "tStatistics": [
+          416.5934593507785,
+          61.779845545368815,
+          -6.916694656958863,
+          7.957384424505326,
+          -36.86317067965543,
+          -23.064095409099288
+        ],
+        "pValues": [
+          0,
+          0,
+          4.722000568335716e-12,
+          1.7763568394002505e-15,
+          0,
+          0
+        ],
+        "r2": 0.27851819200221406,
+        "adjR2": 0.2783897001397033,
+        "aic": 248641.0422130591,
+        "bic": 248690.49930387933,
+        "nobs": 28081,
+        "df": 28075,
+        "ngroups": 5,
+        "rho": null,
+        "icc": null
+      }
+    },
+    {
+      "id": "re_none",
+      "method": "random_effects",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [],
+        "weightType": "none"
+      },
+      "result": {
+        "variableNames": [
+          "Intercept",
+          "escs"
+        ],
+        "coefficients": [
+          491.1276859919482,
+          31.425636629570644
+        ],
+        "standardErrors": [
+          10.84910688265942,
+          0.5082273568152595
+        ],
+        "tStatistics": [
+          45.26895082736608,
+          61.833815531881825
+        ],
+        "pValues": [
+          0,
+          0
+        ],
+        "r2": 0.12027455375596785,
+        "adjR2": 0.12024322338643034,
+        "aic": 248639.3419434386,
+        "bic": 248655.82764037867,
+        "nobs": 28081,
+        "df": 28079,
+        "ngroups": 5,
+        "rho": 0.07735068689539232,
+        "icc": 0.07735068689539232
+      }
+    },
+    {
+      "id": "re_student",
+      "method": "random_effects",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [],
+        "weightType": "student"
+      },
+      "result": {
+        "variableNames": [
+          "Intercept",
+          "escs"
+        ],
+        "coefficients": [
+          477.4107573185235,
+          34.74204840510595
+        ],
+        "standardErrors": [
+          0.7142829864150676,
+          0.44867397620516775
+        ],
+        "tStatistics": [
+          668.377612792672,
+          77.43272453408184
+        ],
+        "pValues": [
+          0,
+          0
+        ],
+        "r2": 0.220103611904248,
+        "adjR2": 0.220075836827212,
+        "aic": 399866.2171866018,
+        "bic": 399882.7028835419,
+        "nobs": 28081,
+        "df": 28079,
+        "ngroups": 5,
+        "rho": 0.00018411012532769055,
+        "icc": 0.00018411012532769055
+      }
+    },
+    {
+      "id": "hausman_none",
+      "method": "hausman",
+      "config": {
+        "dataset": "MULTI",
+        "outcome": "math",
+        "predictor": "escs",
+        "weightType": "none"
+      },
+      "result": {
+        "chiSquared": 3.936254970150726,
+        "pValue": 0.047255868863666395,
+        "df": 1,
+        "reject": true,
+        "conclusion": "Reject RE → Prefer FE (systematic differences exist)",
+        "bFE": 31.404867488586518,
+        "bRE": 31.425636629570644,
+        "difference": -0.0207691409841253
+      }
+    },
+    {
+      "id": "bp_single",
+      "method": "breusch_pagan",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [
+          "gender"
+        ],
+        "weightType": "none"
+      },
+      "result": {
+        "testStatistic": 24.70790033167495,
+        "pValue": 0.000004312683758556091,
+        "df": 2,
+        "reject": true,
+        "conclusion": "Reject homoskedasticity → heteroskedasticity present"
+      }
+    },
+    {
+      "id": "vif_single",
+      "method": "vif",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [
+          "gender"
+        ],
+        "weightType": "none"
+      },
+      "result": {
+        "escs": 1.0000401917635091,
+        "Female": 1.0000401917635455
+      }
+    },
+    {
+      "id": "cooks_single",
+      "method": "cooks_distance",
+      "config": {
+        "dataset": "SINGLE",
+        "outcome": "math",
+        "predictor": "escs",
+        "controls": [
+          "gender"
+        ],
+        "weightType": "none"
+      },
+      "result": {
+        "nInfluential": 260,
+        "threshold": 0.0007198128486593485,
+        "sum": 1.026682217562173,
+        "max": 0.00873516472583758,
+        "first10": [
+          0.000002570508565097424,
+          0.00004392372853168187,
+          0.00033332526618652387,
+          0.000005497627198587554,
+          0.0000033704694325051364,
+          0.0000036817880138043002,
+          0.0000647463774284392,
+          0.0004993347402372473,
+          0.00011249556100569943,
+          0.00043376782670228394
+        ]
+      }
+    }
+  ]
+}

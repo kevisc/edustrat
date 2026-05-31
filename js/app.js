@@ -11,6 +11,7 @@ import { loadMetadata, loadSelectedData, getCacheStats } from './core/data-loade
 import { initLoadingIndicator, updateProgress, showDataStatus, hideLoading,
          showButtonSpinner, hideButtonSpinner, resetProgress } from './ui/loading-indicator.js';
 import { initSelectors, populateFromMetadata } from './ui/country-selector.js';
+import { startTour, maybeStartTour } from './ui/tour.js';
 
 // Import analysis modules
 import { calculateDescriptiveStats, calculateInequalityMeasures, calculateSESGradient,
@@ -54,6 +55,44 @@ async function initApp() {
     console.log('==================================================');
 
     try {
+        // Guard Plotly against rendering into hidden tab panels. A chart drawn into a
+        // display:none container (an inactive tab) has zero size, and Plotly's async
+        // auto-margin redraw then throws (_redrawFromAutoMarginCount). Charts are
+        // re-rendered when their tab becomes visible (see onTabSwitch), so skipping a
+        // hidden draw is safe and silent.
+        if (typeof Plotly !== 'undefined' && !Plotly.__edustratGuarded) {
+            const _newPlot = Plotly.newPlot.bind(Plotly);
+            Plotly.newPlot = (div, ...rest) => {
+                const el = (typeof div === 'string') ? document.getElementById(div) : div;
+                if (!el || el.offsetParent === null || el.clientWidth === 0) return Promise.resolve();
+                // Swallow async render rejections from Plotly's internal layout teardown
+                // (e.g. when a tab is switched away while a chart is still rendering,
+                // which would otherwise surface as an "uncaught (in promise)" error).
+                return _newPlot(el, ...rest).catch(err => {
+                    console.debug('Plotly render skipped:', err && err.message);
+                });
+            };
+            Plotly.__edustratGuarded = true;
+        }
+
+        // Belt-and-braces: Plotly schedules some redraw/teardown work outside the
+        // newPlot promise (auto-margin recompute, drag/scroll handler setup). If a
+        // chart is purged because its tab was switched away while still rendering,
+        // that work can throw asynchronously on a torn-down graph. Suppress only those
+        // specific internal Plotly errors so the console stays clean, without masking
+        // genuine application errors.
+        if (!window.__edustratPlotlyErrGuard) {
+            const isPlotlyTeardownError = (msg) => typeof msg === 'string' &&
+                /_scrollZoom|_redrawFromAutoMarginCount|reading '_full/.test(msg);
+            window.addEventListener('unhandledrejection', (e) => {
+                if (isPlotlyTeardownError(e.reason && e.reason.message)) e.preventDefault();
+            });
+            window.addEventListener('error', (e) => {
+                if (isPlotlyTeardownError(e.message)) { e.preventDefault(); return true; }
+            }, true);
+            window.__edustratPlotlyErrGuard = true;
+        }
+
         // Initialize UI components
         initLoadingIndicator();
         initSelectors();
@@ -92,6 +131,9 @@ async function initApp() {
         );
 
         console.log('✓ Application initialized successfully');
+
+        // Offer a short guided tour on first visit.
+        maybeStartTour();
 
     } catch (error) {
         console.error('Failed to initialize app:', error);
@@ -166,6 +208,58 @@ function initTabSystem() {
     console.log('Tab system initialized');
 }
 
+// Ordered analysis flow for the "Continue →" navigation at the bottom of each tab.
+const ANALYSIS_FLOW = ['overview', 'distribution', 'gap-decomposition', 'regression',
+                       'diagnostics', 'comparative', 'export'];
+const TAB_LABELS = {
+    'data-config': 'Data', overview: 'Overview', distribution: 'Distribution',
+    'gap-decomposition': 'Gap Analysis', regression: 'Regression',
+    diagnostics: 'Diagnostics', comparative: 'Comparative', export: 'Export'
+};
+
+/**
+ * Programmatically switch to a tab (reuses the tab button's own handler) and
+ * scroll to the top so the new analysis starts in view.
+ * @param {String} name - data-tab value of the target tab
+ */
+function goToTab(name) {
+    const btn = document.querySelector(`.tab[data-tab="${name}"]`);
+    if (btn) btn.click();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/**
+ * Add (or refresh) the "← Back / Continue →" footer on an analysis tab so users
+ * can step through the flow without hunting for the next tab.
+ * @param {String} tabName - active tab
+ */
+function ensureFlowNav(tabName) {
+    const i = ANALYSIS_FLOW.indexOf(tabName);
+    if (i === -1) return;
+    const content = document.getElementById(tabName);
+    if (!content) return;
+
+    const existing = content.querySelector('.flow-nav');
+    if (existing) existing.remove();
+
+    const prev = i > 0 ? ANALYSIS_FLOW[i - 1] : 'data-config';
+    const next = i < ANALYSIS_FLOW.length - 1 ? ANALYSIS_FLOW[i + 1] : null;
+
+    const nav = document.createElement('div');
+    nav.className = 'flow-nav';
+    nav.innerHTML = `
+        <button type="button" class="btn btn-secondary flow-prev">← ${TAB_LABELS[prev]}</button>
+        <span class="flow-step">Step ${i + 1} of ${ANALYSIS_FLOW.length}</span>
+        ${next
+            ? `<button type="button" class="btn btn-primary flow-next">Continue to ${TAB_LABELS[next]} →</button>`
+            : `<button type="button" class="btn btn-secondary flow-next">↑ Back to top</button>`}
+    `;
+    nav.querySelector('.flow-prev').addEventListener('click', () => goToTab(prev));
+    nav.querySelector('.flow-next').addEventListener('click', () =>
+        next ? goToTab(next) : window.scrollTo({ top: 0, behavior: 'smooth' }));
+    content.appendChild(nav);
+}
+
 /**
  * Clear Plotly charts from non-active tabs to save memory
  * @param {String} activeTab - Currently active tab name
@@ -214,6 +308,9 @@ function onTabSwitch(tabName) {
         console.log(`Tab switched to ${tabName}, but no data loaded yet`);
         return;
     }
+
+    // Add the "Continue →" flow footer to analysis tabs
+    ensureFlowNav(tabName);
 
     console.log(`Switched to tab: ${tabName}`);
 
@@ -302,6 +399,49 @@ function initEventListeners() {
     }
     if (loadDataBtn) {
         loadDataBtn.addEventListener('click', handleLoadData);
+    }
+
+    // Home page: "Get started" jumps to the Data tab; "Take a tour" replays the tour.
+    const homeStartBtn = document.getElementById('home-start-btn');
+    if (homeStartBtn) homeStartBtn.addEventListener('click', () => goToTab('data-config'));
+    const takeTourBtn = document.getElementById('take-tour-btn');
+    if (takeTourBtn) takeTourBtn.addEventListener('click', () => startTour());
+
+    // "Load BRR comparison set" preset: selects exactly the country-years that carry
+    // replicate weights, sets the student weight, and loads them in one click.
+    const brrDemoBtn = document.getElementById('load-brr-demo-btn');
+    if (brrDemoBtn) {
+        brrDemoBtn.addEventListener('click', () => {
+            const BRR_COUNTRIES = ['FIN', 'USA', 'DEU', 'KOR', 'MEX'];
+            const BRR_YEARS = ['2015', '2018', '2022'];
+            const tick = (selector, values) => {
+                document.querySelectorAll(selector).forEach(cb => {
+                    cb.checked = values.includes(cb.value);
+                    cb.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            };
+            tick('#year-checkboxes input[type="checkbox"]', BRR_YEARS);
+            tick('#country-checkboxes input[type="checkbox"]', BRR_COUNTRIES);
+            const wt = document.getElementById('weight-type');
+            if (wt) wt.value = 'student';
+            handleLoadData();
+        });
+    }
+
+    // Sampling-weight selector: re-run analyses immediately so BRR vs. model-based
+    // standard errors can be compared by toggling the dropdown (no reload needed).
+    const weightTypeSelect = document.getElementById('weight-type');
+    if (weightTypeSelect) {
+        weightTypeSelect.addEventListener('change', () => {
+            const state = getState();
+            if (state.mergedData && state.mergedData.length > 0) {
+                runInitialAnalyses(state.mergedData);
+                const activeTab = document.querySelector('.tab.active');
+                if (activeTab) {
+                    onTabSwitch(activeTab.getAttribute('data-tab'));
+                }
+            }
+        });
     }
 
     // Outcome variable selector
@@ -505,8 +645,10 @@ async function handleLoadData() {
         }
 
         // Run initial analyses
-        // TODO: Phase 3 - Run descriptive statistics and populate overview tab
         runInitialAnalyses(data);
+
+        // Open the Overview tab automatically so the user starts the analysis flow.
+        goToTab('overview');
 
     } catch (error) {
         console.error('Error loading data:', error);

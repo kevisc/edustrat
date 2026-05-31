@@ -163,25 +163,32 @@ export function calculateGini(values, weights = null) {
         return Math.abs(gini);
     }
 
-    // Weighted Gini
+    // Weighted Gini — covariance form on weighted fractional ranks:
+    //   G = 2 * cov_w(x, F) / mean_w(x)
+    // where, after sorting ascending, F_i is the midpoint cumulative weight share
+    // F_i = (Σ_{j<=i} w_j - w_i/2) / W. This is the standard population estimator
+    // and reduces to the ordinary Gini when all weights are equal. Verified against
+    // an independent R reference in pipeline/scripts/04-verify-computations.R.
     const sortedData = values.map((v, i) => ({ value: v, weight: weights[i] }))
                              .sort((a, b) => a.value - b.value);
 
-    let cumWeightedValue = 0;
-    let cumWeight = 0;
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-    const totalWeightedValue = values.reduce((sum, v, i) => sum + v * weights[i], 0);
+    const mu = sortedData.reduce((s, d) => s + d.value * d.weight, 0) / totalWeight;
 
-    let sumOfProducts = 0;
+    // Midpoint cumulative weight share F_i
+    let cumWeight = 0;
+    const F = sortedData.map(d => {
+        const f = (cumWeight + d.weight / 2) / totalWeight;
+        cumWeight += d.weight;
+        return f;
+    });
+    const Fbar = sortedData.reduce((s, d, i) => s + d.weight * F[i], 0) / totalWeight;
 
-    for (let i = 0; i < sortedData.length; i++) {
-        cumWeight += sortedData[i].weight;
-        cumWeightedValue += sortedData[i].value * sortedData[i].weight;
-        sumOfProducts += cumWeight * sortedData[i].value * sortedData[i].weight;
-    }
+    const cov = sortedData.reduce(
+        (s, d, i) => s + d.weight * (d.value - mu) * (F[i] - Fbar), 0
+    ) / totalWeight;
 
-    const gini = (2 * sumOfProducts) / (totalWeight * totalWeightedValue) - 1 - (1 / totalWeight);
-
+    const gini = 2 * cov / mu;
     return Math.abs(gini);
 }
 

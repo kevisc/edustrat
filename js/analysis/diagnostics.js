@@ -6,6 +6,34 @@
  */
 
 /**
+ * Unweighted OLS fit via normal equations (helper for auxiliary regressions).
+ * X must already include an intercept column. Returns coefficients, fitted
+ * values, residuals, the centered R², and (X'X)^-1 for leverage calculations.
+ * @param {Array} y - Response vector
+ * @param {Array} X - Design matrix (rows x cols), intercept included
+ * @returns {Object} { beta, fitted, residuals, r2, XtX_inv }
+ */
+function olsFit(y, X) {
+    const n = y.length;
+    const k = X[0].length;
+    const Xt = jStat.transpose(X);
+    const XtX = jStat.multiply(Xt, X);
+    const XtX_inv = jStat.inv(XtX);
+    const Xty = jStat.multiply(Xt, y.map(v => [v]));
+    const beta = jStat.multiply(XtX_inv, Xty).map(r => r[0]);
+
+    const fitted = X.map(row => row.reduce((s, v, j) => s + v * beta[j], 0));
+    const residuals = y.map((yi, i) => yi - fitted[i]);
+
+    const ybar = y.reduce((s, v) => s + v, 0) / n;
+    const sse = residuals.reduce((s, e) => s + e * e, 0);
+    const sst = y.reduce((s, yi) => s + Math.pow(yi - ybar, 2), 0);
+    const r2 = sst > 0 ? 1 - sse / sst : NaN;
+
+    return { beta, fitted, residuals, r2, XtX_inv, n, k };
+}
+
+/**
  * Perform Hausman specification test
  * Tests whether random effects or fixed effects is more appropriate
  * @param {Object} feModel - Fixed effects model results
@@ -30,10 +58,22 @@ export function hausmanTest(feModel, reModel, predictorName) {
     // Coefficient difference
     const bDiff = feModel.coefficients[iFE] - reModel.coefficients[iRE];
 
-    // Variance of difference (conservative: sum of variances)
+    // Variance of the difference. Under H0, RE is efficient, so
+    // Var(b_FE - b_RE) = Var(b_FE) - Var(b_RE)  (Hausman 1978). Using the
+    // *difference*, not the sum: the sum is not the Hausman statistic.
     const vFE = feModel.vcov?.[iFE]?.[iFE] ?? Math.pow(feModel.standardErrors[iFE], 2);
     const vRE = reModel.vcov?.[iRE]?.[iRE] ?? Math.pow(reModel.standardErrors[iRE], 2);
-    const varDiff = Math.max(vFE + vRE, 1e-12);
+    const varDiff = vFE - vRE;
+
+    // A non-positive variance difference means the asymptotic assumptions are
+    // not met in this sample; the statistic is not interpretable.
+    if (!(varDiff > 0)) {
+        return {
+            chiSquared: NaN, pValue: NaN, df: 1, reject: false,
+            conclusion: 'Var(b_FE) - Var(b_RE) <= 0; Hausman test not interpretable in this sample',
+            bFE: feModel.coefficients[iFE], bRE: reModel.coefficients[iRE], difference: bDiff
+        };
+    }
 
     // Chi-squared statistic (1 df)
     const chiSquared = (bDiff * bDiff) / varDiff;
@@ -146,30 +186,20 @@ export function breuschPaganTest(model, X) {
     const n = model.residuals.length;
     const k = X[0].length;
 
-    // Squared residuals
+    // Studentized (Koenker) Breusch-Pagan test, matching lmtest::bptest defaults:
+    // regress the squared residuals on the original regressors and form the
+    // Lagrange-multiplier statistic LM = n * R²_aux ~ chi²(k-1).
     const e2 = model.residuals.map(r => r * r);
+    const aux = olsFit(e2, X);
 
-    // Mean of squared residuals
-    const meanE2 = e2.reduce((a, b) => a + b, 0) / n;
-
-    // Normalize squared residuals
-    const u = e2.map(e => e / meanE2);
-
-    // Regress u on X
-    // For simplicity, calculate explained sum of squares
-    const meanU = u.reduce((a, b) => a + b, 0) / n;
-    const TSS = u.reduce((sum, ui) => sum + Math.pow(ui - meanU, 2), 0);
-
-    // This is a simplified version - full BP test would run auxiliary regression
-    // For now, use R² from residuals
-
-    const testStat = (model.r2 * (n - k)) / (1 - model.r2);
-    const pValue = 1 - jStat.chisquare.cdf(testStat, k - 1);
+    const testStat = n * aux.r2;
+    const df = k - 1;
+    const pValue = 1 - jStat.chisquare.cdf(testStat, df);
 
     return {
         testStatistic: testStat,
         pValue,
-        df: k - 1,
+        df,
         reject: pValue < 0.05,
         conclusion: pValue < 0.05
             ? 'Reject homoskedasticity → heteroskedasticity present'
@@ -189,28 +219,20 @@ export function calculateVIF(X, varNames) {
     }
 
     const k = X[0].length;
-    const n = X.length;
 
-    // Skip intercept
+    // Skip intercept (column 0). For each predictor j, regress it on all the
+    // other columns (intercept + remaining predictors) and form VIF_j =
+    // 1 / (1 - R²_j). This matches car::vif for models with numeric terms.
     const vif = {};
 
     for (let j = 1; j < k; j++) {
-        // Extract column j as dependent variable
         const y = X.map(row => row[j]);
-
-        // Create X matrix without column j
+        // Other columns, keeping the intercept so the auxiliary regression is centered.
         const Xj = X.map(row => row.filter((_, idx) => idx !== j));
 
-        // Simple R² calculation
         try {
-            const meanY = y.reduce((a, b) => a + b, 0) / n;
-            const TSS = y.reduce((sum, yi) => sum + Math.pow(yi - meanY, 2), 0);
-
-            // For simplicity, use correlation-based R²
-            // Full VIF would require running regression for each variable
-            const r2 = 0.1; // Placeholder - would need actual regression
-
-            const vifValue = 1 / Math.max(1 - r2, 0.001);
+            const aux = olsFit(y, Xj);
+            const vifValue = 1 / Math.max(1 - aux.r2, 1e-12);
             vif[varNames[j]] = vifValue;
         } catch (e) {
             vif[varNames[j]] = NaN;
@@ -294,11 +316,21 @@ export function calculateCooksDistance(model, X) {
     const k = X[0].length;
     const mse = model.residuals.reduce((sum, r) => sum + r * r, 0) / model.df;
 
-    // Calculate leverage (hat matrix diagonals) - simplified
-    // Full calculation would require H = X(X'X)^-1X'
-    const leverages = new Array(n).fill(k / n); // Simplified average leverage
+    // Exact leverages from the hat matrix diagonals h_ii = x_i' (X'X)^-1 x_i.
+    const Xt = jStat.transpose(X);
+    const XtX_inv = jStat.inv(jStat.multiply(Xt, X));
+    const leverages = X.map(xi => {
+        // xi' M xi  with M = (X'X)^-1
+        let h = 0;
+        for (let a = 0; a < k; a++) {
+            let row = 0;
+            for (let b = 0; b < k; b++) row += xi[b] * XtX_inv[b][a];
+            h += row * xi[a];
+        }
+        return h;
+    });
 
-    // Cook's distance
+    // Cook's distance: D_i = e_i² / (k·MSE) · h_i / (1 - h_i)²  (matches stats::cooks.distance)
     const cooks = model.residuals.map((r, i) => {
         const h = leverages[i];
         const d = (r * r / (k * mse)) * (h / Math.pow(1 - h, 2));

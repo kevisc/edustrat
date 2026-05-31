@@ -56,38 +56,38 @@
             <!-- Tab Content: Home (Landing Page) -->
             <div id="home" class="tab-content active">
                 <div style="text-align: center; padding: 2rem 0;">
-                    <p style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary-400); margin-bottom: 1rem;">OECD PISA Data Analysis</p>
-                    <h1 style="font-size: 2.75rem; font-weight: 700; margin-bottom: 1.5rem; background: linear-gradient(135deg, var(--text-primary), var(--primary-300)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2;">Educational Stratification in PISA</h1>
+                    <p style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary-600); margin-bottom: 1rem;">OECD PISA Data Analysis</p>
+                    <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-primary); line-height: 1.25;">Educational Stratification in PISA</h1>
                     <p style="font-size: 1.125rem; color: var(--text-secondary); max-width: 720px; margin: 0 auto; line-height: 1.7;">
                         Explore how parental education, occupation, and wealth relate to student achievement at age 15. Analyze outcomes across 101 countries and 8 PISA cycles using survey-weighted methods.
                     </p>
+                    <div style="margin-top: 1.75rem; display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                        <button id="home-start-btn" class="btn btn-primary" style="width: auto;">Get started</button>
+                        <button id="take-tour-btn" class="btn btn-secondary" style="width: auto;">Take a tour</button>
+                    </div>
                 </div>
 
                 <!-- Key Features -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin: 3rem 0;">
                     <div class="stat-card" style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
                         <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Rich Data</h3>
                         <p style="color: var(--text-secondary); line-height: 1.6;">
                             Country-year microdata with ESCS, achievement scores, and survey weights across 101 countries and 8 PISA cycles (2000-2022)
                         </p>
                     </div>
                     <div class="stat-card" style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
                         <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Advanced Analytics</h3>
                         <p style="color: var(--text-secondary); line-height: 1.6;">
                             Survey-weighted regression, ESCS gradients, distributional measures, and variance decomposition aligned with OECD guidance
                         </p>
                     </div>
                     <div class="stat-card" style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
                         <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Global Insights</h3>
                         <p style="color: var(--text-secondary); line-height: 1.6;">
                             Cross-national maps and time-series views to compare ESCS gradients, achievement gaps, and trends
                         </p>
                     </div>
                     <div class="stat-card" style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">💾</div>
                         <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Publication Ready</h3>
                         <p style="color: var(--text-secondary); line-height: 1.6;">
                             Export reproducible tables, charts, and HTML reports with transparent data lineage
@@ -266,11 +266,21 @@
                             <div class="weight-info" id="countries-selected-count">Loading available countries...</div>
                         </div>
                     </div>
+
+                    <!-- Replicate-weight (BRR) comparison preset -->
+                    <div style="margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--primary-color); border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 0.35rem;">Replicate-weight (BRR) comparison set</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.5;">
+                            These country&ndash;years include PISA's 80 replicate weights, so EduStrat reports design-correct (BRR) standard errors for them. Load the set, then switch <em>Sampling Weights</em> between <strong>Student Weight</strong> (BRR errors) and <strong>No Weights</strong> to see how much the sampling design widens the uncertainty &mdash; the results update immediately.<br>
+                            <strong>Countries:</strong> Finland, United States, Germany, Korea, Mexico &nbsp;&middot;&nbsp; <strong>Years:</strong> 2015, 2018, 2022
+                        </div>
+                        <button id="load-brr-demo-btn" class="btn btn-primary">Load BRR comparison set</button>
+                    </div>
                 </div>
 
                 <!-- Analysis Parameters Section -->
                 <div class="stat-card" style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; color: var(--primary-color);">⚙️ Analysis Parameters</h3>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; color: var(--primary-color);">Analysis Parameters</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
                         <!-- Outcome Variable -->
                         <div class="control-group">
@@ -296,11 +306,10 @@
                             <label for="weight-type" style="font-size: 1.05rem; font-weight: 600;">Sampling Weights</label>
                             <select id="weight-type" style="margin-top: 0.75rem;">
                                 <option value="student">Student Weight (W_FSTUWT)</option>
-                                <option value="senate">Senate Weight (W_FSENWT)</option>
-                                <option value="replicate">BRR Replicate Weights</option>
-                                <option value="none">No Weights</option>
+                                <option value="senate">Senate Weight (cross-country equal)</option>
+                                <option value="none">No Weights (teaching comparison)</option>
                             </select>
-                            <div class="weight-info" style="margin-top: 0.5rem;">Following OECD technical standards</div>
+                            <div class="weight-info" style="margin-top: 0.5rem;">Estimates use the chosen weight. With the student weight, design-correct standard errors are computed by BRR (80 Fay replicate weights) wherever the data carry them; otherwise standard errors are model-based.</div>
                         </div>
 
                         <!-- Control Variables -->
@@ -318,9 +327,9 @@
                 </div>
 
                 <!-- Load Data Action -->
-                <div class="stat-card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); border: 2px solid var(--primary-color);">
+                <div class="stat-card" style="margin-bottom: 2rem; background: var(--primary-50); border: 1px solid var(--primary-200);">
                     <div style="text-align: center; padding: 1rem;">
-                        <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: var(--primary-color);">🚀 Load Data</h3>
+                        <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: var(--primary-color);">Load Data</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6;">
                             Click below to load the selected countries and years. Data will be fetched progressively (~5MB per country-year combination).
                         </p>
@@ -329,7 +338,7 @@
                             <span id="loading-spinner" class="spinner-inline" aria-hidden="true" style="display:none;"></span>
                         </button>
                         <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
-                            💡 Tip: Start with 1-3 countries to ensure fast loading
+                            Tip: Start with 1-3 countries to ensure fast loading
                         </div>
 
                         <!-- Loading Progress -->
@@ -735,7 +744,7 @@
                 <div class="export-grid">
                     <!-- Summary Statistics Export -->
                     <div class="stat-card">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">📊 Summary Statistics</h3>
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">Summary Statistics</h3>
                         <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
                             Export descriptive statistics, distributional measures, and achievement gaps in CSV format.
                         </p>
@@ -749,7 +758,7 @@
 
                     <!-- Regression Results Export -->
                     <div class="stat-card">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">📈 Regression Models</h3>
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">Regression Models</h3>
                         <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
                             Export regression coefficients, standard errors, and fit statistics for all models.
                         </p>
@@ -763,7 +772,7 @@
 
                     <!-- Aggregated Statistics Export -->
                     <div class="stat-card">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">💾 Aggregated Statistics</h3>
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">Aggregated Statistics</h3>
                         <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
                             Export weighted country-year summary statistics (means, SDs, sample sizes) for all loaded data.
                         </p>
@@ -777,7 +786,7 @@
 
                     <!-- Charts Export -->
                     <div class="stat-card">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">📸 Visualizations</h3>
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">Visualizations</h3>
                         <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
                             Download all current visualizations as high-resolution PNG images.
                         </p>
@@ -791,7 +800,7 @@
 
                     <!-- Full Report Export -->
                     <div class="stat-card">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">📄 Full Report</h3>
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">Full Report</h3>
                         <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
                             Generate a comprehensive HTML report with all analyses, tables, and visualizations.
                         </p>
@@ -805,7 +814,7 @@
                 </div>
 
                 <div class="alert alert-info" style="margin-top: 2rem;">
-                    <strong>💡 Tip:</strong> Load data and run analyses first. Export functions will use the most recent analysis results from each tab.
+                    <strong>Tip:</strong> Load data and run analyses first. Export functions will use the most recent analysis results from each tab.
                 </div>
             </div>
 
@@ -819,7 +828,7 @@
                 <div class="doc-grid">
                     <!-- Data Source Card -->
                     <div class="stat-card doc-card">
-                        <h3>📊 Data Sources</h3>
+                        <h3>Data Sources</h3>
                         <div class="doc-card-body">
                             <p><strong>Primary Source:</strong></p>
                             <p>
@@ -835,14 +844,14 @@
                         </div>
                         <div class="doc-card-footer">
                             <a href="docs/data-sources.html" class="btn btn-secondary">
-                                📖 View Full Data Documentation
+                                View Full Data Documentation
                             </a>
                         </div>
                     </div>
 
                     <!-- Methodology Card -->
                     <div class="stat-card doc-card">
-                        <h3>📐 Methodology</h3>
+                        <h3>Methodology</h3>
                         <div class="doc-card-body">
                             <p>Comprehensive documentation of statistical methods, including:</p>
                             <ul class="doc-list">
@@ -855,14 +864,14 @@
                         </div>
                         <div class="doc-card-footer">
                             <a href="docs/methodology.html" class="btn btn-secondary">
-                                📖 View Methodology Guide
+                                View Methodology Guide
                             </a>
                         </div>
                     </div>
 
                     <!-- Publication Article Card -->
                     <div class="stat-card doc-card">
-                        <h3>📰 Publication Article</h3>
+                        <h3>Publication Article</h3>
                         <div class="doc-card-body">
                             <p>Academic article introducing the application, with methodological choices and implementation details.</p>
                             <ul class="doc-list">
@@ -873,14 +882,14 @@
                         </div>
                         <div class="doc-card-footer">
                             <a href="docs/publication-paper.html" class="btn btn-secondary">
-                                📖 Read the Article
+                                Read the Article
                             </a>
                         </div>
                     </div>
 
                     <!-- Citation Card -->
                     <div class="stat-card doc-card">
-                        <h3>📝 How to Cite</h3>
+                        <h3>How to Cite</h3>
                         <div class="doc-card-body">
                             <p>Citation guidelines for academic publications, presentations, and reports.</p>
                             <div class="doc-callout">
@@ -891,14 +900,14 @@
                         </div>
                         <div class="doc-card-footer">
                             <a href="docs/citation.html" class="btn btn-secondary">
-                                📖 View Citation Guidelines
+                                View Citation Guidelines
                             </a>
                         </div>
                     </div>
 
                     <!-- Source Code Card -->
                     <div class="stat-card doc-card">
-                        <h3>💻 Source Code</h3>
+                        <h3>Source Code</h3>
                         <div class="doc-card-body">
                             <p>Full source code is available on GitHub under an open-source license.</p>
                             <ul class="doc-list">
@@ -910,14 +919,14 @@
                         </div>
                         <div class="doc-card-footer">
                             <a href="https://github.com/kevisc/kevisc.github.io/tree/main/edustrat" target="_blank" class="btn btn-secondary">
-                                🔗 View on GitHub
+                                View on GitHub
                             </a>
                         </div>
                     </div>
 
                     <!-- Data Pipeline Card -->
                     <div class="stat-card doc-card">
-                        <h3>🧰 Data Pipeline</h3>
+                        <h3>Data Pipeline</h3>
                         <div class="doc-card-body">
                             <p>R scripts for generating country-year chunks, metadata, and validation reports.</p>
                             <ul class="doc-list">
@@ -928,14 +937,14 @@
                         </div>
                         <div class="doc-card-footer">
                             <a href="pipeline/scripts/README.md" class="btn btn-secondary">
-                                📖 View Pipeline Guide
+                                View Pipeline Guide
                             </a>
                         </div>
                     </div>
 
                     <!-- Key References Card -->
                     <div class="stat-card doc-card doc-card-wide">
-                        <h3>📚 Key References</h3>
+                        <h3>Key References</h3>
                         <div class="doc-card-body">
                             <div class="doc-card-section">
                                 <div class="doc-card-subtitle">Social Stratification Theory</div>
@@ -975,6 +984,17 @@
             <p style="margin-top: 0.5rem;">Open Source Science. Schoenholzer, 2026.</p>
         </div>
     </footer>
+
+    <!-- Blocking overlay shown while data is being fetched and merged -->
+    <div id="load-overlay" role="alert" aria-busy="true" aria-live="polite">
+        <div class="load-overlay-card">
+            <div class="load-overlay-spinner"></div>
+            <div class="load-overlay-title">Loading PISA data</div>
+            <div class="load-overlay-detail" id="load-overlay-text">Fetching country&ndash;year files&hellip;</div>
+            <div class="load-overlay-track"><div class="load-overlay-fill" id="load-overlay-bar"></div></div>
+            <div class="load-overlay-hint">Please wait while the data is fetched and merged in your browser.</div>
+        </div>
+    </div>
 
     <!-- Application JavaScript Modules -->
     <script type="module" src="js/app.js?v=3.5.0"></script>

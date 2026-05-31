@@ -1,0 +1,18 @@
+{
+  "name": "edustrat-verification",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Numerical verification harness: runs EduStrat's actual analysis modules in Node and compares output to R reference implementations on identical PISA chunks.",
+  "scripts": {
+    "run": "node run-js-reference.mjs",
+    "browser": "node run-browser-check.mjs"
+  },
+  "dependencies": {
+    "jstat": "1.9.4",
+    "simple-statistics": "7.8.0"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

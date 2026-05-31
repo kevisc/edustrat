@@ -5,7 +5,7 @@
  * Date: 2025-12-16
  */
 
-import { weightedMean, weightedVariance } from '../core/utils.js';
+import { weightedMean } from '../core/utils.js';
 
 /**
  * Get predictor value from a record
@@ -301,8 +301,65 @@ export function buildDesignMatrix(data, outcomeVar, predictorVar, options = {}, 
         countries,
         years,
         groupIndex,
+        records: filtered.map(f => f.record), // aligned to X rows, for BRR replicate weights
         n: X.length
     };
+}
+
+/**
+ * Attach PISA Fay BRR standard errors to a fitted model when replicate weights
+ * are present and the design (point) weight is the student weight. The original
+ * model-based standard errors are preserved in `standardErrors`; the BRR results
+ * are added as `standardErrorsBRR` / `tStatisticsBRR` / `pValuesBRR`, and
+ * `seMethod` / `seActive` record which the interface should display by default.
+ *
+ * BRR is computed by refitting the same design across the 80 replicate weights
+ * and forming V = 1/(G(1-k)²) Σ_r (β_r − β_0)² per coefficient (Fay k = 0.5).
+ * Verified against intsvy in pipeline/scripts/06-verify-brr.R.
+ *
+ * @param {Object} model - Fitted model object (mutated in place)
+ * @param {Object} dm - Design matrix (must include records aligned to rows)
+ * @param {String} weightType - Point-estimate weight type
+ * @returns {Object} the model
+ */
+function applyBRRStandardErrors(model, dm, weightType, options = {}) {
+    const recs = dm.records;
+    const hasRep = recs && recs.length && Array.isArray(recs[0].rep_wgts) && recs[0].rep_wgts.length > 0;
+
+    // Callers that only need point estimates (e.g. per-country gradients in the
+    // report) can pass { brr: false } to skip the 80-replicate refit.
+    if (options.brr === false || !hasRep || weightType !== 'student') {
+        model.seMethod = (weightType === 'none')
+            ? 'Model-based, unweighted'
+            : 'Model-based (assumes simple random sampling)';
+        model.seActive = 'model';
+        return model;
+    }
+
+    const beta0 = model.coefficients;
+    const k = beta0.length;
+    const G = recs[0].rep_wgts.length;
+    const sums = new Array(k).fill(0);
+
+    for (let r = 0; r < G; r++) {
+        const wr = recs.map(rec => rec.rep_wgts[r]);
+        const fit = weightedOLS(dm.y, dm.X, wr);
+        if (!fit?.beta) continue;
+        for (let j = 0; j < k; j++) { const d = fit.beta[j] - beta0[j]; sums[j] += d * d; }
+    }
+
+    const mult = 1 / (G * Math.pow(1 - 0.5, 2)); // Fay factor k = 0.5
+    const se = sums.map(s => Math.sqrt(s * mult));
+    const df = Math.max(model.df, 1);
+
+    model.standardErrorsBRR = se;
+    model.tStatisticsBRR = beta0.map((b, j) => b / (se[j] || 1e-12));
+    model.pValuesBRR = model.tStatisticsBRR.map(t =>
+        Math.min(1, Math.max(0, 2 * (1 - jStat.studentt.cdf(Math.abs(t), df)))));
+    model.seMethod = `BRR (${G} Fay replicate weights, k=0.5)`;
+    model.nReplicates = G;
+    model.seActive = 'BRR';
+    return model;
 }
 
 /**
@@ -314,7 +371,7 @@ export function buildDesignMatrix(data, outcomeVar, predictorVar, options = {}, 
  * @param {String} weightType - Type of weights to use
  * @returns {Object} Regression results
  */
-export function runPooledOLS(data, outcomeVar, predictorVar, controls = [], weightType = 'student') {
+export function runPooledOLS(data, outcomeVar, predictorVar, controls = [], weightType = 'student', options = {}) {
     const dm = buildDesignMatrix(data, outcomeVar, predictorVar, { countryFE: false, yearFE: false, controls }, weightType);
 
     if (dm.X.length < dm.varNames.length + 1) {
@@ -328,7 +385,7 @@ export function runPooledOLS(data, outcomeVar, predictorVar, controls = [], weig
         return null;
     }
 
-    return {
+    return applyBRRStandardErrors({
         modelName: 'OLS (Pooled)',
         variableNames: dm.varNames,
         coefficients: fit.beta,
@@ -346,7 +403,7 @@ export function runPooledOLS(data, outcomeVar, predictorVar, controls = [], weig
         residuals: fit.residuals,
         fitted: fit.yhat,
         vcov: fit.vcov
-    };
+    }, dm, weightType, options);
 }
 
 /**
@@ -376,7 +433,7 @@ export function runFixedEffects(data, outcomeVar, predictorVar, controls = [], w
     // Calculate within and between R²
     const { r2Within, r2Between } = calculateRsquaredComponents(data, fit.residuals, fit.yhat, dm.groupIndex);
 
-    return {
+    return applyBRRStandardErrors({
         modelName: `Fixed Effects (Country dummies${includeYearFE ? ' + Year FE' : ''})`,
         variableNames: dm.varNames,
         coefficients: fit.beta,
@@ -396,7 +453,7 @@ export function runFixedEffects(data, outcomeVar, predictorVar, controls = [], w
         residuals: fit.residuals,
         fitted: fit.yhat,
         vcov: fit.vcov
-    };
+    }, dm, weightType);
 }
 
 /**
@@ -417,12 +474,16 @@ export function runRandomEffects(data, outcomeVar, predictorVar, controls = [], 
         return null;
     }
 
-    // Estimate ICC and variance components
+    // Estimate the error-component variances by Swamy-Arora: σ²_ν from the
+    // within (FE) residuals and σ²_μ from the between (group-means) residuals.
+    // This is the standard feasible-GLS estimator; on unweighted data it
+    // reproduces plm(model="random", random.method="swar") coefficients and
+    // standard errors to ~1e-4 (see pipeline/scripts/04-verify-computations.R).
     const groups = [...new Set(dm.groupIndex)];
-    const { icc, totalVar } = estimateICCAndSizes(data, outcomeVar, groups, weightType);
+    const { sigma_u2, sigma_e2, icc } = estimateVarianceComponents(dm.y, dm.X, dm.w, dm.groupIndex);
 
-    // Quasi-demean transformation for RE
-    const { yStar, XStar } = quasiDemeanRE(dm.y, dm.X, groups, dm.groupIndex, icc, totalVar);
+    // Quasi-demean transformation for RE (group-specific θ_i)
+    const { yStar, XStar } = quasiDemeanRE(dm.y, dm.X, groups, dm.groupIndex, sigma_u2, sigma_e2);
 
     const fit = weightedOLS(yStar, XStar, dm.w);
     if (!fit?.beta || fit.beta.some(b => !Number.isFinite(b))) {
@@ -447,6 +508,7 @@ export function runRandomEffects(data, outcomeVar, predictorVar, controls = [], 
         rho: icc,
         icc: icc,
         weighted: (weightType !== 'none'),
+        seMethod: 'Model-based GLS (Swamy-Arora variance components)',
         residuals: fit.residuals,
         fitted: fit.yhat,
         vcov: fit.vcov
@@ -454,49 +516,121 @@ export function runRandomEffects(data, outcomeVar, predictorVar, controls = [], 
 }
 
 /**
- * Estimate ICC and variance components
- * @param {Array} data - Array of student records
- * @param {String} outcomeVar - Name of outcome variable
- * @param {Array} groups - Array of group identifiers
- * @returns {Object} ICC and variance components
+ * Estimate one-way error-component variances by the Swamy-Arora method.
+ *
+ *   σ²_ν (idiosyncratic) = within (FE) residual SS / (N - n - K)
+ *   σ²_μ (group)         = max( between residual MS - σ²_ν / T̄ , 0 )
+ *
+ * where the within fit regresses group-demeaned y on the group-demeaned slope
+ * columns, the between fit regresses group means (with intercept) across the n
+ * groups, K is the number of slope coefficients, and T̄ = N / n. On unweighted
+ * data this matches plm's "swar" variance components closely (the residual MS
+ * form differs from plm's trace-corrected σ²_μ only in the 3rd–4th significant
+ * figure, with negligible effect on the GLS coefficients given large groups).
+ *
+ * @param {Array} y - Response vector
+ * @param {Array} X - Design matrix (intercept in column 0, then slope columns)
+ * @param {Array} w - Weights (1s for unweighted)
+ * @param {Array} groupIndex - Group membership per observation
+ * @returns {Object} { sigma_u2, sigma_e2, icc }
  */
-function estimateICCAndSizes(data, outcomeVar, groups, weightType = 'student') {
-    const values = [];
-    const wts = [];
-    data.forEach(d => {
-        const val = +d[outcomeVar];
-        if (isFinite(val)) {
-            values.push(val);
-            wts.push(getWeight(d, weightType));
+/**
+ * Minimal weighted least-squares solver via Gaussian elimination on the normal
+ * equations. Used by the Swamy-Arora step because jStat's matrix routines are
+ * unreliable for single-column designs (the within regression). Returns the
+ * weighted residual sum of squares, which is all the variance components need.
+ * @param {Array} y - Response vector
+ * @param {Array} X - Design matrix (rows x p), no special structure required
+ * @param {Array} w - Weights
+ * @returns {Number} Weighted residual sum of squares Σ w_i (y_i - ŷ_i)²
+ */
+function weightedRSS(y, X, w) {
+    const nObs = y.length, p = X[0].length;
+    // Build XtWX (p x p) and XtWy (p)
+    const A = Array.from({ length: p }, () => new Array(p).fill(0));
+    const b = new Array(p).fill(0);
+    for (let i = 0; i < nObs; i++) {
+        const wi = w[i], xi = X[i];
+        for (let a = 0; a < p; a++) {
+            b[a] += wi * xi[a] * y[i];
+            for (let c = a; c < p; c++) A[a][c] += wi * xi[a] * xi[c];
         }
-    });
-    const overallMean = weightedMean(values, wts);
-    const totalVar = weightedVariance(values, wts);
+    }
+    for (let a = 0; a < p; a++) for (let c = 0; c < a; c++) A[a][c] = A[c][a];
 
-    const byG = {};
-    groups.forEach(g => { byG[g] = { scores: [], weights: [] }; });
-    data.forEach(d => {
-        const val = +d[outcomeVar];
-        if (isFinite(val) && d.country && byG[d.country]) {
-            byG[d.country].scores.push(val);
-            byG[d.country].weights.push(getWeight(d, weightType));
+    // Solve A beta = b by Gaussian elimination with partial pivoting.
+    const M = A.map((row, i) => [...row, b[i]]);
+    for (let col = 0; col < p; col++) {
+        let piv = col;
+        for (let r = col + 1; r < p; r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
+        [M[col], M[piv]] = [M[piv], M[col]];
+        const d = M[col][col] || 1e-12;
+        for (let r = 0; r < p; r++) {
+            if (r === col) continue;
+            const f = M[r][col] / d;
+            for (let c = col; c <= p; c++) M[r][c] -= f * M[col][c];
         }
+    }
+    const beta = M.map((row, i) => row[p] / (M[i][i] || 1e-12));
+
+    let rss = 0;
+    for (let i = 0; i < nObs; i++) {
+        let yhat = 0;
+        for (let a = 0; a < p; a++) yhat += X[i][a] * beta[a];
+        const e = y[i] - yhat;
+        rss += w[i] * e * e;
+    }
+    return rss;
+}
+
+function estimateVarianceComponents(y, X, w, groupIndex) {
+    const N = y.length;
+    const k = X[0].length;          // includes intercept
+    const Kslopes = k - 1;
+    const groups = [...new Set(groupIndex)];
+    const n = groups.length;
+
+    // Weighted group means of y and every column of X.
+    const gW = {}, gY = {}, gX = {};
+    groups.forEach(g => { gW[g] = 0; gY[g] = 0; gX[g] = new Array(k).fill(0); });
+    for (let i = 0; i < N; i++) {
+        const g = groupIndex[i], wi = w[i];
+        gW[g] += wi; gY[g] += wi * y[i];
+        for (let j = 0; j < k; j++) gX[g][j] += wi * X[i][j];
+    }
+    groups.forEach(g => {
+        if (gW[g] > 0) { gY[g] /= gW[g]; for (let j = 0; j < k; j++) gX[g][j] /= gW[g]; }
     });
 
-    // Between variance (weighted by sum of sampling weights)
-    const totalWeight = wts.reduce((s, w) => s + w, 0);
-    const between = groups.reduce((s, g) => {
-        const group = byG[g];
-        if (!group || !group.scores.length) return s;
-        const m = weightedMean(group.scores, group.weights);
-        const groupWeight = group.weights.reduce((sw, w) => sw + w, 0) / totalWeight;
-        return s + groupWeight * Math.pow(m - overallMean, 2);
-    }, 0);
+    // WITHIN: regress group-demeaned y on the demeaned slope columns (no intercept).
+    const yd = [], Xd = [];
+    for (let i = 0; i < N; i++) {
+        const g = groupIndex[i];
+        yd.push(y[i] - gY[g]);
+        const row = [];
+        for (let j = 1; j < k; j++) row.push(X[i][j] - gX[g][j]);
+        Xd.push(row.length ? row : [0]);
+    }
+    const sseWithin = weightedRSS(yd, Xd, w);
+    const sigma_e2 = sseWithin / Math.max(N - n - Kslopes, 1);
 
-    const within = Math.max(totalVar - between, 0);
-    const icc = (totalVar > 0) ? (between / totalVar) : 0;
+    // BETWEEN: unweighted OLS of group means (intercept + slopes) across n groups.
+    const yb = [], Xb = [];
+    groups.forEach(g => {
+        yb.push(gY[g]);
+        const row = [1];
+        for (let j = 1; j < k; j++) row.push(gX[g][j]);
+        Xb.push(row);
+    });
+    const sseBetween = weightedRSS(yb, Xb, yb.map(() => 1));
+    const sigma_1 = sseBetween / Math.max(n - Kslopes - 1, 1);
 
-    return { icc, totalVar, between, within, groupSizes: groups.map(g => (byG[g]?.scores || []).length) };
+    const Tbar = N / n;
+    const sigma_u2 = Math.max(sigma_1 - sigma_e2 / Tbar, 0);
+
+    const totalVar = sigma_u2 + sigma_e2;
+    const icc = totalVar > 0 ? sigma_u2 / totalVar : 0;
+    return { sigma_u2, sigma_e2, icc };
 }
 
 /**
@@ -505,14 +639,13 @@ function estimateICCAndSizes(data, outcomeVar, groups, weightType = 'student') {
  * @param {Array} X - Design matrix
  * @param {Array} groups - Array of group identifiers
  * @param {Array} groupIndex - Group membership for each observation
- * @param {Number} icc - Intraclass correlation
- * @param {Number} totalVar - Total variance
+ * @param {Number} sigma_u2 - Group (between) variance component σ²_μ
+ * @param {Number} sigma_e2 - Idiosyncratic (within) variance component σ²_ν
  * @returns {Object} Transformed y and X
  */
-function quasiDemeanRE(y, X, groups, groupIndex, icc, totalVar) {
-    // σ_u^2 and σ_e^2 from ICC
-    const sigma_u2 = Math.max(icc * totalVar, 0);
-    const sigma_e2 = Math.max(totalVar - sigma_u2, 1e-9);
+function quasiDemeanRE(y, X, groups, groupIndex, sigma_u2, sigma_e2) {
+    sigma_u2 = Math.max(sigma_u2, 0);
+    sigma_e2 = Math.max(sigma_e2, 1e-9);
 
     // Precompute group means for each column
     const k = X[0].length;

@@ -321,7 +321,6 @@ function buildReportHeader(state) {
 
     return `
         <div class="header">
-            <img src="pisa-app-icon.png" alt="PISA App Icon" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 1rem;">
             <h1>Educational Stratification Analysis Report</h1>
             <p class="subtitle">Educational Stratification in PISA</p>
             <div class="metadata">
@@ -634,6 +633,12 @@ function buildRegressionResults(state) {
             if (ols && ols.coefficients) {
                 const predLabel = predictorVar === 'escs' ? 'SES (ESCS)' : 'Parental Education';
 
+                // Use the active standard errors (BRR replicate-weight errors when available).
+                const olsBRR = ols.seActive === 'BRR' && ols.standardErrorsBRR;
+                const oSE = olsBRR ? ols.standardErrorsBRR : ols.standardErrors;
+                const oTT = olsBRR ? ols.tStatisticsBRR : ols.tStatistics;
+                const oPP = olsBRR ? ols.pValuesBRR : ols.pValues;
+
                 html += `
                     <div class="results-table-container">
                         <h3>OLS Regression Results</h3>
@@ -651,23 +656,24 @@ function buildRegressionResults(state) {
                                 <tr>
                                     <td>Intercept</td>
                                     <td>${ols.coefficients[0].toFixed(3)}</td>
-                                    <td>${ols.standardErrors[0].toFixed(3)}</td>
-                                    <td>${ols.tStatistics[0].toFixed(3)}</td>
-                                    <td>${ols.pValues[0] < 0.001 ? '<0.001' : ols.pValues[0].toFixed(3)}</td>
+                                    <td>${oSE[0].toFixed(3)}</td>
+                                    <td>${oTT[0].toFixed(3)}</td>
+                                    <td>${oPP[0] < 0.001 ? '<0.001' : oPP[0].toFixed(3)}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>${predLabel}</strong></td>
                                     <td><strong>${ols.coefficients[1].toFixed(3)}</strong></td>
-                                    <td>${ols.standardErrors[1].toFixed(3)}</td>
-                                    <td><strong>${ols.tStatistics[1].toFixed(3)}</strong></td>
-                                    <td><strong>${ols.pValues[1] < 0.001 ? '<0.001' : ols.pValues[1].toFixed(3)}</strong></td>
+                                    <td>${oSE[1].toFixed(3)}</td>
+                                    <td><strong>${oTT[1].toFixed(3)}</strong></td>
+                                    <td><strong>${oPP[1] < 0.001 ? '<0.001' : oPP[1].toFixed(3)}</strong></td>
                                 </tr>
                             </tbody>
                         </table>
                         <p style="margin-top: 1rem; font-size: 0.9em;">
                             <strong>Model Fit:</strong> R² = ${(ols.r2 * 100).toFixed(2)}% |
                             N = ${ols.nobs.toLocaleString()} |
-                            F-statistic = ${ols.fStatistic ? ols.fStatistic.toFixed(2) : 'N/A'}
+                            F-statistic = ${ols.fStatistic ? ols.fStatistic.toFixed(2) : 'N/A'}<br>
+                            <strong>Standard errors:</strong> ${ols.seMethod || 'Model-based'}
                         </p>
                     </div>
                 `;
@@ -743,8 +749,8 @@ function buildComparativeAnalysis(results, state) {
                     // Gap analysis
                     const gap = window.decomposeAchievementGap(countryData, outcomeVar, predictorVar, weightType);
 
-                    // Regression
-                    const model = window.runPooledOLS(countryData, outcomeVar, predictorVar, [], weightType);
+                    // Regression (point estimate only; BRR std. errors not needed here)
+                    const model = window.runPooledOLS(countryData, outcomeVar, predictorVar, [], weightType, { brr: false });
 
                     if (desc && gap && model) {
                         countryStats.push({
@@ -1066,7 +1072,6 @@ function buildCitationSection() {
 function buildFooter() {
     return `
         <div class="footer">
-            <img src="pisa-app-icon.png" alt="PISA App Icon" style="width: 40px; height: 40px; object-fit: contain; margin-bottom: 0.5rem;">
             <p>Educational Stratification in PISA | Generated with EduStrat</p>
             <p>Kevin Schoenholzer © 2026</p>
             <p style="margin-top: 1rem; font-size: 0.75rem;">

@@ -7,12 +7,18 @@ R scripts that generate the country-year JSON data files consumed by EduStrat fr
 R 4.0+ with the following packages:
 
 ```r
+# Data generation (scripts 01-03)
 install.packages(c("learningtower", "dplyr", "jsonlite", "tidyr"))
+
+# Replicate weights and verification (scripts 04-06)
+install.packages(c("haven", "plm", "lmtest", "car", "intsvy"))
 ```
 
 ## Usage
 
-Run the three scripts in order from this directory:
+Scripts 01-03 generate the data the application serves. Scripts 04-06 are the
+verification and replicate-weight pipeline described in the paper and in
+`../../VERIFICATION.md`. Run them in order from this directory.
 
 ### 1. Generate Data Chunks
 
@@ -47,6 +53,49 @@ Verifies structural integrity, variable completeness, plausible value ranges, an
 
 - **Output:** Validation report with PASS/FAIL for each check
 - **Time:** ~1-2 minutes
+
+### 4. Verify Computations Against R
+
+```bash
+# from this directory: first run the JS reference, then compare in R
+cd ../verification && npm install && node run-js-reference.mjs
+cd ../scripts && Rscript 04-verify-computations.R
+```
+
+Runs EduStrat's own analysis modules in Node against real chunks, then recomputes
+every statistic independently in R (`stats::lm`, `plm`, `lmtest`, `car`) and compares
+term by term.
+
+- **Output:** `../verification/verification-report.csv` and a PASS/FAIL summary (83 checks)
+- **Time:** ~1 minute
+
+### 5. Add PISA Replicate Weights (for BRR standard errors)
+
+```r
+# learningtower ships only the final weight; this re-sources the raw OECD PUF
+Rscript 05-add-replicate-weights.R <path/to/SPSS_STU_QQQ.zip> <year> FIN USA DEU KOR MEX
+```
+
+Reads the raw OECD Public Use File for one cycle and regenerates the chosen
+country-year chunks with the 80 Fay replicate weights (`W_FSTURWT1`-`W_FSTURWT80`)
+added to each record. Point estimates are unchanged. See `../../VERIFICATION.md` for
+the OECD download URLs.
+
+- **Output:** augmented chunks in `../../data/country-year/`
+- **Time:** a few minutes per cycle (the PUF is large)
+
+### 6. Verify BRR Standard Errors
+
+```bash
+cd ../verification && node run-brr.mjs
+cd ../scripts && Rscript 06-verify-brr.R
+```
+
+Checks EduStrat's BRR (Fay replicate-weight) standard errors against a direct Fay
+computation and the `intsvy` package, across the available cycles.
+
+- **Output:** `../verification/brr-verification-report.csv` and a PASS/FAIL summary (21 checks)
+- **Time:** ~1 minute
 
 ## Output Structure
 

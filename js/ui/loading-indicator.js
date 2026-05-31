@@ -14,6 +14,9 @@ let progressPercentage;
 let progressText;
 let progressDetails;
 let loadingSpinner;
+let loadOverlay;
+let loadOverlayBar;
+let loadOverlayText;
 
 /**
  * Initialize loading indicator
@@ -26,6 +29,9 @@ export function initLoadingIndicator() {
     progressText = document.getElementById('progress-text');
     progressDetails = document.getElementById('progress-details');
     loadingSpinner = document.getElementById('loading-spinner');
+    loadOverlay = document.getElementById('load-overlay');
+    loadOverlayBar = document.getElementById('load-overlay-bar');
+    loadOverlayText = document.getElementById('load-overlay-text');
 
     // Subscribe to loading state changes
     subscribeToState((updates) => {
@@ -51,6 +57,10 @@ export function showLoading() {
     if (loadingSpinner) {
         loadingSpinner.style.display = 'inline-block';
     }
+    // Block interaction with the rest of the app while data loads.
+    if (loadOverlay) {
+        loadOverlay.classList.add('active');
+    }
 }
 
 /**
@@ -62,6 +72,9 @@ export function hideLoading() {
     }
     if (loadingSpinner) {
         loadingSpinner.style.display = 'none';
+    }
+    if (loadOverlay) {
+        loadOverlay.classList.remove('active');
     }
 }
 
@@ -94,6 +107,16 @@ export function updateProgress(progress) {
         } else {
             progressDetails.textContent = `Loaded ${loaded} of ${total} country-year combinations`;
         }
+    }
+
+    // Mirror progress onto the blocking overlay
+    if (loadOverlayBar) {
+        loadOverlayBar.style.width = `${percentage}%`;
+    }
+    if (loadOverlayText) {
+        loadOverlayText.textContent = current === 'complete'
+            ? 'Finalising analysis…'
+            : `Loading ${loaded} of ${total} country–year files…`;
     }
 }
 
@@ -130,6 +153,12 @@ export function resetProgress() {
     }
     if (progressDetails) {
         progressDetails.textContent = 'Loading data...';
+    }
+    if (loadOverlayBar) {
+        loadOverlayBar.style.width = '0%';
+    }
+    if (loadOverlayText) {
+        loadOverlayText.textContent = 'Fetching country–year files…';
     }
 }
 

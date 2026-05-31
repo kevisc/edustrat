@@ -435,6 +435,11 @@ export function renderTemporalTrends(data, outcomeVar = 'math', predictorVar = '
         countryGradients[country].sort((a, b) => a.year - b.year);
     });
 
+    // Exact set of PISA years present, used for explicit x-axis ticks.
+    const allYears = [...new Set(
+        validCountries.flatMap(c => countryGradients[c].map(d => Number(d.year)))
+    )].sort((a, b) => a - b);
+
     // Create traces for each country
     const traces = validCountries.map(country => {
         const countryData = countryGradients[country];
@@ -472,8 +477,12 @@ export function renderTemporalTrends(data, outcomeVar = 'math', predictorVar = '
         xaxis: {
             title: 'Year',
             gridcolor: '#334155',
-            dtick: 3,
-            tickmode: 'linear'
+            type: 'linear',
+            tickmode: 'array',
+            tickvals: allYears,
+            ticktext: allYears.map(String),
+            tickformat: 'd',
+            automargin: true
         },
         yaxis: {
             title: 'SES Gradient (points per SD)',
@@ -496,8 +505,7 @@ export function renderTemporalTrends(data, outcomeVar = 'math', predictorVar = '
             font: { size: 11 }
         },
         hovermode: 'closest',
-        margin: { t: 80, b: 60, l: 60, r: 200 },
-        height: 600
+        margin: { t: 80, b: 60, l: 60, r: 200 }
     };
 
     const config = {

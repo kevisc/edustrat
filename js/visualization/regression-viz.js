@@ -58,11 +58,20 @@ export function createModelTable(model) {
         return '<p>No model results available</p>';
     }
 
+    // Prefer BRR (replicate-weight) standard errors when available; otherwise the
+    // model-based standard errors. seActive records which the model exposes.
+    const useBRR = model.seActive === 'BRR' && Array.isArray(model.standardErrorsBRR);
+    const SE = useBRR ? model.standardErrorsBRR : model.standardErrors;
+    const TT = useBRR ? model.tStatisticsBRR : model.tStatistics;
+    const PP = useBRR ? model.pValuesBRR : model.pValues;
+
     let html = `
         <div class="model-box">
             <div class="model-header">${model.modelName}</div>
             <div class="methodology-note" style="margin-bottom: 1rem;">
                 N = ${model.nobs}${model.ngroups ? `, Groups = ${model.ngroups}` : ''}<br>
+                ${model.seMethod ? `Standard errors: ${model.seMethod}<br>` : ''}
+                ${useBRR ? `<span style="color: var(--text-secondary);">t, p and 95% CI use the BRR errors; the model-based column (SRS assumption) is shown for comparison.</span><br>` : ''}
                 ${model.r2Within !== undefined && !isNaN(model.r2Within) ? `R² (within) = ${model.r2Within.toFixed(3)}<br>` : ''}
                 ${model.r2Between !== undefined && !isNaN(model.r2Between) ? `R² (between) = ${model.r2Between.toFixed(3)}<br>` : ''}
                 ${model.r2 !== undefined && !isNaN(model.r2) ? `R² ${model.r2Within !== undefined ? '(overall)' : ''} = ${model.r2.toFixed(3)}<br>` : ''}
@@ -78,7 +87,7 @@ export function createModelTable(model) {
                     <tr>
                         <th>Variable</th>
                         <th>Coef.</th>
-                        <th>SE</th>
+                        ${useBRR ? '<th>SE (BRR)</th><th title="Assumes simple random sampling">SE (model)</th>' : '<th>SE</th>'}
                         <th>t-stat</th>
                         <th>p-value</th>
                         <th>95% CI</th>
@@ -89,23 +98,25 @@ export function createModelTable(model) {
 
     if (model.coefficients && model.variableNames) {
         model.coefficients.forEach((coef, i) => {
-            if (model.pValues && model.standardErrors &&
-                i < model.pValues.length && i < model.standardErrors.length &&
+            if (PP && SE &&
+                i < PP.length && i < SE.length &&
                 i < model.variableNames.length &&
-                !isNaN(coef) && !isNaN(model.standardErrors[i]) && !isNaN(model.pValues[i])) {
+                !isNaN(coef) && !isNaN(SE[i]) && !isNaN(PP[i])) {
 
-                const pVal = Math.min(1, Math.max(0, model.pValues[i]));
+                const pVal = Math.min(1, Math.max(0, PP[i]));
                 const sig = pVal < 0.05;
                 const stars = pVal < 0.001 ? '***' : pVal < 0.01 ? '**' : pVal < 0.05 ? '*' : '';
-                const tStat = model.tStatistics ? model.tStatistics[i] : (coef / model.standardErrors[i]);
-                const ci_lower = coef - 1.96 * model.standardErrors[i];
-                const ci_upper = coef + 1.96 * model.standardErrors[i];
+                const tStat = TT ? TT[i] : (coef / SE[i]);
+                const ci_lower = coef - 1.96 * SE[i];
+                const ci_upper = coef + 1.96 * SE[i];
 
                 html += `
                     <tr>
                         <td>${model.variableNames[i]}</td>
                         <td class="${sig ? 'significant' : ''}">${coef.toFixed(3)}${stars ? '<span style="color:#10b981; font-weight:bold;"> ' + stars + '</span>' : ''}</td>
-                        <td>${model.standardErrors[i].toFixed(3)}</td>
+                        ${useBRR
+                            ? `<td>${SE[i].toFixed(3)}</td><td style="color: var(--text-secondary);">${model.standardErrors[i].toFixed(3)}</td>`
+                            : `<td>${SE[i].toFixed(3)}</td>`}
                         <td>${tStat.toFixed(2)}</td>
                         <td>${pVal.toFixed(4)}${stars ? '<span style="color:#888; font-size:0.8em;"> ' + stars + '</span>' : ''}</td>
                         <td>[${ci_lower.toFixed(2)}, ${ci_upper.toFixed(2)}]</td>

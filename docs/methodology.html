@@ -147,6 +147,8 @@
         <h3>1.2 learningtower R Package</h3>
         <p>Data are accessed via the <code>learningtower</code> R package (Wang et al., 2024), which provides cleaned and harmonized PISA data from 2000-2022 in an easy-to-use format. The package standardizes variable names across assessment cycles and handles missing data codes according to OECD specifications.</p>
 
+        <p>Because <code>learningtower</code> distributes only the final student weight, the country&ndash;years for which design-correct (BRR) standard errors are available were re-sourced directly from the OECD Public Use Files to obtain the 80 replicate weights (Section 3.8). Point estimates are identical to the <code>learningtower</code> values; only the replicate weights are added.</p>
+
         <h3>1.3 Assessment Cycles</h3>
         <p>The current implementation includes data from eight PISA cycles:</p>
         <ul>
@@ -214,13 +216,13 @@ where:
                 </tr>
                 <tr>
                     <td>Replicate Weights</td>
-                    <td><code>W_FSTR1-W_FSTR80</code></td>
+                    <td><code>W_FSTURWT1</code>&ndash;<code>W_FSTURWT80</code></td>
                     <td>Used for balanced repeated replication (BRR) standard error estimation</td>
                 </tr>
             </tbody>
         </table>
 
-        <p>The default analysis uses final student weights (<code>W_FSTUWT</code>) following OECD technical standards (OECD, 2009). In the learningtower package, this variable is named <code>stu_wgt</code>. EduStrat uses only the final student weight; senate weights and replicate weights are not included in the application's data files.</p>
+        <p>The default analysis uses final student weights (<code>W_FSTUWT</code>) following OECD technical standards (OECD, 2009). In the learningtower package, this variable is named <code>stu_wgt</code>. Point estimates use the weight selected in the interface (student, senate, or unweighted). Where the data files also carry the 80 replicate weights, EduStrat additionally reports design-correct standard errors by balanced repeated replication; see Section 3.8.</p>
 
         <h2>3. Statistical Methods</h2>
 
@@ -248,16 +250,19 @@ where:
         <p>These measures summarize the spread of achievement distributions within countries. While not direct measures of intergenerational transmission, they provide context for understanding achievement variation and can be compared across countries and over time.</p>
 
         <h4>Gini Coefficient</h4>
-        <p>The Gini coefficient measures dispersion in achievement distribution, ranging from 0 (all students have identical scores) to 1 (maximum dispersion). When sampling weights are available, EduStrat computes the weighted Gini coefficient. Observations are sorted in ascending order by score, and cumulative weight shares are used in place of ranks:</p>
+        <p>The Gini coefficient measures dispersion in achievement distribution, ranging from 0 (all students have identical scores) to 1 (maximum dispersion). When sampling weights are available, EduStrat computes the weighted Gini coefficient using the covariance form on weighted fractional ranks. Observations are sorted in ascending order by score:</p>
 
         <div class="formula">
-G = 1 - Σ<sub>i</sub> w<sub>i</sub> · (S<sub>i-1</sub> + S<sub>i</sub>) / S<sub>n</sub>
+G = (2 / μ̂<sub>w</sub>) · [ Σ<sub>i</sub> w<sub>i</sub> · (y<sub>i</sub> − μ̂<sub>w</sub>) · (F<sub>i</sub> − F̄) ] / W
 
 where:
-  w<sub>i</sub> = normalized sampling weight for observation i (w<sub>i</sub> = stu_wgt<sub>i</sub> / Σ stu_wgt)
-  S<sub>i</sub> = cumulative weighted sum of scores up to observation i
-  S<sub>n</sub> = total weighted sum of all scores
+  μ̂<sub>w</sub> = weighted mean of scores
+  W   = Σ w<sub>i</sub> (total sampling weight)
+  F<sub>i</sub> = (Σ<sub>j&lt;i</sub> w<sub>j</sub> + w<sub>i</sub>/2) / W   (midpoint cumulative weight share)
+  F̄   = Σ w<sub>i</sub> · F<sub>i</sub> / W
         </div>
+
+        <p>This is the standard population Gini estimator; it reduces to the ordinary Gini coefficient when all weights are equal. It is verified against an independent R reference (see Section 5.3).</p>
 
         <h4>Coefficient of Variation</h4>
         <div class="formula">
@@ -335,13 +340,15 @@ where:
 Total variance: Var(Y) = τ² + σ²
         </div>
 
-        <p>Random effects are estimated using quasi-demeaning (Wooldridge, 2010):</p>
+        <p>Random effects are estimated by feasible GLS (quasi-demeaning; Wooldridge, 2010) with group-specific weights:</p>
 
         <div class="formula">
-Y<sub>ij</sub>* = Y<sub>ij</sub> - θ · Ȳ<sub>j</sub>
+Y<sub>ij</sub>* = Y<sub>ij</sub> - θ<sub>j</sub> · Ȳ<sub>j</sub>
 
-where θ = 1 - √[σ² / (σ² + n<sub>j</sub>·τ²)]
+where θ<sub>j</sub> = 1 - √[σ² / (σ² + n<sub>j</sub>·τ²)]
         </div>
+
+        <p>The variance components are estimated by the <strong>Swamy&ndash;Arora</strong> method: the idiosyncratic variance σ² from the within (fixed-effects) residuals, and the between-country variance τ² from the group-means (between) regression. On unweighted data this reproduces R's <code>plm(model = "random", random.method = "swar")</code> &mdash; the ESCS slope and its standard error agree to within ~1e-6 (Section 5.3). When the student weight is in use the same construction is applied with sampling weights as a design-weighted extension.</p>
 
         <h3>3.5 Model Selection and Diagnostics</h3>
 
@@ -426,20 +433,29 @@ where:
 
         <p>Effect sizes are interpreted using Cohen's conventions: small (0.2), medium (0.5), large (0.8) (Cohen, 1988).</p>
 
-        <h3>3.8 Standard Errors</h3>
-        <p>Standard errors are computed using classical analytical formulas with sampling weights. The OECD recommends balanced repeated replication (BRR) using 80 replicate weights for design-consistent variance estimation (OECD, 2009):</p>
+        <h3>3.8 Standard Errors: model-based and BRR</h3>
+        <p>PISA's two-stage stratified, clustered design means that standard errors computed under a simple-random-sampling (SRS) assumption understate the true sampling uncertainty. EduStrat reports two kinds of standard error:</p>
+        <ul>
+            <li><strong>Model-based</strong> &mdash; classical analytical formulas (with sampling weights for the point estimate). These assume SRS and are shown when replicate weights are not available for the selected data.</li>
+            <li><strong>Design-correct (BRR)</strong> &mdash; balanced repeated replication using the 80 Fay replicate weights, the OECD-recommended method (OECD, 2009). When the selected country&ndash;years carry replicate weights and the student weight is in use, BRR errors are reported by default, and the model-based errors are shown alongside for comparison.</li>
+        </ul>
+
+        <p>For any statistic &theta;, the Fay BRR variance is:</p>
 
         <div class="formula">
-SE(θ̂) = √[Σ<sub>r=1</sub><sup>R</sup> (θ̂<sub>r</sub> - θ̂)² / R]
+V<sub>BRR</sub>(θ̂) = 1 / (G·(1 − k)²) · Σ<sub>r=1</sub><sup>G</sup> (θ̂<sub>r</sub> − θ̂)²
 
 where:
-  θ̂ = estimate using final weights
+  θ̂  = estimate using the final weight W_FSTUWT
   θ̂<sub>r</sub> = estimate using replicate weight r
-  R = 80 replicate weights
+  G  = 80 replicate weights
+  k  = 0.5 (Fay factor for PISA), so 1 / (G·(1 − k)²) = 1/20
         </div>
 
+        <p>EduStrat's BRR implementation reproduces the <code>intsvy</code> R package exactly (to machine precision) and is verified across three cycles (2015, 2018, 2022); see the repository's <code>VERIFICATION.md</code>. The design effect is substantial and stable: for the Finnish mathematics mean the BRR standard error is 1.7&ndash;2.0 times the SRS error in every cycle. Toggling the <em>Sampling Weights</em> control between the student weight and no weights lets users see this difference directly.</p>
+
         <div class="warning">
-            <strong>Limitation:</strong> EduStrat does not currently implement replicate-weight variance estimation. Standard errors are computed using analytical formulas and may understate uncertainty, particularly for subgroup analyses. Users requiring publication-grade inference should replicate analyses using BRR or jackknife procedures in R or Stata.
+            <strong>Scope and a remaining limitation.</strong> Replicate weights are currently included for a documented subset of country&ndash;years (re-sourced from the OECD Public Use Files; the pipeline can be extended to others). BRR here captures <em>sampling</em> variance only: because <code>learningtower</code> supplies a single plausible value (PV1), the measurement/imputation component across plausible values is not estimated, and the resulting standard errors are therefore still slightly conservative relative to a full PV + BRR analysis. Users requiring publication-grade inference should combine all plausible values using Rubin's rules (Rubin, 1987) alongside BRR.
         </div>
 
         <h2>4. Assumptions and Limitations</h2>
@@ -455,7 +471,7 @@ where:
         <p>OECD recommends multiple imputation for handling missing data in PISA (OECD, 2009), which is not yet implemented in this tool.</p>
 
         <h3>4.3 Sampling Design</h3>
-        <p>All analyses account for sampling weights, which adjust for unequal selection probabilities and nonresponse. However, the current implementation does not account for clustering (students within schools) when computing standard errors, which may underestimate uncertainty. For publication-quality inference, cluster-robust standard errors or BRR should be used.</p>
+        <p>All analyses account for sampling weights, which adjust for unequal selection probabilities and nonresponse. For country&ndash;years that include the replicate weights, EduStrat reports design-correct standard errors by balanced repeated replication (Section 3.8), which capture the stratified, clustered design. Where replicate weights are not available, the model-based standard errors assume simple random sampling and may understate uncertainty; for those cases, publication-quality inference should use BRR or cluster-robust errors in R or Stata.</p>
 
         <h3>4.4 Measurement Error</h3>
         <p>Achievement scores are measured with error. PISA addresses this through plausible values, but the <code>learningtower</code> R package provides only the first plausible value (PV1) for each domain, and EduStrat is therefore constrained to PV1. Full uncertainty quantification requires analyzing all plausible values and combining results using Rubin's rules (Rubin, 1987). See <a href="https://www.oecd.org/en/about/programmes/pisa/how-to-prepare-and-analyse-the-pisa-database.html">OECD guidance on analysing the PISA database</a>.</p>
@@ -477,8 +493,8 @@ where:
         <h3>5.1 Statistical Libraries</h3>
         <p>Analyses are implemented in JavaScript using the following libraries:</p>
         <ul>
-            <li><strong>jStat:</strong> Statistical distributions (t-distribution, χ² distribution) for p-values</li>
-            <li><strong>simple-statistics:</strong> Basic statistical functions (mean, variance, quantiles)</li>
+            <li><strong>jStat:</strong> Statistical distributions (t, χ², F) for p-values, and matrix algebra (transpose, multiply, inverse) for the regression normal equations</li>
+            <li><strong>simple-statistics:</strong> Basic statistical helpers (mean, variance, quantiles)</li>
             <li><strong>Plotly.js:</strong> Interactive visualizations</li>
         </ul>
 
@@ -494,12 +510,14 @@ where λ = 10⁻¹⁰ · trace(X'WX)
         <p>This prevents singular matrix errors when country fixed effects induce near-collinearity.</p>
 
         <h3>5.3 Validation</h3>
-        <p>Statistical functions have been validated against R implementations using identical datasets. Key validation tests:</p>
+        <p>Every statistic the application reports is checked against an independent reference implementation in R, computed on the same PISA chunks. The harness runs the application's own analysis modules in Node and compares the output term by term; the R references use peer-reviewed packages:</p>
         <ul>
-            <li>Weighted mean and variance match R's <code>weighted.mean()</code> and <code>cov.wt()</code></li>
-            <li>Regression coefficients match R's <code>lm()</code> with weights</li>
-            <li>Gini coefficients match R's <code>ineq</code> package</li>
+            <li>Weighted mean, SD, quantiles, the ESCS gradient, inequality indices, variance decomposition (ICC), and achievement gaps &mdash; matched to definitional weighted estimators and an independent covariance-form Gini (to 10&ndash;14 significant figures).</li>
+            <li>Pooled OLS and fixed effects &mdash; matched to <code>stats::lm</code> (with weights; least-squares dummy variables for FE).</li>
+            <li>Random effects and the Hausman test &mdash; matched to the <code>plm</code> package (Swamy&ndash;Arora; <code>phtest</code>).</li>
+            <li>BRR replicate-weight standard errors &mdash; matched to a direct Fay computation and the <code>intsvy</code> package, across three cycles (2015, 2018, 2022).</li>
         </ul>
+        <p>All 83 computational checks and 21 replicate-weight checks pass, and a headless-browser test confirms the application runs in a real browser with no errors and renders the BRR standard errors. The verification scripts (<code>pipeline/scripts/04-verify-computations.R</code>, <code>06-verify-brr.R</code>) and a full report (<code>VERIFICATION.md</code>) are included in the repository so the results can be reproduced. This process also corrected several issues found in development (the weighted Gini formula, the random-effects variance components, and the Hausman variance term).</p>
 
         <h2>6. References</h2>
 
@@ -513,6 +531,14 @@ Burnham, K. P. &amp; Anderson, D. R. (2004). Multimodel inference: Understanding
 
         <div class="reference">
 Cohen, J. (1988). <em>Statistical Power Analysis for the Behavioral Sciences</em> (2nd ed.). Lawrence Erlbaum Associates.
+        </div>
+
+        <div class="reference">
+Caro, D. H. &amp; Biecek, P. (2021). <em>intsvy: International Assessment Data Manager</em> (R package). Tools for analyzing PISA, TIMSS, PIRLS and PIAAC data with replicate weights and plausible values. https://CRAN.R-project.org/package=intsvy
+        </div>
+
+        <div class="reference">
+Croissant, Y. &amp; Millo, G. (2008). Panel data econometrics in R: The plm package. <em>Journal of Statistical Software, 27</em>(2), 1&ndash;43. https://doi.org/10.18637/jss.v027.i02
         </div>
 
         <div class="reference">

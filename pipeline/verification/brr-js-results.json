@@ -1,0 +1,121 @@
+{
+  "generated": "2026-05-26T12:36:26.741Z",
+  "datasets": {
+    "SINGLE": [
+      "FIN_2018"
+    ],
+    "MULTI": [
+      "FIN_2018",
+      "USA_2018",
+      "DEU_2018",
+      "KOR_2018",
+      "MEX_2018"
+    ],
+    "CYCLES": [
+      "FIN_2015",
+      "FIN_2018",
+      "FIN_2022"
+    ]
+  },
+  "runs": [
+    {
+      "id": "brr_mean_math_SINGLE",
+      "dataset": "SINGLE",
+      "target": "mean(math)",
+      "estimate": 507.8448617642028,
+      "se": 1.8862448567878136,
+      "variance": 3.55791965975848,
+      "nrep": 80
+    },
+    {
+      "id": "brr_mean_escs_SINGLE",
+      "dataset": "SINGLE",
+      "target": "mean(escs)",
+      "estimate": 0.2964759048779126,
+      "se": 0.019213408508280367,
+      "variance": 0.00036915506650606034,
+      "nrep": 80
+    },
+    {
+      "id": "brr_slope_SINGLE",
+      "dataset": "SINGLE",
+      "target": "slope(math~escs)",
+      "estimate": 35.85250979989387,
+      "se": 1.7477329609841625,
+      "variance": 3.0545705029104684,
+      "nrep": 80
+    },
+    {
+      "id": "brr_mean_math_MULTI",
+      "dataset": "MULTI",
+      "target": "mean(math)",
+      "estimate": 467.86869376903803,
+      "se": 1.8123366188740169,
+      "variance": 3.2845640201117035,
+      "nrep": 80
+    },
+    {
+      "id": "brr_slope_MULTI",
+      "dataset": "MULTI",
+      "target": "slope(math~escs)",
+      "estimate": 37.127426466359346,
+      "se": 0.9592148603853871,
+      "variance": 0.9200931483841576,
+      "nrep": 80
+    },
+    {
+      "id": "brr_mean_math_FIN_2015",
+      "dataset": "FIN_2015",
+      "target": "mean(math)",
+      "estimate": 510.585631330695,
+      "se": 2.045626608874517,
+      "variance": 4.1845882229354565,
+      "nrep": 80
+    },
+    {
+      "id": "brr_slope_FIN_2015",
+      "dataset": "FIN_2015",
+      "target": "slope(math~escs)",
+      "estimate": 38.72144514251153,
+      "se": 1.8659993524657,
+      "variance": 3.4819535834024116,
+      "nrep": 80
+    },
+    {
+      "id": "brr_mean_math_FIN_2018",
+      "dataset": "FIN_2018",
+      "target": "mean(math)",
+      "estimate": 507.8448617642028,
+      "se": 1.8862448567878136,
+      "variance": 3.55791965975848,
+      "nrep": 80
+    },
+    {
+      "id": "brr_slope_FIN_2018",
+      "dataset": "FIN_2018",
+      "target": "slope(math~escs)",
+      "estimate": 35.85250979989387,
+      "se": 1.7477329609841625,
+      "variance": 3.0545705029104684,
+      "nrep": 80
+    },
+    {
+      "id": "brr_mean_math_FIN_2022",
+      "dataset": "FIN_2022",
+      "target": "mean(math)",
+      "estimate": 484.15780241069046,
+      "se": 1.8125533800269296,
+      "variance": 3.285349755447047,
+      "nrep": 80
+    },
+    {
+      "id": "brr_slope_FIN_2022",
+      "dataset": "FIN_2022",
+      "target": "slope(math~escs)",
+      "estimate": 38.62944112781379,
+      "se": 1.3058057186471217,
+      "variance": 1.7051285748515261,
+      "nrep": 80
+    }
+  ]
+}
