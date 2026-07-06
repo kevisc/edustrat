@@ -6,6 +6,7 @@
  */
 
 import { calculateVarianceDecomposition } from '../analysis/decomposition.js';
+import { CHART_COLORS, INK, baseLayout, BASE_CONFIG } from './chart-theme.js';
 
 /**
  * Render country comparison chart
@@ -41,35 +42,24 @@ export function renderCountryComparison(comparativeResults, years) {
         }
     });
 
-    const layout = {
-        title: 'Cross-National Comparison: Achievement Trends',
+    const layout = baseLayout({
+        title: { text: 'Cross-National Comparison: Achievement Trends' },
         xaxis: {
-            title: 'Country',
-            gridcolor: '#334155'
+            title: { text: 'Country' }
         },
         yaxis: {
-            title: 'Mean Achievement Score',
-            gridcolor: '#334155'
+            title: { text: 'Mean Achievement Score' }
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         barmode: 'group',
         showlegend: true,
         legend: {
             y: 1,
             yanchor: 'top',
-            itemsizing: 'constant',
-            tracegroupgap: 5,
-            font: { size: 11 }
+            tracegroupgap: 5
         }
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('country-comparison');
     if (chartDiv) {
@@ -102,26 +92,21 @@ export function renderDecompositionChart(data, outcomeVar = 'math') {
         y: values,
         type: 'bar',
         marker: {
-            color: ['#3b82f6', '#10b981']
+            color: [CHART_COLORS[0], CHART_COLORS[1]]
         },
         text: values.map(v => `${v.toFixed(1)}%`),
         textposition: 'outside'
     };
 
-    const layout = {
-        title: 'Variance Decomposition of Achievement',
+    const layout = baseLayout({
+        title: { text: 'Variance Decomposition of Achievement' },
         xaxis: {
-            title: '',
-            gridcolor: '#334155'
+            title: { text: '' }
         },
         yaxis: {
-            title: 'Percent of Total Variance',
-            range: [0, 100],
-            gridcolor: '#334155'
+            title: { text: 'Percent of Total Variance' },
+            range: [0, 100]
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: false,
         annotations: [{
             x: 0.5,
@@ -132,13 +117,9 @@ export function renderDecompositionChart(data, outcomeVar = 'math') {
             showarrow: false,
             font: { size: 14 }
         }]
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('decomposition-chart');
     if (chartDiv) {
@@ -170,7 +151,7 @@ export function renderGapComparison(gapResults) {
         name: 'Gap (Q4-Q1)',
         type: 'bar',
         yaxis: 'y',
-        marker: { color: '#3b82f6' }
+        marker: { color: CHART_COLORS[0] }
     };
 
     const trace2 = {
@@ -182,49 +163,38 @@ export function renderGapComparison(gapResults) {
         yaxis: 'y2',
         marker: {
             size: 10,
-            color: '#ef4444'
+            color: CHART_COLORS[7]
         },
         line: {
-            color: '#ef4444',
+            color: CHART_COLORS[7],
             width: 2
         }
     };
 
-    const layout = {
-        title: 'Achievement Gap Comparison (Q4-Q1 SES Quartiles)',
+    const layout = baseLayout({
+        title: { text: 'Achievement Gap Comparison (Q4-Q1 SES Quartiles)' },
         xaxis: {
-            title: 'Country',
-            gridcolor: '#334155'
+            title: { text: 'Country' }
         },
         yaxis: {
-            title: 'Achievement Gap (score points)',
-            gridcolor: '#334155'
+            title: { text: 'Achievement Gap (score points)' }
         },
         yaxis2: {
-            title: 'Effect Size (Cohen\'s d)',
+            title: { text: 'Effect Size (Cohen\'s d)' },
             overlaying: 'y',
             side: 'right',
             gridcolor: 'transparent'
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: true,
         legend: {
             x: 0,
             y: 1,
             yanchor: 'top',
-            itemsizing: 'constant',
-            tracegroupgap: 5,
-            font: { size: 11 }
+            tracegroupgap: 5
         }
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('gap-comparison');
     if (chartDiv) {
@@ -300,63 +270,54 @@ export function renderWorldMap(data, outcomeVar = 'math', predictorVar = 'escs')
         text: hoverText,
         hoverinfo: 'text',
         colorscale: [
-            [0, '#1e3a8a'],      // Dark blue (low gradient)
-            [0.25, '#3b82f6'],   // Blue
-            [0.5, '#fbbf24'],    // Yellow (medium)
-            [0.75, '#f97316'],   // Orange
-            [1, '#dc2626']       // Red (high gradient)
+            [0, '#cde2fb'],      // Light blue (low gradient)
+            [0.25, '#9ec5f4'],
+            [0.5, '#5598e7'],
+            [0.75, '#256abf'],
+            [1, '#0d366b']       // Dark blue (high gradient)
         ],
         reversescale: false,
         colorbar: {
             title: {
                 text: 'SES Gradient<br>(points per SD)',
-                font: { color: '#f1f5f9', size: 12 }
+                font: { color: INK.secondary, size: 12 }
             },
-            tickfont: { color: '#f1f5f9' },
+            tickfont: { color: INK.secondary },
             x: 1.02
         },
         marker: {
             line: {
-                color: '#334155',
+                color: '#ffffff',
                 width: 0.5
             }
         }
     };
 
-    const layout = {
+    const layout = baseLayout({
         title: {
-            text: 'Intergenerational Educational Stratification: SES → Achievement Gradient by Country',
-            font: { color: '#f1f5f9', size: 16 }
+            text: 'Intergenerational Educational Stratification: SES → Achievement Gradient by Country'
         },
         geo: {
             projection: {
                 type: 'natural earth'
             },
-            bgcolor: '#1e293b',
+            bgcolor: 'rgba(0,0,0,0)',
             showframe: false,
             showcoastlines: true,
-            coastlinecolor: '#64748b',
+            coastlinecolor: '#cfd4dc',
             showcountries: true,
-            countrycolor: '#475569',
+            countrycolor: '#e4e7ec',
             showland: true,
-            landcolor: '#0f172a',
+            landcolor: '#eef0f4',
             showocean: true,
-            oceancolor: '#0a1628',
+            oceancolor: '#f7f9fb',
             showlakes: false
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         margin: { t: 80, b: 20, l: 20, r: 80 },
         height: 600
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('world-map');
     if (chartDiv) {
@@ -425,7 +386,7 @@ export function renderTemporalTrends(data, outcomeVar = 'math', predictorVar = '
     if (validCountries.length === 0) {
         const chartDiv = document.getElementById('temporal-trends');
         if (chartDiv) {
-            chartDiv.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">Need at least 2 years of data per country to show temporal trends.</p>';
+            chartDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">Need at least 2 years of data per country to show temporal trends.</p>';
         }
         return;
     }
@@ -469,51 +430,34 @@ export function renderTemporalTrends(data, outcomeVar = 'math', predictorVar = '
         };
     });
 
-    const layout = {
+    const layout = baseLayout({
         title: {
-            text: 'Temporal Trends: SES → Achievement Gradient Over Time',
-            font: { color: '#f1f5f9', size: 16 }
+            text: 'Temporal Trends: SES → Achievement Gradient Over Time'
         },
         xaxis: {
-            title: 'Year',
-            gridcolor: '#334155',
+            title: { text: 'Year' },
             type: 'linear',
             tickmode: 'array',
             tickvals: allYears,
             ticktext: allYears.map(String),
-            tickformat: 'd',
-            automargin: true
+            tickformat: 'd'
         },
         yaxis: {
-            title: 'SES Gradient (points per SD)',
-            gridcolor: '#334155'
+            title: { text: 'SES Gradient (points per SD)' }
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: true,
         legend: {
             x: 1.05,
             y: 1,
             yanchor: 'top',
             xanchor: 'left',
-            bgcolor: 'rgba(30, 41, 59, 0.8)',
-            bordercolor: '#475569',
-            borderwidth: 1,
-            itemsizing: 'constant',
-            tracegroupgap: 5,
-            font: { size: 11 }
+            tracegroupgap: 5
         },
         hovermode: 'closest',
         margin: { t: 80, b: 60, l: 60, r: 200 }
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('temporal-trends');
     if (chartDiv) {

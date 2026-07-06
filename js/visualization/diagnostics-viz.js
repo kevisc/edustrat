@@ -6,6 +6,8 @@
  * Date: 2026-01-10
  */
 
+import { CHART_COLORS, STATUS, INK, baseLayout, BASE_CONFIG } from './chart-theme.js';
+
 /**
  * Create model comparison summary table
  * @param {Object} models - Object containing OLS, FE, RE models
@@ -41,15 +43,6 @@ export function createDiagnosticsComparisonTable(models) {
         return -2 * logLik + k * Math.log(n);
     };
 
-    // Find best model by AIC
-    const aicValues = {
-        'OLS': getAIC(ols),
-        'FE': getAIC(fe),
-        'RE': getAIC(re)
-    };
-    const validAIC = Object.entries(aicValues).filter(([_, v]) => v !== null);
-    const bestAIC = validAIC.length > 0 ? validAIC.reduce((a, b) => a[1] < b[1] ? a : b)[0] : null;
-
     const formatValue = (val, decimals = 4) => {
         if (val === undefined || val === null || isNaN(val)) return '—';
         return val.toFixed(decimals);
@@ -59,81 +52,48 @@ export function createDiagnosticsComparisonTable(models) {
         const vals = [ols?.[metric], fe?.[metric], re?.[metric]].filter(v => v !== undefined && !isNaN(v));
         if (vals.length === 0) return '';
         const best = lower ? Math.min(...vals) : Math.max(...vals);
-        return model?.[metric] === best ? 'style="color: #10b981; font-weight: 600;"' : '';
+        return model?.[metric] === best ? `style="color: ${STATUS.good}; font-weight: 600;"` : '';
     };
 
-    let html = `
+    // Columns are built from the models actually present, with each model's own
+    // display name — so a per-country view with only OLS (+ year effects) shows
+    // two meaningful columns rather than a column of dashes.
+    const defaultNames = { ols: 'OLS (Pooled)', fixedEffects: 'Fixed Effects', randomEffects: 'Random Effects' };
+    const cols = ['ols', 'fixedEffects', 'randomEffects']
+        .filter(key => models[key])
+        .map(key => ({ key, model: models[key], name: models[key].modelName || defaultNames[key] }));
+
+    const aicByKey = Object.fromEntries(cols.map(c => [c.key, getAIC(c.model)]));
+    const validAICList = cols.filter(c => aicByKey[c.key] !== null);
+    const bestAICKey = validAICList.length > 1
+        ? validAICList.reduce((a, b) => (aicByKey[a.key] < aicByKey[b.key] ? a : b)).key
+        : null;
+
+    const row = (label, cellFn) =>
+        `<tr><td><strong>${label}</strong></td>${cols.map(c => `<td ${cellFn(c).style || ''}>${cellFn(c).text}</td>`).join('')}</tr>`;
+    const plain = fn => c => ({ text: fn(c.model) });
+
+    const html = `
         <div class="model-box">
             <div class="model-header">Model Fit Comparison</div>
             <table class="coef-table">
                 <thead>
-                    <tr>
-                        <th>Statistic</th>
-                        <th>OLS (Pooled)</th>
-                        <th>Fixed Effects</th>
-                        <th>Random Effects</th>
-                    </tr>
+                    <tr><th>Statistic</th>${cols.map(c => `<th>${c.name}</th>`).join('')}</tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td><strong>Sample Size (N)</strong></td>
-                        <td>${ols?.nobs?.toLocaleString() || '—'}</td>
-                        <td>${fe?.nobs?.toLocaleString() || '—'}</td>
-                        <td>${re?.nobs?.toLocaleString() || '—'}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Number of Groups</strong></td>
-                        <td>—</td>
-                        <td>${fe?.ngroups || '—'}</td>
-                        <td>${re?.ngroups || '—'}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>R² (Overall)</strong></td>
-                        <td ${highlightBest(ols, 'r2', false)}>${formatValue(ols?.r2)}</td>
-                        <td ${highlightBest(fe, 'r2', false)}>${formatValue(fe?.r2)}</td>
-                        <td ${highlightBest(re, 'r2', false)}>${formatValue(re?.r2)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>R² (Within)</strong></td>
-                        <td>—</td>
-                        <td>${formatValue(fe?.r2Within)}</td>
-                        <td>${formatValue(re?.r2Within)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>R² (Between)</strong></td>
-                        <td>—</td>
-                        <td>${formatValue(fe?.r2Between)}</td>
-                        <td>${formatValue(re?.r2Between)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Adjusted R²</strong></td>
-                        <td>${formatValue(ols?.adjR2)}</td>
-                        <td>${formatValue(fe?.adjR2)}</td>
-                        <td>${formatValue(re?.adjR2)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>AIC</strong></td>
-                        <td ${bestAIC === 'OLS' ? 'style="color: #10b981; font-weight: 600;"' : ''}>${formatValue(getAIC(ols), 1)}</td>
-                        <td ${bestAIC === 'FE' ? 'style="color: #10b981; font-weight: 600;"' : ''}>${formatValue(getAIC(fe), 1)}</td>
-                        <td ${bestAIC === 'RE' ? 'style="color: #10b981; font-weight: 600;"' : ''}>${formatValue(getAIC(re), 1)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>BIC</strong></td>
-                        <td>${formatValue(getBIC(ols), 1)}</td>
-                        <td>${formatValue(getBIC(fe), 1)}</td>
-                        <td>${formatValue(getBIC(re), 1)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>ICC (ρ)</strong></td>
-                        <td>—</td>
-                        <td>${formatValue(fe?.rho)}</td>
-                        <td>${formatValue(re?.rho)}</td>
-                    </tr>
+                    ${row('Sample Size (N)', plain(m => m?.nobs?.toLocaleString() || '—'))}
+                    ${row('Number of Groups', plain(m => m?.ngroups || '—'))}
+                    ${row('R² (Overall)', c => ({ text: formatValue(c.model?.r2), style: highlightBest(c.model, 'r2', false) }))}
+                    ${row('R² (Within)', plain(m => formatValue(m?.r2Within)))}
+                    ${row('R² (Between)', plain(m => formatValue(m?.r2Between)))}
+                    ${row('Adjusted R²', plain(m => formatValue(m?.adjR2)))}
+                    ${row('AIC', c => ({ text: formatValue(aicByKey[c.key], 1), style: c.key === bestAICKey ? `style="color: ${STATUS.good}; font-weight: 600;"` : '' }))}
+                    ${row('BIC', plain(m => formatValue(getBIC(m), 1)))}
+                    ${row('ICC (ρ)', plain(m => formatValue(m?.rho)))}
                 </tbody>
             </table>
             <div class="methodology-note" style="margin-top: 1rem; font-size: 0.9rem;">
-                <span style="color: #10b981;">●</span> Green = best value for that metric.
-                Lower AIC/BIC = better fit. Higher R² = more variance explained.
+                Green = best value for that metric. Lower AIC/BIC = better fit. Higher R² = more variance explained.
             </div>
         </div>
     `;
@@ -157,7 +117,7 @@ export function createHausmanTestPanel(hausmanResult) {
     }
 
     const isSignificant = hausmanResult.pValue < 0.05;
-    const statusColor = isSignificant ? '#ef4444' : '#10b981';
+    const statusColor = isSignificant ? STATUS.serious : STATUS.good;
     const recommendation = isSignificant ? 'Fixed Effects' : 'Random Effects';
 
     return `
@@ -206,9 +166,9 @@ export function createResidualDiagnosticsTable(models) {
     }
 
     const modelList = [
-        { key: 'ols', name: 'OLS (Pooled)' },
-        { key: 'fixedEffects', name: 'Fixed Effects' },
-        { key: 'randomEffects', name: 'Random Effects' }
+        { key: 'ols', name: models.ols?.modelName || 'OLS (Pooled)' },
+        { key: 'fixedEffects', name: models.fixedEffects?.modelName || 'Fixed Effects' },
+        { key: 'randomEffects', name: models.randomEffects?.modelName || 'Random Effects' }
     ];
 
     const getStats = (model) => {
@@ -237,8 +197,9 @@ export function createResidualDiagnosticsTable(models) {
 
         // Heteroscedasticity check (variance ratio upper/lower half)
         let heteroRatio = null;
-        if (model.yhat) {
-            const pairs = model.yhat.map((y, i) => ({ yhat: y, resid: model.residuals[i] }))
+        const fittedVals = model.fitted || model.yhat;   // model objects expose `fitted`
+        if (fittedVals) {
+            const pairs = fittedVals.map((y, i) => ({ yhat: y, resid: model.residuals[i] }))
                 .filter(p => Number.isFinite(p.yhat) && Number.isFinite(p.resid))
                 .sort((a, b) => a.yhat - b.yhat);
 
@@ -292,13 +253,14 @@ export function createResidualDiagnosticsTable(models) {
         return '<p class="text-secondary">No residual data available.</p>';
     }
 
-    // Residual Mean (should be ≈ 0)
+    // Residual Mean — judged relative to the residual SD (the weighted mean is
+    // zero by construction under survey-weighted estimation).
     html += `<tr><td><strong>Residual Mean</strong></td>`;
     modelList.forEach(({ key }) => {
         if (stats[key]) {
             const val = stats[key].mean;
-            const ok = Math.abs(val) < 1;
-            html += `<td style="color: ${ok ? '#10b981' : '#f59e0b'};">${val.toFixed(4)}</td>`;
+            const ok = Math.abs(val) / Math.max(stats[key].sd, 1e-9) < 0.1;
+            html += `<td style="color: ${ok ? STATUS.good : STATUS.warning};">${val.toFixed(2)}</td>`;
         }
     });
     html += `</tr>`;
@@ -316,7 +278,7 @@ export function createResidualDiagnosticsTable(models) {
         if (stats[key]) {
             const val = stats[key].skewness;
             const ok = Math.abs(val) < 1;
-            html += `<td style="color: ${ok ? '#10b981' : Math.abs(val) < 2 ? '#f59e0b' : '#ef4444'};">${val.toFixed(3)}</td>`;
+            html += `<td style="color: ${ok ? STATUS.good : Math.abs(val) < 2 ? STATUS.warning : STATUS.serious};">${val.toFixed(3)}</td>`;
         }
     });
     html += `</tr>`;
@@ -327,7 +289,7 @@ export function createResidualDiagnosticsTable(models) {
         if (stats[key]) {
             const val = stats[key].kurtosis;
             const ok = Math.abs(val) < 2;
-            html += `<td style="color: ${ok ? '#10b981' : Math.abs(val) < 7 ? '#f59e0b' : '#ef4444'};">${val.toFixed(3)}</td>`;
+            html += `<td style="color: ${ok ? STATUS.good : Math.abs(val) < 7 ? STATUS.warning : STATUS.serious};">${val.toFixed(3)}</td>`;
         }
     });
     html += `</tr>`;
@@ -344,7 +306,7 @@ export function createResidualDiagnosticsTable(models) {
         if (stats[key]) {
             const p = stats[key].jbPValue;
             const ok = p >= 0.05;
-            html += `<td style="color: ${ok ? '#10b981' : '#ef4444'};">${p < 0.001 ? '< 0.001' : p.toFixed(4)}</td>`;
+            html += `<td style="color: ${ok ? STATUS.good : STATUS.serious};">${p < 0.001 ? '< 0.001' : p.toFixed(4)}</td>`;
         }
     });
     html += `</tr>`;
@@ -356,7 +318,7 @@ export function createResidualDiagnosticsTable(models) {
             const val = stats[key].heteroRatio;
             if (val) {
                 const ok = val < 1.5;
-                html += `<td style="color: ${ok ? '#10b981' : val < 2 ? '#f59e0b' : '#ef4444'};">${val.toFixed(2)}</td>`;
+                html += `<td style="color: ${ok ? STATUS.good : val < 2 ? STATUS.warning : STATUS.serious};">${val.toFixed(2)}</td>`;
             } else {
                 html += `<td>—</td>`;
             }
@@ -370,7 +332,7 @@ export function createResidualDiagnosticsTable(models) {
         if (stats[key]) {
             const pct = stats[key].outlierPct;
             const ok = pct < 1;
-            html += `<td style="color: ${ok ? '#10b981' : pct < 3 ? '#f59e0b' : '#ef4444'};">${stats[key].outliers} (${pct.toFixed(2)}%)</td>`;
+            html += `<td style="color: ${ok ? STATUS.good : pct < 3 ? STATUS.warning : STATUS.serious};">${stats[key].outliers} (${pct.toFixed(2)}%)</td>`;
         }
     });
     html += `</tr>`;
@@ -391,9 +353,9 @@ export function createCooksDistanceSummary(models) {
     }
 
     const modelList = [
-        { key: 'ols', name: 'OLS (Pooled)' },
-        { key: 'fixedEffects', name: 'Fixed Effects' },
-        { key: 'randomEffects', name: 'Random Effects' }
+        { key: 'ols', name: models.ols?.modelName || 'OLS (Pooled)' },
+        { key: 'fixedEffects', name: models.fixedEffects?.modelName || 'Fixed Effects' },
+        { key: 'randomEffects', name: models.randomEffects?.modelName || 'Random Effects' }
     ];
 
     const getCooksStats = (model) => {
@@ -461,7 +423,7 @@ export function createCooksDistanceSummary(models) {
         if (stats[key]) {
             const pct = stats[key].influentialPct;
             const ok = pct < 5;
-            html += `<td style="color: ${ok ? '#10b981' : pct < 10 ? '#f59e0b' : '#ef4444'};">${stats[key].influential} (${pct.toFixed(1)}%)</td>`;
+            html += `<td style="color: ${ok ? STATUS.good : pct < 10 ? STATUS.warning : STATUS.serious};">${stats[key].influential} (${pct.toFixed(1)}%)</td>`;
         }
     });
     html += `</tr>`;
@@ -471,7 +433,7 @@ export function createCooksDistanceSummary(models) {
         if (stats[key]) {
             const val = stats[key].maxCooks;
             const ok = val < 1;
-            html += `<td style="color: ${ok ? '#10b981' : '#ef4444'};">${val.toFixed(4)}</td>`;
+            html += `<td style="color: ${ok ? STATUS.good : STATUS.serious};">${val.toFixed(4)}</td>`;
         }
     });
     html += `</tr>`;
@@ -497,16 +459,20 @@ export function createAssumptionCheckSummary(models, hausmanResult) {
     const checks = [];
     const ols = models?.ols;
 
-    // 1. Linearity
+    // 1. Linearity. Judged relative to the residual spread: with survey weights the
+    // WEIGHTED residual mean is exactly zero by construction, so the unweighted
+    // mean can sit away from zero on the score scale without signalling anything.
     if (ols?.residuals) {
         const residuals = ols.residuals.filter(Number.isFinite);
         const mean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
-        const status = Math.abs(mean) < 1 ? 'pass' : Math.abs(mean) < 5 ? 'warning' : 'fail';
+        const sd = Math.sqrt(residuals.reduce((s, r) => s + (r - mean) ** 2, 0) / residuals.length);
+        const rel = Math.abs(mean) / Math.max(sd, 1e-9);
+        const status = rel < 0.1 ? 'pass' : rel < 0.25 ? 'warning' : 'fail';
         checks.push({
             name: 'Linearity',
             status,
-            value: `Mean residual: ${mean.toFixed(3)}`,
-            expected: 'Should be ≈ 0'
+            value: `Mean residual: ${mean.toFixed(2)} (${rel.toFixed(2)} SD)`,
+            expected: 'Small relative to residual SD'
         });
     }
 
@@ -530,8 +496,9 @@ export function createAssumptionCheckSummary(models, hausmanResult) {
     }
 
     // 3. Homoscedasticity
-    if (ols?.residuals && ols?.yhat) {
-        const pairs = ols.yhat.map((y, i) => ({ yhat: y, resid: ols.residuals[i] }))
+    const olsFitted = ols?.fitted || ols?.yhat;   // model objects expose `fitted`
+    if (ols?.residuals && olsFitted) {
+        const pairs = olsFitted.map((y, i) => ({ yhat: y, resid: ols.residuals[i] }))
             .filter(p => Number.isFinite(p.yhat) && Number.isFinite(p.resid))
             .sort((a, b) => a.yhat - b.yhat);
 
@@ -577,38 +544,37 @@ export function createAssumptionCheckSummary(models, hausmanResult) {
         });
     }
 
-    const statusColors = { pass: '#10b981', warning: '#f59e0b', fail: '#ef4444' };
-    const statusLabels = { pass: 'Pass', warning: 'Caution', fail: 'Concern' };
+    // Card grid with status badges (symbol + label, never color alone).
+    const badge = {
+        pass: '<span class="assn-badge assn-pass">✓ Pass</span>',
+        warning: '<span class="assn-badge assn-warning">! Caution</span>',
+        fail: '<span class="assn-badge assn-fail">✕ Concern</span>'
+    };
 
-    let html = `
-        <div class="model-box">
-            <div class="model-header">Assumption Check Summary</div>
-            <table class="coef-table">
-                <thead>
-                    <tr>
-                        <th>Assumption</th>
-                        <th>Status</th>
-                        <th>Result</th>
-                        <th>Interpretation</th>
-                    </tr>
-                </thead>
-                <tbody>
+    const nPass = checks.filter(c => c.status === 'pass').length;
+    const nWarn = checks.filter(c => c.status === 'warning').length;
+    const nFail = checks.filter(c => c.status === 'fail').length;
+    const verdict = nFail > 0
+        ? `${nFail} assumption${nFail > 1 ? 's' : ''} of concern — read the details below before trusting the estimates.`
+        : nWarn > 0
+            ? `${nPass} of ${checks.length} assumptions pass; ${nWarn} warrant${nWarn === 1 ? 's' : ''} a closer look.`
+            : `All ${checks.length} assumptions pass.`;
+
+    const cards = checks.map(check => `
+        <div class="assn-card">
+            <div class="assn-card-head">
+                <span class="assn-name">${check.name}</span>
+                ${badge[check.status]}
+            </div>
+            <div class="assn-value">${check.value}</div>
+            <div class="assn-expected">${check.expected}</div>
+        </div>
+    `).join('');
+
+    return `
+        <p class="assn-verdict">${verdict}</p>
+        <div class="assn-grid">${cards}</div>
     `;
-
-    checks.forEach(check => {
-        html += `
-            <tr>
-                <td><strong>${check.name}</strong></td>
-                <td style="color: ${statusColors[check.status]}; font-weight: 600;">${statusLabels[check.status]}</td>
-                <td>${check.value}</td>
-                <td style="color: var(--text-secondary);">${check.expected}</td>
-            </tr>
-        `;
-    });
-
-    html += `</tbody></table></div>`;
-
-    return html;
 }
 
 /**
@@ -618,15 +584,16 @@ export function createAssumptionCheckSummary(models, hausmanResult) {
  * @param {String} targetElementId - Target div ID
  */
 export function renderResidualPlotOptimized(model, modelName, targetElementId) {
-    if (!model || !model.residuals || !model.yhat) {
+    const fittedVals = model?.fitted || model?.yhat;   // model objects expose `fitted`
+    if (!model || !model.residuals || !fittedVals) {
         const div = document.getElementById(targetElementId);
         if (div) div.innerHTML = '<p class="text-secondary">No residual data available for this model.</p>';
         return;
     }
 
     const pairs = [];
-    for (let i = 0; i < model.yhat.length; i++) {
-        const fitted = model.yhat[i];
+    for (let i = 0; i < fittedVals.length; i++) {
+        const fitted = fittedVals[i];
         const residual = model.residuals[i];
         if (Number.isFinite(fitted) && Number.isFinite(residual)) {
             pairs.push([fitted, residual]);
@@ -661,7 +628,7 @@ export function renderResidualPlotOptimized(model, modelName, targetElementId) {
         name: 'Residuals',
         marker: {
             size: 3,
-            color: '#3b82f6',
+            color: CHART_COLORS[0],
             opacity: 0.4
         },
         hovertemplate: 'Fitted: %{x:.1f}<br>Residual: %{y:.1f}<extra></extra>'
@@ -676,29 +643,22 @@ export function renderResidualPlotOptimized(model, modelName, targetElementId) {
         mode: 'lines',
         type: 'scatter',
         name: 'Zero',
-        line: { color: '#ef4444', width: 2, dash: 'dash' }
+        line: { color: INK.reference, width: 2, dash: 'dash' }
     };
 
-    const layout = {
+    const layout = baseLayout({
         title: {
             text: `Residual vs Fitted: ${modelName} (n=${pairs.length.toLocaleString()}, showing ${sampledPairs.length.toLocaleString()})`,
-            font: { color: '#f1f5f9', size: 14 }
+            font: { size: 14 }
         },
-        xaxis: { title: 'Fitted Values', gridcolor: '#334155' },
-        yaxis: { title: 'Residuals', gridcolor: '#334155' },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
+        xaxis: { title: { text: 'Fitted Values' } },
+        yaxis: { title: { text: 'Residuals' } },
         showlegend: false,
         hovermode: 'closest',
         margin: { t: 50, b: 50, l: 60, r: 30 }
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById(targetElementId);
     if (chartDiv) {

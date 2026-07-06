@@ -5,6 +5,25 @@
  * Date: 2025-12-16
  */
 
+import { calculateGini } from '../core/utils.js';
+import { CHART_COLORS, INK, baseLayout, BASE_CONFIG } from './chart-theme.js';
+
+/**
+ * Get a record's weight (matches the rule used across the analysis modules).
+ * @param {Object} record - Student record
+ * @param {String} weightType - 'student' | 'senate' | 'none'
+ * @returns {Number} weight
+ */
+function getWeight(record, weightType) {
+    if (weightType === 'none') return 1;
+    if (weightType === 'senate') {
+        const v = record.w_fsenwt || record.senateWeight || record.W_FSENWT;
+        return (v && isFinite(+v) && +v > 0) ? +v : 1;
+    }
+    const v = record.stu_wgt || record.w_fstuwt || record.studentWeight || record.W_FSTUWT || record.weight;
+    return (v && isFinite(+v) && +v > 0) ? +v : 1;
+}
+
 /**
  * Render distribution box plots by country and year
  * @param {Array} data - Array of student records
@@ -21,7 +40,8 @@ export function renderDistributionChart(data, outcomeVar = 'math') {
     const legendYears = new Set(); // Track which years have been added to legend
 
     // Create a box plot trace for each country-year combination
-    years.forEach(year => {
+    years.forEach((year, yearIdx) => {
+        const yearColor = CHART_COLORS[yearIdx % CHART_COLORS.length];
         countries.forEach(country => {
             const countryYearData = data.filter(d => d.country === country && d.year === year);
             const scores = countryYearData.map(d => +d[outcomeVar]).filter(isFinite);
@@ -39,8 +59,8 @@ export function renderDistributionChart(data, outcomeVar = 'math') {
                     name: `${year}`,
                     type: 'box',
                     boxpoints: false,
-                    marker: { size: 4 },
-                    line: { width: 2 },
+                    marker: { size: 4, color: yearColor },
+                    line: { width: 2, color: yearColor },
                     offsetgroup: year,
                     legendgroup: year,
                     showlegend: showLegendForYear, // Show legend once per year
@@ -52,22 +72,16 @@ export function renderDistributionChart(data, outcomeVar = 'math') {
         });
     });
 
-    const layout = {
+    const layout = baseLayout({
         title: {
-            text: `${getOutcomeLabel(outcomeVar)} Score Distributions: Country × Year Comparison`,
-            font: { color: '#f1f5f9', size: 16 }
+            text: `${getOutcomeLabel(outcomeVar)} Score Distributions: Country × Year Comparison`
         },
         xaxis: {
-            title: 'Country',
-            gridcolor: '#334155'
+            title: { text: 'Country' }
         },
         yaxis: {
-            title: `${getOutcomeLabel(outcomeVar)} Score`,
-            gridcolor: '#334155'
+            title: { text: `${getOutcomeLabel(outcomeVar)} Score` }
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         boxmode: 'group',
         showlegend: true,
         legend: {
@@ -76,23 +90,13 @@ export function renderDistributionChart(data, outcomeVar = 'math') {
             xanchor: 'left',
             y: 1,
             yanchor: 'top',
-            bgcolor: 'rgba(30, 41, 59, 0.8)',
-            bordercolor: '#475569',
-            borderwidth: 1,
-            itemsizing: 'constant',
-            tracegroupgap: 5,
-            font: { size: 11 }
+            tracegroupgap: 5
         },
         hovermode: 'closest',
         margin: { l: 60, r: 150, t: 80, b: 80 }
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('distribution-chart');
     if (chartDiv) {
@@ -136,36 +140,25 @@ export function renderPercentileChart(data, outcomeVar = 'math') {
         }
     });
 
-    const layout = {
-        title: `Achievement Percentiles by Country`,
+    const layout = baseLayout({
+        title: { text: `Achievement Percentiles by Country` },
         height: 420,
         xaxis: {
-            title: 'Percentile',
+            title: { text: 'Percentile' },
             tickvals: [0, 1, 2, 3, 4],
-            ticktext: ['P10', 'P25', 'P50', 'P75', 'P90'],
-            gridcolor: '#334155'
+            ticktext: ['P10', 'P25', 'P50', 'P75', 'P90']
         },
         yaxis: {
-            title: `${getOutcomeLabel(outcomeVar)} Score`,
-            gridcolor: '#334155'
+            title: { text: `${getOutcomeLabel(outcomeVar)} Score` }
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: true,
         legend: {
             y: 1,
-            yanchor: 'top',
-            itemsizing: 'constant',
-            font: { size: 11 }
+            yanchor: 'top'
         }
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('percentile-chart');
     if (chartDiv) {
@@ -174,11 +167,19 @@ export function renderPercentileChart(data, outcomeVar = 'math') {
 }
 
 /**
- * Render Lorenz curve for inequality visualization
+ * Render Lorenz curve for inequality visualization.
+ *
+ * The curve is survey-weighted, so it corresponds to the weighted Gini coefficient
+ * the rest of the app reports: students are ranked by score and the cumulative
+ * *weight* share (x) is plotted against the cumulative *weighted-score* share (y).
+ * Each country's weighted Gini is shown in the legend so the visual gap from the
+ * 45° line and its single-number summary are read together.
+ *
  * @param {Array} data - Array of student records
  * @param {String} outcomeVar - Name of outcome variable
+ * @param {String} weightType - 'student' | 'senate' | 'none'
  */
-export function renderLorenzCurve(data, outcomeVar = 'math') {
+export function renderLorenzCurve(data, outcomeVar = 'math', weightType = 'student') {
     if (!data || data.length === 0) {
         return;
     }
@@ -186,81 +187,78 @@ export function renderLorenzCurve(data, outcomeVar = 'math') {
     const countries = [...new Set(data.map(d => d.country))];
     const traces = [];
 
-    // Add line of equality
+    // Line of perfect equality (every student has the same score).
     traces.push({
         x: [0, 1],
         y: [0, 1],
         type: 'scatter',
         mode: 'lines',
-        name: 'Perfect Equality',
-        line: {
-            dash: 'dash',
-            color: '#999',
-            width: 2
-        }
+        name: 'Perfect equality',
+        line: { dash: 'dash', color: INK.reference, width: 2 },
+        hoverinfo: 'skip'
     });
 
-    // Add Lorenz curve for each country
+    // Weighted Lorenz curve for each country.
     countries.forEach(country => {
-        const countryData = data.filter(d => d.country === country);
-        const scores = countryData.map(d => +d[outcomeVar]).filter(isFinite);
+        const rows = [];
+        data.forEach(d => {
+            if (d.country !== country) return;
+            const v = +d[outcomeVar];
+            if (isFinite(v)) rows.push({ v, w: getWeight(d, weightType) });
+        });
+        if (rows.length === 0) return;
 
-        if (scores.length > 0) {
-            scores.sort((a, b) => a - b);
+        rows.sort((a, b) => a.v - b.v);
+        const totalW = rows.reduce((s, r) => s + r.w, 0);
+        const totalWY = rows.reduce((s, r) => s + r.w * r.v, 0);
+        if (!(totalW > 0) || !(totalWY > 0)) return;
 
-            const n = scores.length;
-            const cumSum = scores.reduce((acc, val, i) => {
-                acc.push((acc[i] || 0) + val);
-                return acc;
-            }, []);
-
-            const totalSum = cumSum[n - 1];
-            const x = cumSum.map((_, i) => (i + 1) / n);
-            const y = cumSum.map(sum => sum / totalSum);
-
-            traces.push({
-                x: [0, ...x],
-                y: [0, ...y],
-                type: 'scatter',
-                mode: 'lines',
-                name: country,
-                line: { width: 2 }
-            });
+        const x = [0], y = [0];
+        let cw = 0, cwy = 0;
+        for (const r of rows) {
+            cw += r.w; cwy += r.w * r.v;
+            x.push(cw / totalW);
+            y.push(cwy / totalWY);
         }
+
+        const gini = calculateGini(rows.map(r => r.v), weightType !== 'none' ? rows.map(r => r.w) : null);
+
+        traces.push({
+            x, y,
+            type: 'scatter',
+            mode: 'lines',
+            name: `${country} — Gini ${gini.toFixed(3)}`,
+            line: { width: 2 },
+            hovertemplate: `${country}<br>the lowest-scoring %{x:.0%} of students<br>hold %{y:.0%} of the total score<extra></extra>`
+        });
     });
 
-    const layout = {
-        title: 'Lorenz Curve: Achievement Distribution',
+    const layout = baseLayout({
+        title: { text: 'Lorenz Curve: Achievement Distribution' },
         height: 420,
         xaxis: {
-            title: 'Cumulative Population Proportion',
-            range: [0, 1],
-            gridcolor: '#334155'
+            title: { text: 'Cumulative share of students (lowest → highest score)' },
+            range: [0, 1]
         },
         yaxis: {
-            title: 'Cumulative Achievement Proportion',
-            range: [0, 1],
-            gridcolor: '#334155'
+            title: { text: 'Cumulative share of total score' },
+            range: [0, 1]
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: true,
         legend: {
             y: 1,
             yanchor: 'top',
-            itemsizing: 'constant',
-            tracegroupgap: 5,
-            font: { size: 11 }
+            tracegroupgap: 5
         },
-        hovermode: 'x unified'
-    };
+        hovermode: 'closest',
+        annotations: [{
+            x: 0.66, y: 0.28, xref: 'x', yref: 'y', align: 'left',
+            text: 'Area between a curve and the<br>diagonal ↔ Gini (twice it).<br>Closer to the line = more equal.',
+            showarrow: false, font: { size: 11, color: INK.secondary }
+        }]
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('lorenz-curve');
     if (chartDiv) {
@@ -273,10 +271,10 @@ export function renderLorenzCurve(data, outcomeVar = 'math') {
  * @param {Array} data - Array of student records
  * @param {String} outcomeVar - Name of outcome variable
  */
-export function renderAllDistributionCharts(data, outcomeVar = 'math') {
+export function renderAllDistributionCharts(data, outcomeVar = 'math', weightType = 'student') {
     renderDistributionChart(data, outcomeVar);
     renderPercentileChart(data, outcomeVar);
-    renderLorenzCurve(data, outcomeVar);
+    renderLorenzCurve(data, outcomeVar, weightType);
 }
 
 /**

@@ -8,10 +8,16 @@ records the result.
 
 The short version: **every estimator the application reports is checked, on real
 PISA data, against an independent reference implementation in R built from
-peer-reviewed packages (`stats`, `plm`, `lmtest`, `car`, `intsvy`).** Three harnesses
+peer-reviewed packages (`stats`, `plm`, `lmtest`, `car`, `intsvy`, `mice`, `sandwich`).** Seven harnesses
 run: 83 checks on the point estimates and model-based statistics, 21 checks on the
-design-correct (BRR replicate-weight) standard errors across three PISA cycles, and a
-headless-browser smoke-test that runs the app in real Chrome. All pass; the great
+design-correct (BRR replicate-weight) standard errors across three PISA cycles, 38
+checks on the within-country trend estimators (per-cycle estimates and both trend
+regressions), 18 checks on the FIML missing-data estimator (against an independent R EM
+and `mice`), 23 checks on the inequality/clustering estimators (Theil decomposition,
+school-clustered standard errors, Oaxaca–Blinder, plausible-value pooling, panel R²,
+senate weights), 19 checks on the "Show the R" code generator (including executing a
+generated snippet in R and reproducing the app's numbers), and a headless-browser
+smoke-test that runs the app in real Chrome. All pass; the great
 majority of numerical checks agree with R to between 10 and 14 significant figures,
 and the documented exceptions are listed below.
 
@@ -191,6 +197,128 @@ honest about this, and lets students see it directly by comparing the two.
 This is a *limited-scope* implementation by design: the replicate-weight pipeline is
 provided and documented, and was run for five countries across three cycles. Extending
 it to further cycles/countries is a matter of re-running `05-add-replicate-weights.R`.
+
+## Within-country trends (a country-level panel over PISA cycles)
+
+The **Trends** tab estimates how a focal statistic — mean achievement, the ESCS
+gradient, the achievement Gini, or the Q4–Q1 SES gap — moves across PISA cycles
+*within* a country, and fits a country fixed-effects panel across several countries.
+PISA is a series of repeated cross-sections, so this is a *country-level* panel
+(one estimate per country per cycle), not an individual panel; the tab states this
+explicitly and flags the cross-cycle comparability breaks (the 2015 move to
+computer-based delivery, the 2022 pandemic cycle, the periodic re-scaling of ESCS).
+
+Each new estimator reduces to ordinary (weighted) least squares and is verified
+against `stats::lm` on the same chunks by `pipeline/scripts/07-verify-trends.R`:
+
+- **Per-cycle estimates** — the weighted mean reproduces `lm(y ~ 1, weights = w)`
+  and the ESCS gradient reproduces `lm(y ~ escs, weights = w)`, both point estimate
+  and standard error, to between ten and fifteen significant figures across all
+  eight Finnish cycles.
+- **Per-country trend** — a precision-weighted regression of the per-cycle estimate
+  on time in decades, `lm(theta ~ I((year-2000)/10), weights = 1/se^2)`, matched on
+  slope and standard error.
+- **Country fixed-effects panel** — `lm(theta ~ I((year-2000)/10) + factor(country),
+  weights = 1/se^2)`, the average within-country trend net of fixed country levels,
+  matched on slope and standard error.
+
+All 38 checks pass. The two trend regressions agree with R to about eight significant
+figures rather than to machine precision, because `weightedOLS` adds the same
+`1e-10·tr(XᵀWX)` ridge documented for the random-effects slope above; the per-cycle
+means, which are computed in closed form, match to full precision. Run it with:
+
+```bash
+cd pipeline/verification && node run-trends.mjs   # -> trends-js-results.json
+Rscript pipeline/scripts/07-verify-trends.R       # -> trends-verification-report.csv  (38/38)
+```
+
+The Gini and gap trajectories are shown as point estimates; their per-cycle standard
+errors (and hence confidence bands and precision weighting) are reported only where
+the chunk carries replicate weights, otherwise the trend for those metrics is fit
+equally-weighted and labelled as such in the interface.
+
+## Missing data: FIML against an independent R EM and `mice`
+
+Everywhere else EduStrat handles item-missingness by **listwise deletion**. The
+Regression tab adds a **full-information maximum likelihood (FIML)** alternative: it
+treats the outcome and the SES predictor as jointly normal and estimates the
+regression by the EM algorithm of Little & Rubin, using every partially-observed
+student rather than dropping it. Standard errors come from the numerical
+observed-information matrix (the negative Hessian of the weighted observed-data
+log-likelihood), propagated to the slope by a numerical delta method. The survey
+weights are normalised to the sample size so the information — and therefore the
+standard error — is on the sample scale, not the population scale.
+
+Because the whole procedure is deterministic, it admits a tight check.
+`pipeline/scripts/08-verify-fiml.R` reimplements the EM and the numerical-Hessian
+standard errors independently in base R, and runs it on Finland, the United States,
+and Mexico (2018), for the ESCS gradient and the parental-education gradient:
+
+- **Point estimates** (the FIML slope and intercept) match the independent R EM to
+  **machine precision** (relative differences of 0 to ~1e-16) once both EMs are run
+  to a tight convergence tolerance.
+- **Standard errors** match the independent R numerical-Hessian computation to about
+  seven significant figures (~1e-7 relative).
+- **Convergent validity:** the FIML slope is additionally cross-checked against
+  `mice` multiple imputation (m = 20, Bayesian normal imputation, weighted pooling
+  by Rubin's rules) and agrees to within 0.1–0.9% on every dataset — independent
+  confirmation that the EM recovers the same MAR estimand as the standard MI tool.
+
+All 18 checks pass. Run it with:
+
+```bash
+cd pipeline/verification && node run-fiml.mjs     # -> fiml-js-results.json
+Rscript pipeline/scripts/08-verify-fiml.R         # -> fiml-verification-report.csv  (18/18)
+```
+
+FIML here assumes joint normality, so it is offered for continuous predictors (ESCS,
+or parental education as a numeric ISCED level); categorical controls such as gender
+violate that assumption and are better handled by multiple imputation, which is noted
+in the interface and left to a future extension.
+
+## The rigor ladder: Theil, school clustering, Oaxaca–Blinder, plausible values
+
+Four further estimators follow the same discipline (`pipeline/verification/run-rigor.mjs`
+→ `pipeline/scripts/09-verify-rigor.R`; 23 checks, all passing):
+
+- **Theil-T index and its additive decomposition** (`js/core/utils.js`) — total,
+  within-country, and between-country components match a definitional base-R
+  implementation to machine precision. Unlike the Gini, Theil decomposes exactly
+  into within + between, which the Gap Analysis tab now displays alongside the ICC.
+- **Cluster-robust (school) standard errors** (`js/analysis/regression.js`,
+  `applyClusterSE`) — PISA samples whole classrooms within schools, so the CR1
+  sandwich estimator clustered on `school_id` is attached to every OLS/FE fit.
+  Matches `sandwich::vcovCL(..., cluster = ~school_id, type = "HC1")` to ~1e-10.
+- **Oaxaca–Blinder decomposition** (`js/analysis/oaxaca.js`) — twofold and
+  threefold decompositions of a two-country gap (reference-group convention
+  stated in the interface), exact against base-R `lm` algebra; the identity
+  E + C + I = gap holds to floating-point precision.
+- **Plausible-value pooling (Rubin's rules)** (`js/analysis/pv-pooling.js`) —
+  pooled estimate, within/between variance, total SE, and Rubin df match base R
+  exactly on a deterministic synthetic multi-PV dataset. The machinery activates
+  automatically when chunks carry pv fields; `pipeline/scripts/10-add-plausible-values.R`
+  regenerates chunks with all PVs from the OECD PUF, following the same
+  limited-scope template as the replicate-weight pipeline. Until such chunks are
+  present, analyses remain single-PV (PV1) and the interface says so.
+
+The same harness formalizes two Phase-1 corrections: the fixed-effects
+within/between R² now follows the Stata `xtreg` convention (the within R² equals
+plm's within-model R² to 1e-8; the previous "simplified" formula was replaced),
+and senate weights are derived at load time as the final student weight rescaled
+to sum to 5,000 per country-cycle — the senate-weighted slope and SE match R on
+identically rescaled weights.
+
+## "Show the R": the code panels are themselves tested
+
+Every results surface carries a "Show the R code" panel (js/analysis/r-code-gen.js)
+whose claim — run this code, get these numbers — is tested in
+`pipeline/verification/run-rcode.mjs` (19 checks): each generated snippet is
+checked to contain the exact verified R call for its estimator, the "expected
+output" block is checked to carry the very numbers of the on-screen model object,
+and one generated snippet is **executed in R end-to-end**, reproducing the app's
+coefficient and standard error to ~1e-9. The learningtower data path is used for
+public reproduction; snippets switch to the OECD PUF preamble only where
+learningtower cannot supply the inputs (replicate weights).
 
 ## What "verified" does and does not mean
 

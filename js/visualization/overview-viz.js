@@ -6,6 +6,7 @@
  */
 
 import { calculateDescriptiveStats, calculateInequalityMeasures, calculateSESGradient } from '../analysis/descriptive.js';
+import { baseLayout, BASE_CONFIG } from './chart-theme.js';
 
 /**
  * Update overview statistics cards
@@ -112,19 +113,14 @@ export function renderOverviewChart(data, outcomeVar = 'math', predictorVar = 'e
     const predLabel = getPredictorLabel(predictorVar, true);
     const outcomeLabel = getOutcomeLabel(outcomeVar);
 
-    const layout = {
-        title: `Stratification of Achievement (${outcomeLabel})`,
+    const layout = baseLayout({
+        title: { text: `Stratification of Achievement (${outcomeLabel})` },
         xaxis: {
-            title: 'Mean Achievement Score',
-            gridcolor: '#334155'
+            title: { text: 'Mean Achievement Score' }
         },
         yaxis: {
-            title: `${predLabel} Gradient (Score Points per 1 unit)`,
-            gridcolor: '#334155'
+            title: { text: `${predLabel} Gradient (Score Points per 1 unit)` }
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         hovermode: 'closest',
         showlegend: true,
         legend: {
@@ -132,18 +128,11 @@ export function renderOverviewChart(data, outcomeVar = 'math', predictorVar = 'e
             xanchor: 'right',
             y: 1,
             yanchor: 'top',
-            itemsizing: 'constant',
-            tracegroupgap: 5,
-            font: { size: 11 }
+            tracegroupgap: 5
         }
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('overview-chart');
     if (chartDiv) {
@@ -180,32 +169,20 @@ export function renderCountryComparison(data, outcomeVar = 'math', weightType = 
     const trace = {
         x: sortedCountries,
         y: sortedCountries.map(c => countryStats[c]),
-        type: 'bar',
-        marker: {
-            color: '#3b82f6'
-        }
+        type: 'bar'
     };
 
-    const layout = {
-        title: 'Mean Achievement by Country',
+    const layout = baseLayout({
+        title: { text: 'Mean Achievement by Country' },
         xaxis: {
-            title: 'Country',
-            gridcolor: '#334155'
+            title: { text: 'Country' }
         },
         yaxis: {
-            title: `Mean ${getOutcomeLabel(outcomeVar)} Score`,
-            gridcolor: '#334155'
-        },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' }
-    };
+            title: { text: `Mean ${getOutcomeLabel(outcomeVar)} Score` }
+        }
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('country-comparison');
     if (chartDiv) {

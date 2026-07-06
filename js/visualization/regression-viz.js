@@ -5,6 +5,21 @@
  * Date: 2025-12-16
  */
 
+import { CHART_COLORS, INK, baseLayout, BASE_CONFIG } from './chart-theme.js';
+
+/**
+ * Fixed model → color mapping so a model keeps its color across every chart:
+ * OLS = CHART_COLORS[5], Fixed Effects = CHART_COLORS[1], Random Effects = CHART_COLORS[7].
+ * @param {String} modelName - Display name of the model
+ * @returns {String} Hex color
+ */
+function modelColor(modelName) {
+    const name = (modelName || '').toLowerCase();
+    if (name.includes('fixed')) return CHART_COLORS[1];
+    if (name.includes('random')) return CHART_COLORS[7];
+    return CHART_COLORS[5]; // OLS / pooled
+}
+
 /**
  * Get predictor value from a record, handling parent_edu ISCED codes
  * @param {Object} record - Student record
@@ -69,8 +84,9 @@ export function createModelTable(model) {
         <div class="model-box">
             <div class="model-header">${model.modelName}</div>
             <div class="methodology-note" style="margin-bottom: 1rem;">
-                N = ${model.nobs}${model.ngroups ? `, Groups = ${model.ngroups}` : ''}<br>
+                N = ${model.nobs.toLocaleString()}${model.ngroups ? `, Groups = ${model.ngroups}` : ''}<br>
                 ${model.seMethod ? `Standard errors: ${model.seMethod}<br>` : ''}
+                ${model.standardErrorsCluster && isFinite(model.standardErrorsCluster[1]) ? `School-clustered SE (focal predictor): ${model.standardErrorsCluster[1].toFixed(3)} across ${model.nClusters.toLocaleString()} schools — vs ${model.standardErrors[1].toFixed(3)} model-based; clustering students within schools changes the uncertainty.<br>` : ''}
                 ${useBRR ? `<span style="color: var(--text-secondary);">t, p and 95% CI use the BRR errors; the model-based column (SRS assumption) is shown for comparison.</span><br>` : ''}
                 ${model.r2Within !== undefined && !isNaN(model.r2Within) ? `R² (within) = ${model.r2Within.toFixed(3)}<br>` : ''}
                 ${model.r2Between !== undefined && !isNaN(model.r2Between) ? `R² (between) = ${model.r2Between.toFixed(3)}<br>` : ''}
@@ -113,12 +129,12 @@ export function createModelTable(model) {
                 html += `
                     <tr>
                         <td>${model.variableNames[i]}</td>
-                        <td class="${sig ? 'significant' : ''}">${coef.toFixed(3)}${stars ? '<span style="color:#10b981; font-weight:bold;"> ' + stars + '</span>' : ''}</td>
+                        <td class="${sig ? 'significant' : ''}">${coef.toFixed(3)}${stars ? '<span class="sig-stars"> ' + stars + '</span>' : ''}</td>
                         ${useBRR
                             ? `<td>${SE[i].toFixed(3)}</td><td style="color: var(--text-secondary);">${model.standardErrors[i].toFixed(3)}</td>`
                             : `<td>${SE[i].toFixed(3)}</td>`}
                         <td>${tStat.toFixed(2)}</td>
-                        <td>${pVal.toFixed(4)}${stars ? '<span style="color:#888; font-size:0.8em;"> ' + stars + '</span>' : ''}</td>
+                        <td>${pVal.toFixed(4)}${stars ? '<span class="sig-stars"> ' + stars + '</span>' : ''}</td>
                         <td>[${ci_lower.toFixed(2)}, ${ci_upper.toFixed(2)}]</td>
                     </tr>
                 `;
@@ -262,7 +278,7 @@ export function renderCoefficientPlot(models, predictorName) {
             type: 'data',
             array: errorBars,
             visible: true,
-            color: '#94a3b8',
+            color: INK.muted,
             thickness: 2,
             width: 8
         },
@@ -270,11 +286,7 @@ export function renderCoefficientPlot(models, predictorName) {
         mode: 'markers',
         marker: {
             size: 14,
-            color: '#3b82f6',
-            line: {
-                color: '#1e40af',
-                width: 2
-            }
+            color: modelNames.map(modelColor)
         },
         hovertemplate: '<b>%{x}</b><br>Coefficient: %{y:.3f}<br>95% CI: %{y:.3f} ± %{error_y.array:.3f}<extra></extra>'
     };
@@ -286,35 +298,25 @@ export function renderCoefficientPlot(models, predictorName) {
         ? 'Parental Education'
         : predictorName;
 
-    const layout = {
+    const layout = baseLayout({
         title: {
-            text: `${displayLabel} Coefficient Comparison (95% CI)`,
-            font: { color: '#f1f5f9', size: 16 }
+            text: `${displayLabel} Coefficient Comparison (95% CI)`
         },
         xaxis: {
-            title: 'Model Type',
-            gridcolor: '#334155'
+            title: { text: 'Model Type' }
         },
         yaxis: {
-            title: `${displayLabel} Coefficient<br>(Achievement Points per SD)`,
-            gridcolor: '#334155',
+            title: { text: `${displayLabel} Coefficient<br>(Achievement Points per SD)` },
             zeroline: true,
-            zerolinecolor: '#ef4444',
+            zerolinecolor: INK.reference,
             zerolinewidth: 2
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: false,
         hovermode: 'closest',
         margin: { t: 80, b: 80, l: 80, r: 40 }
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('coefficient-plot');
     if (chartDiv) {
@@ -381,17 +383,14 @@ export function renderRegressionScatterPlots(data, outcomeVar, predictorVar, mod
         name: `Data (n=${x.length.toLocaleString()}, showing ${sampledX.length.toLocaleString()})`,
         marker: {
             size: 4,
-            color: '#3b82f6',
+            color: CHART_COLORS[0],
             opacity: 0.3
         }
     };
 
     const traces = [scatterTrace];
 
-    // Add fitted lines for each model
-    const colors = ['#ef4444', '#10b981', '#f59e0b'];
-    let colorIdx = 0;
-
+    // Add fitted lines for each model (fixed model → color mapping)
     Object.values(models).forEach(model => {
         if (model && model.coefficients && model.variableNames) {
             // Find intercept and slope
@@ -415,45 +414,31 @@ export function renderRegressionScatterPlots(data, outcomeVar, predictorVar, mod
                     type: 'scatter',
                     name: model.modelName,
                     line: {
-                        color: colors[colorIdx % colors.length],
+                        color: modelColor(model.modelName),
                         width: 3
                     }
                 });
-
-                colorIdx++;
             }
         }
     });
 
-    const layout = {
-        title: `${outcomeVar} vs ${predictorVar} with Regression Lines`,
+    const layout = baseLayout({
+        title: { text: `${outcomeVar} vs ${predictorVar} with Regression Lines` },
         xaxis: {
-            title: predictorVar,
-            gridcolor: '#334155'
+            title: predictorVar
         },
         yaxis: {
-            title: outcomeVar,
-            gridcolor: '#334155'
+            title: outcomeVar
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: true,
         legend: {
             x: 0.02,
-            y: 0.98,
-            bgcolor: 'rgba(30, 41, 59, 0.8)',
-            bordercolor: '#475569',
-            borderwidth: 1
+            y: 0.98
         },
         hovermode: 'closest'
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById('regression-scatter');
     if (chartDiv) {
@@ -504,7 +489,7 @@ export function renderResidualPlot(model, modelName = 'Model', targetElementId =
         name: 'Residuals',
         marker: {
             size: 4,
-            color: '#3b82f6',
+            color: CHART_COLORS[0],
             opacity: 0.5
         }
     };
@@ -524,36 +509,26 @@ export function renderResidualPlot(model, modelName = 'Model', targetElementId =
         type: 'scatter',
         name: 'Zero',
         line: {
-            color: '#ef4444',
+            color: INK.reference,
             width: 2,
             dash: 'dash'
         }
     };
 
-    const layout = {
-        title: `Residual Plot: ${modelName}`,
+    const layout = baseLayout({
+        title: { text: `Residual Plot: ${modelName}` },
         xaxis: {
-            title: 'Fitted Values',
-            gridcolor: '#334155'
+            title: { text: 'Fitted Values' }
         },
         yaxis: {
-            title: 'Residuals',
-            gridcolor: '#334155',
-            zeroline: true,
-            zerolinecolor: '#64748b'
+            title: { text: 'Residuals' },
+            zeroline: true
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: false,
         hovermode: 'closest'
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById(targetElementId);
     if (chartDiv) {
@@ -613,7 +588,7 @@ export function renderQQPlot(model, modelName = 'Model', targetElementId = 'qq-p
         name: 'Sample Quantiles',
         marker: {
             size: 4,
-            color: '#3b82f6',
+            color: CHART_COLORS[0],
             opacity: 0.6
         }
     };
@@ -633,34 +608,25 @@ export function renderQQPlot(model, modelName = 'Model', targetElementId = 'qq-p
         type: 'scatter',
         name: 'Normal',
         line: {
-            color: '#ef4444',
+            color: INK.reference,
             width: 2,
             dash: 'dash'
         }
     };
 
-    const layout = {
-        title: `Q-Q Plot: ${modelName}`,
+    const layout = baseLayout({
+        title: { text: `Q-Q Plot: ${modelName}` },
         xaxis: {
-            title: 'Theoretical Quantiles',
-            gridcolor: '#334155'
+            title: { text: 'Theoretical Quantiles' }
         },
         yaxis: {
-            title: 'Sample Quantiles',
-            gridcolor: '#334155'
+            title: { text: 'Sample Quantiles' }
         },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
         showlegend: false,
         hovermode: 'closest'
-    };
+    });
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
+    const config = BASE_CONFIG;
 
     const chartDiv = document.getElementById(targetElementId);
     if (chartDiv) {

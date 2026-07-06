@@ -193,6 +193,79 @@ export function calculateGini(values, weights = null) {
 }
 
 /**
+ * Weighted Theil-T index.
+ *
+ *   T = Σ w_i (y_i/μ_w) ln(y_i/μ_w) / Σ w_i
+ *
+ * T = 0 when all values are equal; larger values indicate more concentration at
+ * the top. Unlike the Gini, Theil-T is additively decomposable into within- and
+ * between-group components (see calculateTheilDecomposition). Requires strictly
+ * positive values — true for PISA scores. Verified against a definitional R
+ * reference in pipeline/scripts/09-verify-rigor.R.
+ *
+ * @param {Array<Number>} values - Data values (must be > 0)
+ * @param {Array<Number>} weights - Optional weights (default: equal)
+ * @returns {Number} Theil-T index
+ */
+export function calculateTheil(values, weights = null) {
+    if (!values || values.length === 0) return NaN;
+    const w = weights || values.map(() => 1);
+    let sw = 0, swy = 0;
+    for (let i = 0; i < values.length; i++) {
+        if (!(values[i] > 0) || !(w[i] > 0)) continue;
+        sw += w[i]; swy += w[i] * values[i];
+    }
+    if (!(sw > 0) || !(swy > 0)) return NaN;
+    const mu = swy / sw;
+    let t = 0;
+    for (let i = 0; i < values.length; i++) {
+        if (!(values[i] > 0) || !(w[i] > 0)) continue;
+        const r = values[i] / mu;
+        t += w[i] * r * Math.log(r);
+    }
+    return t / sw;
+}
+
+/**
+ * Additive decomposition of Theil-T by group:
+ *   T = T_within + T_between
+ *   T_within  = Σ_g s_g T_g          (s_g = group share of total weighted y)
+ *   T_between = Σ_g s_g ln(μ_g/μ)
+ * @param {Array<Number>} values - Data values (> 0)
+ * @param {Array} groups - Group label per observation
+ * @param {Array<Number>} weights - Optional weights
+ * @returns {Object} { total, within, between, byGroup }
+ */
+export function calculateTheilDecomposition(values, groups, weights = null) {
+    const w = weights || values.map(() => 1);
+    const byG = {};
+    let sw = 0, swy = 0;
+    for (let i = 0; i < values.length; i++) {
+        if (!(values[i] > 0) || !(w[i] > 0)) continue;
+        const g = groups[i];
+        (byG[g] = byG[g] || { v: [], w: [] });
+        byG[g].v.push(values[i]); byG[g].w.push(w[i]);
+        sw += w[i]; swy += w[i] * values[i];
+    }
+    if (!(sw > 0) || !(swy > 0)) return { total: NaN, within: NaN, between: NaN, byGroup: {} };
+    const mu = swy / sw;
+
+    let within = 0, between = 0;
+    const byGroup = {};
+    for (const g of Object.keys(byG)) {
+        const gw = byG[g].w.reduce((s, x) => s + x, 0);
+        const gwy = byG[g].v.reduce((s, v, i) => s + byG[g].w[i] * v, 0);
+        const muG = gwy / gw;
+        const share = gwy / swy;             // group share of total weighted outcome
+        const tG = calculateTheil(byG[g].v, byG[g].w);
+        within += share * tG;
+        between += share * Math.log(muG / mu);
+        byGroup[g] = { theil: tG, mean: muG, share };
+    }
+    return { total: within + between, within, between, byGroup };
+}
+
+/**
  * Calculate SES gradient (regression slope)
  * @param {Array<Number>} scores - Achievement scores (Y)
  * @param {Array<Number>} ses - SES values (X)
@@ -445,6 +518,8 @@ export default {
     weightedQuantile,
     calculateWeightedStats,
     calculateGini,
+    calculateTheil,
+    calculateTheilDecomposition,
     calculateSESGradient,
     calculateCorrelation,
     sanitizeWeights,

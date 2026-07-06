@@ -6,7 +6,7 @@
  */
 
 import { weightedMean, weightedVariance, weightedSD, weightedQuantile,
-         calculateGini } from '../core/utils.js';
+         calculateGini, calculateTheil } from '../core/utils.js';
 
 /**
  * Get predictor value from a record, handling parent_edu ISCED codes
@@ -140,8 +140,9 @@ export function calculateInequalityMeasures(data, outcomeVar = 'math', weightTyp
         return null;
     }
 
-    // Calculate Gini coefficient (weighted)
+    // Calculate Gini coefficient and Theil-T index (weighted)
     const gini = calculateGini(values, weightType !== 'none' ? weights : null);
+    const theil = calculateTheil(values, weightType !== 'none' ? weights : null);
 
     // Calculate descriptive stats for other measures
     const descriptive = calculateDescriptiveStats(data, outcomeVar, weightType);
@@ -157,6 +158,7 @@ export function calculateInequalityMeasures(data, outcomeVar = 'math', weightTyp
 
     return {
         gini,
+        theil,
         cv,
         p90p10,
         range: descriptive.max - descriptive.min,

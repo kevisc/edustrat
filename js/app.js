@@ -6,8 +6,8 @@
 
 // Import modules
 import { getState, setState, setLoading, getCurrentOutcome, setCurrentOutcome,
-         getCurrentPredictor, setCurrentPredictor } from './core/state-manager.js';
-import { loadMetadata, loadSelectedData, getCacheStats } from './core/data-loader.js';
+         getCurrentPredictor, setCurrentPredictor, subscribeToState } from './core/state-manager.js';
+import { loadMetadata, loadSelectedData, loadChunk, getCacheStats, getLastLoadErrors } from './core/data-loader.js';
 import { initLoadingIndicator, updateProgress, showDataStatus, hideLoading,
          showButtonSpinner, hideButtonSpinner, resetProgress } from './ui/loading-indicator.js';
 import { initSelectors, populateFromMetadata } from './ui/country-selector.js';
@@ -17,7 +17,10 @@ import { startTour, maybeStartTour } from './ui/tour.js';
 import { calculateDescriptiveStats, calculateInequalityMeasures, calculateSESGradient,
          calculateStatsByGroup } from './analysis/descriptive.js';
 import { runPooledOLS, runFixedEffects, runRandomEffects } from './analysis/regression.js';
+import { fimlRegression } from './analysis/fiml.js';
 import { decomposeAchievementGap, calculateVarianceDecomposition, calculateGapTrend, calculateComparativeDecomposition } from './analysis/decomposition.js';
+import { oaxacaDecomposition } from './analysis/oaxaca.js';
+import { calculateTheilDecomposition } from './core/utils.js';
 import { hausmanTest } from './analysis/diagnostics.js';
 
 // Import visualization modules
@@ -32,6 +35,13 @@ import {
     renderQQPlot
 } from './visualization/regression-viz.js';
 import { renderAllComparativeCharts } from './visualization/comparative-viz.js';
+import { analyzeWithinCountryTrends } from './analysis/trends.js';
+import { renderWithinCountryTrends } from './visualization/trends-viz.js';
+import { generateRegressionCode, generateFimlCode, generateTrendsCode,
+         generateGapCode, generateOverviewCode } from './analysis/r-code-gen.js';
+import { baseLayout, BASE_CONFIG, CHART_COLORS } from './visualization/chart-theme.js';
+import { attachRCodePanel } from './ui/r-code-panel.js';
+import { downloadRScript } from './export/r-script-export.js';
 import {
     createDiagnosticsComparisonTable,
     createHausmanTestPanel,
@@ -132,17 +142,40 @@ async function initApp() {
 
         console.log('✓ Application initialized successfully');
 
+        // Shareable links: restore any selection encoded in the URL hash, then
+        // keep the hash in sync with subsequent selection changes.
+        applyUrlHash();
+        hashSyncEnabled = true;
+        subscribeToState(() => syncUrlHash());
+
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', async () => {
+                syncUrlHash();
+                const url = location.href.replace(/#.*$/, '') + location.hash +
+                    (location.hash.includes('c=') ? '&load=1' : '');
+                try {
+                    await navigator.clipboard.writeText(url);
+                    copyLinkBtn.textContent = 'Link copied';
+                    setTimeout(() => { copyLinkBtn.textContent = 'Copy shareable link'; }, 1500);
+                } catch (e) {
+                    prompt('Copy this link:', url);
+                }
+            });
+        }
+
         // Offer a short guided tour on first visit.
         maybeStartTour();
 
     } catch (error) {
         console.error('Failed to initialize app:', error);
         showDataStatus(
-            `Failed to load metadata: ${error.message}. Please check that data files are generated.`,
+            `Failed to load metadata: ${error.message}. Check your internet connection (data is fetched from the live host), then reload the page.`,
             'error'
         );
-
-        alert(`Application initialization failed:\n\n${error.message}\n\nPlease ensure you have run the R scripts to generate data files.`);
+        // The status banner lives on the Data tab; switch there so the error is visible
+        // instead of surfacing only a modal alert on the Home tab.
+        goToTab('data-config');
     }
 }
 
@@ -210,12 +243,64 @@ function initTabSystem() {
 
 // Ordered analysis flow for the "Continue →" navigation at the bottom of each tab.
 const ANALYSIS_FLOW = ['overview', 'distribution', 'gap-decomposition', 'regression',
-                       'diagnostics', 'comparative', 'export'];
+                       'diagnostics', 'comparative', 'trends', 'export'];
 const TAB_LABELS = {
     'data-config': 'Data', overview: 'Overview', distribution: 'Distribution',
     'gap-decomposition': 'Gap Analysis', regression: 'Regression',
-    diagnostics: 'Diagnostics', comparative: 'Comparative', export: 'Export'
+    diagnostics: 'Diagnostics', comparative: 'Comparative', trends: 'Trends', export: 'Export'
 };
+
+// ---- Shareable-link (URL hash) state -----------------------------------------
+
+let hashSyncEnabled = false;
+
+/** Serialize the current selection into the URL hash (replaceState: no history spam). */
+function syncUrlHash() {
+    if (!hashSyncEnabled) return;
+    const state = getState();
+    if (!state.selectedCountries.length && !state.selectedYears.length) return;
+    const params = new URLSearchParams();
+    if (state.selectedCountries.length) params.set('c', state.selectedCountries.join('.'));
+    if (state.selectedYears.length) params.set('y', state.selectedYears.join('.'));
+    params.set('o', getCurrentOutcome());
+    params.set('p', getCurrentPredictor());
+    params.set('w', getWeightType());
+    history.replaceState(null, '', '#' + params.toString());
+}
+
+/**
+ * Restore a selection from the URL hash (after the metadata has populated the
+ * checkboxes). With load=1 the data loads automatically — an instructor can
+ * hand students a link that opens straight onto a configured analysis.
+ * @returns {Boolean} true if a selection was restored
+ */
+function applyUrlHash() {
+    if (!location.hash || location.hash.length < 2) return false;
+    const params = new URLSearchParams(location.hash.slice(1));
+    const tick = (sel, vals) => document.querySelectorAll(sel).forEach(cb => {
+        const want = vals.includes(cb.value);
+        if (cb.checked !== want) {
+            cb.checked = want;
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+    const c = params.get('c'), y = params.get('y');
+    if (c) tick('#country-checkboxes input[type="checkbox"]', c.split('.'));
+    if (y) tick('#year-checkboxes input[type="checkbox"]', y.split('.'));
+    const o = params.get('o');
+    if (o) { const el = document.getElementById('outcome'); if (el) { el.value = o; setCurrentOutcome(o); } }
+    const p = params.get('p');
+    if (p) { const el = document.getElementById('predictor'); if (el) { el.value = p; setCurrentPredictor(p); } }
+    const w = params.get('w');
+    if (w) { const el = document.getElementById('weight-type'); if (el) el.value = w; }
+
+    if (c && y) {
+        showDataStatus('Selection restored from the shared link. Press "Load Selected Data" to run it.', 'info');
+        if (params.get('load') === '1') handleLoadData();
+        return true;
+    }
+    return false;
+}
 
 /**
  * Programmatically switch to a tab (reuses the tab button's own handler) and
@@ -261,6 +346,74 @@ function ensureFlowNav(tabName) {
 }
 
 /**
+ * Attach the Show-the-R panel for the Overview cards (weighted mean, Gini,
+ * SES gradient) beneath the overview chart.
+ */
+function attachOverviewRPanel(data, outcomeVar, predictorVar, weightType) {
+    try {
+        const chart = document.getElementById('overview-chart');
+        const container = chart ? chart.parentElement : null;
+        if (!container) return;
+        const desc = calculateDescriptiveStats(data, outcomeVar, weightType);
+        const ineq = calculateInequalityMeasures(data, outcomeVar, weightType);
+        const grad = calculateSESGradient(data, outcomeVar, predictorVar, weightType);
+        if (!desc || !ineq) return;
+        attachRCodePanel(container,
+            generateOverviewCode({ mean: desc.mean, gini: ineq.gini, gradient: grad }, buildRSpec()),
+            'overview');
+    } catch (e) {
+        console.warn('R panel (overview) failed:', e.message);
+    }
+}
+
+/**
+ * Assemble the selection spec the R code generators need (countries, years,
+ * variables, weighting, controls) from the application state. Render functions
+ * only receive the variable choices, so the selection is read here.
+ * @param {Object} overrides - per-surface additions (e.g. { countryFilter })
+ * @returns {Object} spec for js/analysis/r-code-gen.js
+ */
+function buildRSpec(overrides = {}) {
+    const state = getState();
+    const data = state.mergedData || [];
+    // Prefer what is actually loaded over what is ticked, so the snippet
+    // reproduces the on-screen analysis even after selections changed.
+    const countries = [...new Set(data.map(d => d.country))].sort();
+    const years = [...new Set(data.map(d => d.year))].sort((a, b) => a - b);
+    return {
+        countries: countries.length ? countries : state.selectedCountries,
+        years: years.length ? years : state.selectedYears,
+        outcomeVar: getCurrentOutcome(),
+        predictorVar: getCurrentPredictor(),
+        weightType: getWeightType(),
+        controls: getSelectedControls(),
+        dataSource: 'learningtower',
+        ...overrides
+    };
+}
+
+/**
+ * Show a call-to-action on an analysis tab opened before any data is loaded,
+ * so pre-load tabs are not silent dead-ends of stale placeholders.
+ * @param {String} tabName - active tab
+ */
+function showNoDataMessage(tabName) {
+    if (['home', 'data-config', 'documentation'].includes(tabName)) return;
+    const content = document.getElementById(tabName);
+    if (!content || content.querySelector('.no-data-cta')) return;
+    const cta = document.createElement('div');
+    cta.className = 'alert alert-info no-data-cta';
+    cta.style.display = 'flex';
+    cta.style.alignItems = 'center';
+    cta.style.gap = '1rem';
+    cta.innerHTML = `
+        <span>No data loaded yet. Choose countries and years on the Data tab, then press <strong>Load Selected Data</strong>.</span>
+        <button type="button" class="btn btn-primary" style="white-space: nowrap;">Go to Data</button>`;
+    cta.querySelector('button').addEventListener('click', () => goToTab('data-config'));
+    content.insertBefore(cta, content.firstChild);
+}
+
+/**
  * Clear Plotly charts from non-active tabs to save memory
  * @param {String} activeTab - Currently active tab name
  */
@@ -273,7 +426,8 @@ function clearInactivePlotlyCharts(activeTab) {
         'regression': ['coefficient-plot', 'regression-scatter'],
         'diagnostics': ['residual-plot-ols', 'residual-plot-fe', 'residual-plot-re',
                        'qq-plot-ols', 'qq-plot-fe', 'qq-plot-re', 'decomposition-chart'],
-        'comparative': ['country-comparison', 'world-map', 'temporal-trends', 'gap-comparison']
+        'comparative': ['country-comparison', 'world-map', 'temporal-trends', 'gap-comparison'],
+        'trends': ['trends-chart']
     };
 
     // Clear charts from all tabs except the active one
@@ -306,6 +460,7 @@ function onTabSwitch(tabName) {
     // Only run analyses if data is loaded
     if (!state.mergedData || state.mergedData.length === 0) {
         console.log(`Tab switched to ${tabName}, but no data loaded yet`);
+        showNoDataMessage(tabName);
         return;
     }
 
@@ -329,10 +484,11 @@ function onTabSwitch(tabName) {
                 case 'overview':
                     updateOverviewStats(data, outcomeVar, predictorVar, weightType);
                     renderOverviewChart(data, outcomeVar, predictorVar, weightType);
+                    attachOverviewRPanel(data, outcomeVar, predictorVar, weightType);
                     break;
 
                 case 'distribution':
-                    renderAllDistributionCharts(data, outcomeVar);
+                    renderAllDistributionCharts(data, outcomeVar, weightType);
                     break;
 
                 case 'gap-decomposition':
@@ -354,6 +510,12 @@ function onTabSwitch(tabName) {
 
                 case 'diagnostics':
                     renderDiagnostics(data, outcomeVar);
+                    break;
+
+                case 'trends':
+                    // Async: pulls every available cycle for the focal countries and
+                    // manages its own in-chart loading state, so it is not awaited here.
+                    renderTrendsTab(outcomeVar, predictorVar, weightType);
                     break;
 
                 default:
@@ -433,6 +595,7 @@ function initEventListeners() {
     const weightTypeSelect = document.getElementById('weight-type');
     if (weightTypeSelect) {
         weightTypeSelect.addEventListener('change', () => {
+            syncUrlHash();
             const state = getState();
             if (state.mergedData && state.mergedData.length > 0) {
                 runInitialAnalyses(state.mergedData);
@@ -504,6 +667,18 @@ function initEventListeners() {
         });
     }
 
+    // Trends metric selector: recompute the within-country trend from the already
+    // loaded cycles (no reload needed; only the focal statistic changes).
+    const trendMetricSelect = document.getElementById('trend-metric');
+    if (trendMetricSelect) {
+        trendMetricSelect.addEventListener('change', () => {
+            const activeTab = document.querySelector('.tab.active');
+            if (activeTab && activeTab.getAttribute('data-tab') === 'trends') {
+                renderTrendsTab(getCurrentOutcome(), getCurrentPredictor(), getWeightType());
+            }
+        });
+    }
+
     // Export buttons
     const exportSummaryBtn = document.getElementById('export-summary-btn');
     if (exportSummaryBtn) {
@@ -523,6 +698,11 @@ function initEventListeners() {
     const exportChartsBtn = document.getElementById('export-charts-btn');
     if (exportChartsBtn) {
         exportChartsBtn.addEventListener('click', handleExportCharts);
+    }
+
+    const exportRBtn = document.getElementById('export-r-btn');
+    if (exportRBtn) {
+        exportRBtn.addEventListener('click', () => downloadRScript(buildRSpec()));
     }
 
     const exportReportBtn = document.getElementById('export-report-btn');
@@ -619,8 +799,17 @@ async function handleLoadData() {
             updateProgress(progress);
         });
 
+        // A total load failure must not fall through to the success banner
+        // ("Loaded 0 student records ... Ready to analyze!").
+        if (!data || data.length === 0) {
+            throw new Error('No data could be loaded for this selection. Check your internet connection (data is fetched from the live host) and try again.');
+        }
+
         // Store merged data in state
         setState({ mergedData: data });
+
+        // Remove any "no data yet" call-to-action panels injected on analysis tabs.
+        document.querySelectorAll('.no-data-cta').forEach(el => el.remove());
 
         // Get cache stats
         const stats = getCacheStats();
@@ -632,12 +821,21 @@ async function handleLoadData() {
         console.log('Years:', stats.years.join(', '));
         console.log('===========================================');
 
-        // Update status
-        showDataStatus(
-            `✓ Loaded ${data.length.toLocaleString()} student records from ${stats.chunksLoaded} data chunks.
-             Ready to analyze! Switch to different tabs to explore the data.`,
-            'success'
-        );
+        // Update status — report partial failures rather than a clean success.
+        const loadErrors = getLastLoadErrors();
+        if (loadErrors.length > 0) {
+            const failed = loadErrors.map(e => `${e.country} ${e.year}`).join(', ');
+            showDataStatus(
+                `Loaded ${data.length.toLocaleString()} student records, but ${loadErrors.length} chunk(s) failed: ${failed}. Results will exclude those country-years.`,
+                'warning'
+            );
+        } else {
+            showDataStatus(
+                `✓ Loaded ${data.length.toLocaleString()} student records from ${stats.chunksLoaded} data chunks.
+                 Ready to analyze! Switch to different tabs to explore the data.`,
+                'success'
+            );
+        }
 
         if (loadCompleteMessage) {
             loadCompleteMessage.textContent = 'Done loading. You can now explore the analysis tabs above.';
@@ -892,12 +1090,214 @@ function getSelectedControls() {
 }
 
 /**
+ * Populate and render the Oaxaca–Blinder section on the Gap Analysis tab.
+ * Shown only when the loaded data contain at least two countries.
+ */
+function renderOaxacaSection(data, outcomeVar, predictorVar, weightType) {
+    const section = document.getElementById('oaxaca-section');
+    const selA = document.getElementById('oaxaca-a');
+    const selB = document.getElementById('oaxaca-b');
+    const results = document.getElementById('oaxaca-results');
+    if (!section || !selA || !selB || !results) return;
+
+    const countries = [...new Set(data.map(d => d.country))].sort();
+    if (countries.length < 2) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+
+    // (Re)populate the selectors, preserving current choices when possible.
+    const fill = (sel, def) => {
+        const cur = sel.value;
+        sel.innerHTML = countries.map(c => `<option value="${c}">${c}</option>`).join('');
+        sel.value = countries.includes(cur) ? cur : def;
+    };
+    fill(selA, countries[0]);
+    fill(selB, countries[1]);
+    if (selA.value === selB.value) selB.value = countries.find(c => c !== selA.value);
+
+    const render = () => {
+        const a = selA.value, b = selB.value;
+        if (a === b) { results.innerHTML = '<p style="color: var(--text-secondary);">Choose two different countries.</p>'; return; }
+        const recsA = data.filter(d => d.country === a);
+        const recsB = data.filter(d => d.country === b);
+        const controls = getSelectedControls().filter(c => c !== 'year');
+        const d = oaxacaDecomposition(recsA, recsB, outcomeVar, predictorVar, controls, weightType);
+        if (!d) { results.innerHTML = '<p style="color: var(--text-secondary);">Not enough complete cases for this pair.</p>'; return; }
+
+        const pct = v => `${(100 * v / d.gap).toFixed(1)}%`;
+        const fmt2 = v => v.toFixed(2);
+        results.innerHTML = `
+            <div class="stat-card">
+                <div class="methodology-note">
+                    <strong>Gap (${a} − ${b}):</strong> ${fmt2(d.gap)} score points
+                    (${fmt2(d.meanA)} vs ${fmt2(d.meanB)}; n = ${d.nA.toLocaleString()} / ${d.nB.toLocaleString()})<br><br>
+                    <strong>Twofold (reference: ${b}):</strong><br>
+                    &nbsp;&nbsp;Explained by composition (endowments): ${fmt2(d.twofold.explained)} (${pct(d.twofold.explained)})<br>
+                    &nbsp;&nbsp;Unexplained (returns + interaction): ${fmt2(d.twofold.unexplained)} (${pct(d.twofold.unexplained)})<br><br>
+                    <strong>Threefold:</strong>
+                    endowments ${fmt2(d.threefold.endowments)},
+                    coefficients ${fmt2(d.threefold.coefficients)},
+                    interaction ${fmt2(d.threefold.interaction)}<br><br>
+                    <strong>Per-variable endowment contributions:</strong>
+                    ${d.detail.map(t => `${t.variable}: ${fmt2(t.endowment)}`).join(' · ')}
+                </div>
+            </div>`;
+    };
+
+    selA.onchange = render;
+    selB.onchange = render;
+    render();
+}
+
+/**
  * Get selected weight type
  * @returns {String} Weight type
  */
 function getWeightType() {
     const weightSelect = document.getElementById('weight-type');
     return weightSelect ? weightSelect.value : 'student';
+}
+
+/**
+ * Per-record weight (same fallback rule as the analysis modules).
+ */
+function getRecordWeight(record, weightType) {
+    if (weightType === 'none') return 1;
+    if (weightType === 'senate') {
+        const v = record.w_fsenwt || record.senateWeight || record.W_FSENWT;
+        return (v && isFinite(+v) && +v > 0) ? +v : 1;
+    }
+    const v = record.stu_wgt || record.w_fstuwt || record.studentWeight || record.W_FSTUWT || record.weight;
+    return (v && isFinite(+v) && +v > 0) ? +v : 1;
+}
+
+// Within-country trends: cap the number of focal countries so the tab never
+// fetches an unreasonable number of cycle chunks, and cache the loaded records so
+// switching the focal metric/outcome recomputes without re-downloading.
+const TRENDS_MAX_COUNTRIES = 6;
+let trendsRecordsCache = { key: null, records: null };
+
+/**
+ * Render the Within-Country Trends tab. For each focal country it pulls *every*
+ * available PISA cycle (from metadata) — a superset of the years selected for the
+ * other tabs — so the trend spans the full series, then computes per-cycle
+ * estimates, the precision-weighted within-country trend, and the country
+ * fixed-effects panel for the chosen metric.
+ * @param {String} outcomeVar - current outcome (math/reading/science)
+ * @param {String} predictorVar - current SES predictor (escs/parent_edu)
+ * @param {String} weightType - current weighting (student/senate/none)
+ */
+async function renderTrendsTab(outcomeVar, predictorVar, weightType) {
+    const state = getState();
+    const chartDiv = document.getElementById('trends-chart');
+    const tableDiv = document.getElementById('trends-table');
+    const metric = document.getElementById('trend-metric')?.value || 'gradient';
+
+    const selected = state.selectedCountries || [];
+    if (selected.length === 0) {
+        if (chartDiv) chartDiv.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:2rem;">Select one or more countries on the Data tab and load data to see within-country trends.</p>';
+        if (tableDiv) tableDiv.innerHTML = '';
+        return;
+    }
+
+    const countries = selected.slice(0, TRENDS_MAX_COUNTRIES);
+    const capped = selected.length > TRENDS_MAX_COUNTRIES;
+    const key = countries.slice().sort().join(',');
+
+    // Load all available cycles for the focal countries (cached across re-renders).
+    let records = (trendsRecordsCache.key === key) ? trendsRecordsCache.records : null;
+    if (!records) {
+        if (chartDiv) chartDiv.innerHTML = `<p style="text-align:center;color:#94a3b8;padding:2rem;">Loading all PISA cycles for ${countries.join(', ')}…</p>`;
+        const meta = state.metadata;
+        const pairs = [];
+        countries.forEach(c => {
+            const cm = meta?.countries?.find(m => m.code === c);
+            const years = (cm && Array.isArray(cm.years) && cm.years.length) ? cm.years : (state.selectedYears || []);
+            years.forEach(y => pairs.push({ country: c, year: y }));
+        });
+        records = [];
+        let done = 0;
+        for (const { country, year } of pairs) {
+            try {
+                const chunk = await loadChunk(country, year);
+                if (chunk?.students) records.push(...chunk.students);
+            } catch (e) {
+                console.warn(`Trends: could not load ${country}_${year}: ${e.message}`);
+            }
+            done++;
+            if (chartDiv) chartDiv.innerHTML = `<p style="text-align:center;color:#94a3b8;padding:2rem;">Loading all PISA cycles for ${countries.join(', ')}… (${done}/${pairs.length} files)</p>`;
+        }
+        trendsRecordsCache = { key, records };
+    }
+
+    // The async load may have outlived the user's stay on this tab.
+    if (document.querySelector('.tab.active')?.getAttribute('data-tab') !== 'trends') return;
+
+    const analysis = analyzeWithinCountryTrends(records, { metric, outcomeVar, predictorVar, weightType });
+    renderWithinCountryTrends(analysis, { chartId: 'trends-chart', tableId: 'trends-table', caveatsId: 'trends-caveats' });
+
+    try {
+        const tDiv = document.getElementById('trends-table');
+        if (tDiv) attachRCodePanel(tDiv, generateTrendsCode(analysis, buildRSpec({ countries })), 'trends');
+    } catch (e) { console.warn('R panel (trends) failed:', e.message); }
+
+    const noteEl = document.getElementById('trends-cap-note');
+    if (noteEl) noteEl.textContent = capped
+        ? `Showing the first ${TRENDS_MAX_COUNTRIES} of ${selected.length} selected countries (to limit the number of cycle files fetched).`
+        : '';
+}
+
+/**
+ * Render the listwise-deletion vs FIML comparison for the bivariate gradient.
+ * Pure addition to the Regression tab — does not affect the OLS/FE/RE pipeline.
+ * @param {Array} data - Student data (already country-filtered)
+ * @param {String} outcomeVar - Outcome variable
+ * @param {String} predictorVar - SES predictor
+ * @param {String} weightType - Weight type
+ */
+function renderFimlComparison(data, outcomeVar, predictorVar, weightType) {
+    const div = document.getElementById('fiml-comparison');
+    if (!div) return;
+
+    const predLabel = getPredictorLabel(predictorVar);
+    const cc = runPooledOLS(data, outcomeVar, predictorVar, [], weightType);
+    const fiml = fimlRegression(data, outcomeVar, predictorVar, weightType);
+
+    if (!cc || !fiml || !Number.isFinite(fiml.coefficients?.[1])) {
+        div.innerHTML = '<p style="color:var(--text-secondary);">Not enough data to compare missing-data methods for this selection.</p>';
+        return;
+    }
+
+    const fmt = (v, d = 2) => (v == null || !isFinite(v)) ? '—' : (+v).toFixed(d);
+    const ccBeta = cc.coefficients[1];
+    const ccSe = (cc.seActive === 'BRR' && cc.standardErrorsBRR) ? cc.standardErrorsBRR[1] : cc.standardErrors[1];
+    const ccN = cc.nobs;
+    const fBeta = fiml.coefficients[1];
+    const fSe = fiml.standardErrors[1];
+    const recovered = fiml.nUsed - fiml.nComplete;
+    const diff = fBeta - ccBeta;
+
+    const th = t => `<th style="text-align:left;padding:0.4rem 0.7rem;border-bottom:1px solid var(--border);">${t}</th>`;
+    const td = t => `<td style="padding:0.4rem 0.7rem;">${t}</td>`;
+
+    div.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:0.92rem;max-width:660px;">
+            <thead><tr>${th('Method')}${th(predLabel + ' gradient (β)')}${th('SE')}${th('Students used')}</tr></thead>
+            <tbody>
+                <tr>${td('Listwise deletion')}${td('<strong>' + fmt(ccBeta) + '</strong>')}${td(fmt(ccSe))}${td(ccN.toLocaleString() + ' complete cases')}</tr>
+                <tr>${td('FIML (EM, joint normal)')}${td('<strong>' + fmt(fBeta) + '</strong>')}${td(fmt(fSe))}${td(fiml.nUsed.toLocaleString() + ' (' + fiml.nComplete.toLocaleString() + ' complete)')}</tr>
+            </tbody>
+        </table>
+        <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.6rem;">
+            FIML recovers <strong>${recovered.toLocaleString()}</strong> partially-observed student${recovered === 1 ? '' : 's'} that listwise deletion discards.
+            The gradient is <strong>${fmt(Math.abs(diff))}</strong> points ${diff >= 0 ? 'higher' : 'lower'} under FIML
+            (${fmt(Math.abs(diff) / Math.max(Math.abs(ccBeta), 1e-9) * 100, 1)}% relative).
+            ${recovered === 0 ? 'With no partially-observed cases in this selection, the two methods coincide.' : 'A larger gap indicates greater sensitivity to how missing data are handled.'}
+        </p>`;
+
+    try {
+        const spec = buildRSpec({ countries: [...new Set(data.map(d => d.country))].sort() });
+        attachRCodePanel(div, generateFimlCode(cc, fiml, spec), 'fiml');
+    } catch (e) { console.warn('R panel (FIML) failed:', e.message); }
 }
 
 /**
@@ -921,10 +1321,18 @@ function renderGapDecomposition(data, outcomeVar, predictorVar, weightType) {
     // Import decomposition functions
     const { calculateGapTrend, calculateComparativeDecomposition } = window;
 
+    let overallGap = null; // kept for the Show-the-R panel below
+
+    // The gap plot only draws for the by-* granularities; hide its container on
+    // "overall" so no empty chart card shows.
+    const gapPlotDiv = document.getElementById('gap-plot');
+    if (gapPlotDiv) gapPlotDiv.style.display = (granularity === 'overall') ? 'none' : 'block';
+
     if (granularity === 'overall') {
         // Overall gap across all data
         const gap = decomposeAchievementGap(data, outcomeVar, predictorVar, weightType);
         const decomp = calculateVarianceDecomposition(data, outcomeVar);
+        overallGap = gap;
 
         if (!gap && !decomp) {
             console.warn('No gap decomposition results');
@@ -948,8 +1356,28 @@ function renderGapDecomposition(data, outcomeVar, predictorVar, weightType) {
             `;
         }
 
-        // Variance decomposition card
+        // Variance decomposition card (variance-based ICC + additive Theil decomposition)
         if (decomp) {
+            let theilLines = '';
+            try {
+                const vals = [], wts = [], grps = [];
+                for (const r of data) {
+                    const v = +r[outcomeVar];
+                    if (isFinite(v) && v > 0 && r.country) {
+                        vals.push(v);
+                        wts.push(weightType === 'none' ? 1 : getRecordWeight(r, weightType));
+                        grps.push(r.country);
+                    }
+                }
+                const t = calculateTheilDecomposition(vals, grps, wts);
+                if (isFinite(t.total)) {
+                    theilLines = `
+                        <strong>Theil-T (additively decomposable):</strong> ${t.total.toFixed(4)}<br>
+                        <strong>&nbsp;&nbsp;within-country:</strong> ${t.within.toFixed(4)} (${(100 * t.within / t.total).toFixed(1)}%)<br>
+                        <strong>&nbsp;&nbsp;between-country:</strong> ${t.between.toFixed(4)} (${(100 * t.between / t.total).toFixed(1)}%)<br>`;
+                }
+            } catch (e) { console.warn('Theil decomposition failed:', e.message); }
+
             html += `
                 <div class="stat-card">
                     <h3>Variance Decomposition</h3>
@@ -957,7 +1385,8 @@ function renderGapDecomposition(data, outcomeVar, predictorVar, weightType) {
                         <strong>Total Variance:</strong> ${decomp.totalVariance.toFixed(2)}<br>
                         <strong>Within-country:</strong> ${decomp.percentWithin.toFixed(1)}%<br>
                         <strong>Between-country:</strong> ${decomp.percentBetween.toFixed(1)}%<br>
-                        <strong>ICC (ρ):</strong> ${decomp.icc.toFixed(3)}
+                        <strong>ICC (ρ):</strong> ${decomp.icc.toFixed(3)}<br>
+                        ${theilLines}
                     </div>
                 </div>
             `;
@@ -1080,6 +1509,16 @@ function renderGapDecomposition(data, outcomeVar, predictorVar, weightType) {
     }
 
     resultsDiv.innerHTML = html;
+
+    // Show-the-R panel for the overall gap (the verified quartile-gap recipe).
+    if (granularity === 'overall' && overallGap) {
+        try {
+            attachRCodePanel(resultsDiv, generateGapCode(overallGap, buildRSpec()), 'gap:overall');
+        } catch (e) { console.warn('R panel (gap) failed:', e.message); }
+    }
+
+    // Oaxaca–Blinder section (needs at least two countries in the loaded data).
+    renderOaxacaSection(data, outcomeVar, predictorVar, weightType);
 }
 
 /**
@@ -1107,7 +1546,7 @@ function renderGapPlot(gapData, type, outcomeVar) {
             y: gaps,
             name: 'Gap (Q4-Q1)',
             type: 'bar',
-            marker: { color: '#3b82f6' },
+            marker: { color: CHART_COLORS[0] },
             yaxis: 'y'
         });
 
@@ -1117,8 +1556,8 @@ function renderGapPlot(gapData, type, outcomeVar) {
             name: 'Effect Size',
             type: 'scatter',
             mode: 'markers+lines',
-            marker: { size: 10, color: '#ef4444' },
-            line: { color: '#ef4444', width: 2 },
+            marker: { size: 10, color: CHART_COLORS[7] },
+            line: { color: CHART_COLORS[7], width: 2 },
             yaxis: 'y2'
         });
 
@@ -1134,7 +1573,7 @@ function renderGapPlot(gapData, type, outcomeVar) {
             y: gaps,
             name: 'Gap (Q4-Q1)',
             type: 'bar',
-            marker: { color: '#10b981' }
+            marker: { color: CHART_COLORS[0] }
         });
 
     } else if (type === 'country-year') {
@@ -1170,45 +1609,29 @@ function renderGapPlot(gapData, type, outcomeVar) {
         });
     }
 
-    const layout = {
+    const layout = baseLayout({
         title: {
-            text: `Achievement Gap by ${type === 'country' ? 'Country' : type === 'year' ? 'Year' : 'Country × Year'}`,
-            font: { color: '#f1f5f9', size: 16 }
+            text: `Achievement Gap by ${type === 'country' ? 'Country' : type === 'year' ? 'Year' : 'Country × Year'}`
         },
-        xaxis: {
-            title: type === 'year' ? 'Year' : 'Country',
-            gridcolor: '#334155'
-        },
-        yaxis: {
-            title: 'Achievement Gap (Q4-Q1 score points)',
-            gridcolor: '#334155'
-        },
-        paper_bgcolor: '#1e293b',
-        plot_bgcolor: '#1e293b',
-        font: { color: '#f1f5f9' },
+        xaxis: { title: { text: type === 'year' ? 'Year' : 'Country' } },
+        yaxis: { title: { text: 'Achievement Gap (Q4-Q1 score points)' } },
         barmode: type === 'country-year' ? 'group' : 'relative',
         showlegend: type === 'country-year' || type === 'country',
-        margin: { l: 60, r: type === 'country' ? 120 : 40, t: 80, b: 80 }
-    };
+        margin: { r: type === 'country' ? 120 : 40 }
+    });
 
     // Add second y-axis for country comparison (effect size)
     if (type === 'country') {
         layout.yaxis2 = {
-            title: 'Effect Size (Cohen\'s d)',
+            title: { text: 'Effect Size (Cohen\'s d)' },
             overlaying: 'y',
             side: 'right',
-            gridcolor: 'transparent'
+            gridcolor: 'transparent',
+            tickfont: { color: '#55606f', size: 11 }
         };
     }
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
-    };
-
-    Plotly.newPlot(chartDiv, traces, layout, config);
+    Plotly.newPlot(chartDiv, traces, layout, BASE_CONFIG);
 }
 
 /**
@@ -1310,6 +1733,15 @@ function runRegressionAnalyses(data, outcomeVar, predictorVar, weightType) {
         // Render results
         renderRegressionComparison(models);
 
+        // Explicit feedback when every model came back null (e.g. too few
+        // complete cases) instead of a silently empty panel.
+        if (Object.keys(models).length === 0) {
+            const resultsDiv = document.getElementById('regression-results');
+            if (resultsDiv) {
+                resultsDiv.innerHTML = '<div class="alert alert-info">Not enough complete cases in the current selection to fit a regression model. Load more countries or years, or choose a different predictor.</div>';
+            }
+        }
+
         // Show info message if models were skipped
         if (applicable.message) {
             const resultsDiv = document.getElementById('regression-results');
@@ -1317,7 +1749,7 @@ function runRegressionAnalyses(data, outcomeVar, predictorVar, weightType) {
                 const infoBox = document.createElement('div');
                 infoBox.className = 'alert alert-info';
                 infoBox.style.marginTop = '1rem';
-                infoBox.innerHTML = `<strong>ℹ️ Note:</strong> ${applicable.message}`;
+                infoBox.innerHTML = `<strong>Note:</strong> ${applicable.message}`;
                 resultsDiv.insertBefore(infoBox, resultsDiv.firstChild);
             }
         }
@@ -1341,6 +1773,19 @@ function runRegressionAnalyses(data, outcomeVar, predictorVar, weightType) {
 
         // Store models globally for diagnostics tab to access
         window.lastRegressionModels = models;
+
+        // Show-the-R panels: one per rendered model box, matched by header text.
+        try {
+            const spec = buildRSpec(countryFilter !== 'all' ? { countries: [countryFilter] } : {});
+            document.querySelectorAll('#regression-results .model-box').forEach(box => {
+                const header = (box.querySelector('.model-header')?.textContent || '').trim();
+                const model = Object.values(models).find(m => m.modelName === header);
+                if (model) attachRCodePanel(box, generateRegressionCode(model, spec), `reg:${model.modelName}`);
+            });
+        } catch (e) { console.warn('R panel (regression) failed:', e.message); }
+
+        // Missing-data comparison: listwise deletion vs FIML for the bivariate gradient.
+        renderFimlComparison(filteredData, outcomeVar, predictorVar, weightType);
 
         console.log('✓ Regression analyses complete');
 
@@ -1411,21 +1856,22 @@ function renderDiagnostics(data, outcomeVar) {
     console.log(`Running diagnostics regressions for ${selectedCountry}...`);
 
     const models = {};
-    let hausmanResult = null;
+    // The FE-vs-RE (Hausman) contrast groups by country, so it is degenerate for a
+    // single country — it lives on the Regression tab with several countries loaded.
+    const hausmanResult = null;
 
     try {
-        // Run OLS on country data
+        // Baseline OLS on this country's data
         models.ols = runPooledOLS(countryData, outcomeVar, predictorVar, ['gender'], weightType);
 
-        // For single-country diagnostics, FE/RE would be by year (if multiple years)
+        // With several cycles, the meaningful within-country contrast is year
+        // effects: same model plus a dummy per PISA cycle.
         if (years.length > 1) {
-            models.fixedEffects = runFixedEffects(countryData, outcomeVar, predictorVar, ['gender'], weightType);
-            models.randomEffects = runRandomEffects(countryData, outcomeVar, predictorVar, ['gender'], weightType);
-
-            // Hausman test
-            if (models.fixedEffects && models.randomEffects) {
-                const predLabel = getPredictorLabel(predictorVar);
-                hausmanResult = hausmanTest(models.fixedEffects, models.randomEffects, predLabel);
+            const yfe = runFixedEffects(countryData, outcomeVar, predictorVar, ['gender', 'year'], weightType);
+            if (yfe) {
+                yfe.modelName = 'OLS + Year fixed effects';
+                yfe.ngroups = years.length; // groups are cycles here, not countries
+                models.fixedEffects = yfe;
             }
         }
     } catch (error) {
@@ -1444,14 +1890,16 @@ function renderDiagnostics(data, outcomeVar) {
         comparisonDiv.innerHTML = createDiagnosticsComparisonTable(models);
     }
 
-    // 3. Render Hausman Test Panel (table)
+    // 3. Hausman panel: on this per-country view the FE-vs-RE contrast cannot be
+    // estimated (it groups by country), so point to where it lives instead.
     const hausmanDiv = document.getElementById('hausman-panel');
     if (hausmanDiv) {
-        if (years.length > 1) {
-            hausmanDiv.innerHTML = createHausmanTestPanel(hausmanResult);
-        } else {
-            hausmanDiv.innerHTML = '<div style="padding: 1rem; color: var(--text-secondary);">Hausman test requires multiple years of data (panel structure). This country has data from only one year.</div>';
-        }
+        hausmanDiv.innerHTML = `<div style="padding: 1rem; color: var(--text-secondary);">
+            The Hausman test contrasts country fixed effects with country random effects, so it needs
+            several countries in one model. Load two or more countries and run it on the
+            <strong>Regression</strong> tab ("All Countries Combined") — the result appears beneath the model tables there.
+            This per-country view fits OLS${years.length > 1 ? ' and a year-effects specification' : ''} instead.
+        </div>`;
     }
 
     // 4. Render Residual Diagnostics Table

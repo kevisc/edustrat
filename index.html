@@ -49,6 +49,7 @@
                 <button class="tab" data-tab="regression">Regression</button>
                 <button class="tab" data-tab="diagnostics">Diagnostics</button>
                 <button class="tab" data-tab="comparative">Comparative</button>
+                <button class="tab" data-tab="trends">Trends</button>
                 <button class="tab" data-tab="export">Export</button>
                 <button class="tab" data-tab="documentation">Docs</button>
             </div>
@@ -333,9 +334,13 @@
                         <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6;">
                             Click below to load the selected countries and years. Data will be fetched progressively (~5MB per country-year combination).
                         </p>
+
                         <button id="load-data-btn" class="btn btn-primary" style="min-width: 250px; font-size: 1.1rem; padding: 0.75rem 2rem; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
                             <span>Load Selected Data</span>
                             <span id="loading-spinner" class="spinner-inline" aria-hidden="true" style="display:none;"></span>
+                        </button>
+                        <button id="copy-link-btn" class="btn btn-secondary" style="margin-left: 0.75rem; padding: 0.75rem 1.25rem;" title="Copy a link that restores this exact selection">
+                            Copy shareable link
                         </button>
                         <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
                             Tip: Start with 1-3 countries to ensure fast loading
@@ -446,10 +451,18 @@
                         <h3 style="margin-bottom: 0.75rem;">Lorenz Curve: Achievement Distribution</h3>
                         <div id="lorenz-curve"></div>
                         <p style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-                            <strong>What this shows:</strong> Lorenz curves plot cumulative proportion of achievement against cumulative proportion of students (ranked from lowest to highest).
-                            The diagonal dashed line represents perfect equality (all students with identical scores).<br>
-                            <strong>Interpretation:</strong> Curves further from the diagonal indicate greater dispersion in achievement. The area between a country's curve and the diagonal relates to the Gini coefficient.<br>
-                            <strong>Calculation:</strong> Students sorted by score; cumulative sums computed for population and achievement shares.
+                            <strong>What this shows:</strong> A survey-weighted Lorenz curve. Students are ranked from lowest to highest score;
+                            the curve plots the cumulative share of students (x-axis) against the cumulative share of the total score they hold (y-axis).
+                            The dashed 45° line is perfect equality — every student scoring identically. Each country's Gini coefficient appears in the legend.<br>
+                            <strong>How to read it:</strong> The further a curve bows below the diagonal, the more unequally achievement is distributed.
+                            A point at (0.40, 0.30) means the lowest-scoring 40% of students account for 30% of the total score. The Gini coefficient is
+                            twice the area between the curve and the diagonal (0 = everyone equal; larger = more spread).<br>
+                            <strong>An important caveat:</strong> The Gini and the Lorenz curve were designed for <em>ratio-scale</em> quantities such as income,
+                            which have a meaningful zero. Achievement scores are <em>interval-scaled</em> with an arbitrary origin (the PISA scale is anchored to an
+                            OECD mean near 500), so the Gini of achievement is best read as a descriptive dispersion index for comparison <em>across countries or over time</em>,
+                            not as an income-style measure of inequality — its absolute level depends on where the scale's zero is placed.<br>
+                            <strong>Calculation:</strong> Records sorted by score; cumulative survey-weighted shares of students and of total score.
+                            Gini computed as 2·cov<sub>w</sub>(score, rank) / mean<sub>w</sub>(score), verified against an R reference.
                         </p>
                     </div>
                 </div>
@@ -491,6 +504,26 @@
                 <div id="gap-results"></div>
 
                 <div id="gap-plot" style="margin-top: 2rem;"></div>
+
+                <div id="oaxaca-section" style="margin-top: 3rem; display: none;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Oaxaca–Blinder Decomposition: Why Do Two Countries Differ?</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> The mean achievement gap between two countries, split into the part attributable to
+                        <em>composition</em> (country A's students have different family backgrounds than country B's — the "endowments" or explained part)
+                        and the part attributable to <em>returns</em> (the same background translates into different achievement — coefficients plus interaction, the unexplained part).<br>
+                        <strong>How to read it:</strong> A large explained share means the gap mostly reflects who the students are;
+                        a large unexplained share means the gap persists even for students with the same measured background — pointing at differences in the education systems themselves.<br>
+                        <strong>Caveat:</strong> This is descriptive accounting on observed covariates, not a causal decomposition, and the split depends on the
+                        reference group (country B's coefficients are used as the reference here).
+                    </p>
+                    <div class="controls-section" style="margin-bottom: 1rem;">
+                        <label for="oaxaca-a" style="font-weight: 600; margin-right: 0.5rem;">Country A:</label>
+                        <select id="oaxaca-a" class="select-input" style="min-width: 120px;"></select>
+                        <label for="oaxaca-b" style="font-weight: 600; margin: 0 0.5rem 0 1.5rem;">Country B (reference):</label>
+                        <select id="oaxaca-b" class="select-input" style="min-width: 120px;"></select>
+                    </div>
+                    <div id="oaxaca-results"></div>
+                </div>
             </div>
 
             <!-- Tab Content: Regression -->
@@ -553,6 +586,23 @@
                     </p>
                     <div id="coefficient-plot"></div>
                 </div>
+
+                <div id="fiml-comparison-container" style="margin-top: 2.5rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Missing Data: Listwise Deletion vs. FIML</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> The bivariate socioeconomic gradient estimated two ways — by <em>listwise deletion</em>
+                        (the default everywhere else in the app, which drops any student missing the score or the predictor) and by
+                        <em>full-information maximum likelihood</em> (FIML), which keeps every partially-observed student and estimates the model
+                        by EM under joint normality.<br>
+                        <strong>Why it matters:</strong> Listwise deletion is unbiased only when data are missing completely at random (MCAR).
+                        When missingness depends on observed characteristics (MAR), FIML uses the discarded cases to recover information and reduce bias.
+                        The gap between the two estimates is the cost of listwise deletion on the current selection.<br>
+                        <strong>Assumption:</strong> FIML here treats the score and predictor as jointly normal, so it is intended for continuous predictors
+                        (ESCS, or parental education as a numeric ISCED level); categorical controls such as gender are better handled by multiple imputation.
+                        The estimator is verified against an independent R EM and cross-checked against multiple imputation (<code>mice</code>).
+                    </p>
+                    <div id="fiml-comparison"></div>
+                </div>
             </div>
 
             <!-- Tab Content: Diagnostics -->
@@ -578,90 +628,78 @@
                     </div>
                 </div>
 
-                <!-- Assumption Check Summary -->
-                <div style="margin-bottom: 2.5rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">1. Assumption Check Summary</h3>
-                    <div class="alert alert-info" style="margin-bottom: 1rem;">
-                        <strong>Purpose:</strong> Quick overview of key OLS regression assumptions.<br>
-                        <strong>Why it matters:</strong> Violations can lead to biased coefficients, incorrect standard errors, and invalid p-values.<br>
-                        <strong>Interpretation:</strong> <span style="color: #10b981;">Pass</span> = assumption met;
-                        <span style="color: #f59e0b;">Caution</span> = minor concerns, results likely still valid;
-                        <span style="color: #ef4444;">Concern</span> = significant violation, interpret with care.
-                    </div>
+                <!-- Assumptions at a glance: the verdict comes first -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Assumptions at a Glance</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        One verdict per OLS assumption for the selected country.
+                        <strong style="color: #067d06;">Pass</strong> = assumption met ·
+                        <strong style="color: #b45309;">Caution</strong> = minor concerns, results likely still valid ·
+                        <strong style="color: #b91c1c;">Concern</strong> = notable violation, interpret with care.
+                        Open the sections below for the statistics behind each verdict.
+                    </p>
                     <div id="assumption-dashboard"></div>
                 </div>
 
-                <!-- Model Comparison Table -->
-                <div style="margin-bottom: 2.5rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">2. Model Fit Comparison</h3>
-                    <div class="alert alert-info" style="margin-bottom: 1rem;">
-                        <strong>Purpose:</strong> Compare goodness-of-fit across OLS, Fixed Effects, and Random Effects models.<br>
-                        <strong>Key metrics:</strong><br>
-                        • <strong>R²</strong>: Proportion of variance explained (0-1). Higher = better fit.<br>
-                        • <strong>R² Within</strong>: Variance explained within groups (countries). Key for panel models.<br>
-                        • <strong>R² Between</strong>: Variance explained between group means.<br>
-                        • <strong>AIC/BIC</strong>: Information criteria for model selection. Lower = better. BIC penalizes complexity more.<br>
-                        • <strong>ICC (ρ)</strong>: Intraclass correlation. Proportion of variance at country level. High ICC suggests panel methods needed.
+                <!-- Detailed diagnostics: browse on demand -->
+                <details class="diag-section">
+                    <summary>Model fit comparison <span class="diag-hint">which specification fits best — R², AIC/BIC, ICC</span></summary>
+                    <div class="diag-body">
+                        <p class="diag-explainer">
+                            <strong>R²</strong> is the share of variance explained (higher = better);
+                            <strong>R² within / between</strong> split that for panel models;
+                            <strong>AIC/BIC</strong> trade fit against complexity (lower = better, BIC penalizes complexity more);
+                            <strong>ICC (ρ)</strong> is the share of variance at the country level — a high ICC is the reason panel models exist.
+                        </p>
+                        <div id="model-comparison-table"></div>
                     </div>
-                    <div id="model-comparison-table"></div>
-                </div>
+                </details>
 
-                <!-- Hausman Test -->
-                <div style="margin-bottom: 2.5rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">3. Hausman Specification Test</h3>
-                    <div class="alert alert-info" style="margin-bottom: 1rem;">
-                        <strong>Purpose:</strong> Determine whether Fixed Effects or Random Effects is more appropriate.<br>
-                        <strong>Null hypothesis (H₀):</strong> Country effects are uncorrelated with predictors (RE is consistent).<br>
-                        <strong>Alternative (H₁):</strong> Country effects correlate with predictors (only FE is consistent).<br>
-                        <strong>Interpretation:</strong><br>
-                        • p < 0.05 → Reject H₀ → Use <strong>Fixed Effects</strong> (systematic differences exist).<br>
-                        • p ≥ 0.05 → Fail to reject → <strong>Random Effects</strong> is acceptable and more efficient.
+                <details class="diag-section">
+                    <summary>Hausman specification test <span class="diag-hint">fixed or random effects?</span></summary>
+                    <div class="diag-body">
+                        <p class="diag-explainer">
+                            Tests whether the country effects correlate with the predictors.
+                            <strong>p &lt; 0.05</strong>: they do — random effects would be inconsistent, keep <strong>fixed effects</strong>.
+                            <strong>p ≥ 0.05</strong>: no evidence they do — <strong>random effects</strong> is acceptable and more efficient.
+                        </p>
+                        <div id="hausman-panel"></div>
                     </div>
-                    <div id="hausman-panel"></div>
-                </div>
+                </details>
 
-                <!-- Residual Diagnostics Table -->
-                <div style="margin-bottom: 2.5rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">4. Residual Diagnostics</h3>
-                    <div class="alert alert-info" style="margin-bottom: 1rem;">
-                        <strong>Purpose:</strong> Assess normality and distributional properties of model residuals.<br>
-                        <strong>Key metrics:</strong><br>
-                        • <strong>Residual Mean</strong>: Should be ≈ 0. Non-zero suggests model misspecification.<br>
-                        • <strong>Skewness</strong>: Measures asymmetry. Should be ≈ 0 (±1 acceptable).<br>
-                        • <strong>Excess Kurtosis</strong>: Measures tail heaviness. Should be ≈ 0 (±2 acceptable).<br>
-                        • <strong>Jarque-Bera Test</strong>: Formal normality test. p < 0.05 rejects normality.<br>
-                        • <strong>Variance Ratio</strong>: Compares residual variance in upper vs lower fitted values. >1.5 suggests heteroscedasticity.<br>
-                        • <strong>Outliers (>3σ)</strong>: Observations with unusually large residuals. Should be <1% of sample.
+                <details class="diag-section">
+                    <summary>Residual diagnostics <span class="diag-hint">are the residuals well behaved — mean, skewness, normality, heteroscedasticity</span></summary>
+                    <div class="diag-body">
+                        <p class="diag-explainer">
+                            Healthy residuals have mean ≈ 0, skewness ≈ 0 (±1 acceptable), excess kurtosis ≈ 0 (±2 acceptable),
+                            a Jarque–Bera p above 0.05 (normality not rejected), a variance ratio below ~1.5 (no fanning),
+                            and under 1% of observations beyond 3σ. With PISA's large samples, formal normality tests reject
+                            easily — read the magnitudes, not only the p-values.
+                        </p>
+                        <div id="residual-diagnostics-table"></div>
                     </div>
-                    <div id="residual-diagnostics-table"></div>
-                </div>
+                </details>
 
-                <!-- Cook's Distance Summary -->
-                <div style="margin-bottom: 2.5rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">5. Influential Observations (Cook's Distance)</h3>
-                    <div class="alert alert-info" style="margin-bottom: 1rem;">
-                        <strong>Purpose:</strong> Identify observations that disproportionately influence regression coefficients.<br>
-                        <strong>What it measures:</strong> Combined effect of an observation's leverage (unusual predictor values) and residual size.<br>
-                        <strong>Threshold:</strong> Cook's D > 4/n indicates potentially influential observations.<br>
-                        <strong>Interpretation:</strong><br>
-                        • <5% influential points = typical, no action needed.<br>
-                        • 5-10% = moderate concern, check for data quality issues.<br>
-                        • >10% = investigate whether outliers are driving results.
+                <details class="diag-section">
+                    <summary>Influential observations <span class="diag-hint">is any single student driving the results — Cook's distance</span></summary>
+                    <div class="diag-body">
+                        <p class="diag-explainer">
+                            Cook's distance combines an observation's leverage (unusual predictor values) with its residual size;
+                            values above 4/n flag potential influence. Under 5% flagged is typical; above 10%, check whether
+                            outliers drive the coefficients.
+                        </p>
+                        <div id="cooks-distance-summary"></div>
                     </div>
-                    <div id="cooks-distance-summary"></div>
-                </div>
+                </details>
 
-                <!-- Single Residual Plot -->
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">6. Residual vs Fitted Plot (OLS)</h3>
-                    <div class="alert alert-info" style="margin-bottom: 1rem;">
-                        <strong>Purpose:</strong> Visual check for linearity and homoscedasticity assumptions.<br>
-                        <strong>What to look for:</strong><br>
-                        • <strong>Good:</strong> Random scatter around zero with constant spread.<br>
-                        • <strong>Fan shape:</strong> Variance increases with fitted values → heteroscedasticity.<br>
-                        • <strong>Curved pattern:</strong> Nonlinear relationship not captured by model.<br>
-                        • <strong>Clusters:</strong> May indicate omitted categorical variable.
-                    </div>
+                <!-- Residual plot stays visible: the one visual check worth a look every time -->
+                <div style="margin-top: 2rem; margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Residuals vs Fitted (OLS)</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        The single most useful visual check. <strong>Good:</strong> random scatter around zero with constant spread.
+                        <strong>Fan shape:</strong> heteroscedasticity. <strong>Curve:</strong> a nonlinearity the model misses.
+                        <strong>Clusters:</strong> a grouping variable the model omits.
+                    </p>
                     <div id="residual-plot-main"></div>
                 </div>
             </div>
@@ -715,7 +753,8 @@
                     <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
                         <strong>What this shows:</strong> Combined bar/line chart comparing Q4–Q1 ESCS achievement gaps across countries.
                         Bars show raw score gaps (difference between highest and lowest family background quartiles); the line overlays standardized effect sizes (Cohen's d).<br>
-                        <strong>Interpretation:</strong> Larger gaps and higher effect sizes indicate stronger intergenerational transmission of educational achievement.
+                        <strong>Interpretation:</strong> Larger gaps and higher effect sizes indicate stronger intergenerational transmission of educational achievement.<br>
+                        <strong>Calculation:</strong> Students are split into survey-weighted ESCS quartiles within each country; the gap is the difference in weighted mean achievement between the top and bottom quartile, and Cohen's d divides that gap by the pooled standard deviation.
                     </p>
                     <div id="gap-comparison"></div>
                 </div>
@@ -732,6 +771,65 @@
                     </p>
                     <div id="decomposition-chart"></div>
                 </div>
+            </div>
+
+            <!-- Tab Content: Within-Country Trends -->
+            <div id="trends" class="tab-content">
+                <div class="section-title">Within-Country Trends</div>
+                <p class="description">
+                    How does a country's achievement, its socioeconomic gradient, or its inequality
+                    <em>change across PISA cycles</em>? This tab estimates a focal statistic once per cycle
+                    for each selected country and models its trajectory over time — the within-country,
+                    over-time view that the cross-sectional country fixed effects on the Regression tab do not provide.
+                </p>
+
+                <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+                    <strong>PISA is a series of repeated cross-sections, not a panel of individuals.</strong>
+                    A student tested in 2009 is never re-tested, so there is no individual panel to estimate.
+                    What is estimated here is a <em>country-level</em> panel: each country contributes one estimate
+                    per cycle, and the trend is fit across those cycles. The country fixed-effects model below pools
+                    countries with dummy intercepts, so the reported trend is identified from change <em>within</em>
+                    countries, net of fixed differences in level.
+                </div>
+
+                <div class="controls-section" style="margin-bottom: 1.5rem;">
+                    <label for="trend-metric" style="font-weight: 600; color: #f1f5f9; margin-right: 0.5rem;">
+                        Trend metric:
+                    </label>
+                    <select id="trend-metric" class="select-input" style="min-width: 240px;">
+                        <option value="gradient">ESCS gradient (intergenerational transmission)</option>
+                        <option value="mean">Mean achievement</option>
+                        <option value="gini">Achievement Gini (dispersion)</option>
+                        <option value="gap">Q4–Q1 SES achievement gap</option>
+                    </select>
+                    <span style="color: var(--text-secondary); font-size: 0.85rem; margin-left: 0.75rem;">
+                        The outcome (math/reading/science), SES predictor and weighting are taken from the Data tab.
+                    </span>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>What this shows:</strong> Each marker is the chosen statistic for one country in one PISA cycle;
+                        vertical bars are 95% confidence intervals where a standard error is available (mean and gradient always;
+                        Gini and gap only when replicate weights are present). The dotted line is each country's fitted trend.<br>
+                        <strong>How it is estimated:</strong> Per cycle, means and the ESCS gradient reuse the same survey-weighted
+                        estimators (and BRR standard errors, where replicate weights are present) as the Overview and Regression tabs.
+                        Each country's trend is a regression of the per-cycle estimate on time (in decades), precision-weighted by 1/SE²
+                        so well-estimated cycles count more; with fewer than three cycles a slope is shown but its uncertainty is not.<br>
+                        <strong>How to read it:</strong> A rising ESCS-gradient line means family background is becoming a stronger predictor
+                        of achievement (declining mobility); a falling line means the opposite. Read the <em>direction and size of change</em>,
+                        keeping the comparability notes below in mind.
+                    </p>
+                    <div id="trends-chart"></div>
+                    <p id="trends-cap-note" style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.5rem;"></p>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Trend Estimates</h3>
+                    <div id="trends-table"></div>
+                </div>
+
+                <div id="trends-caveats" style="margin-bottom: 1rem;"></div>
             </div>
 
             <!-- Tab Content: Export -->
@@ -809,6 +907,21 @@
                         </button>
                         <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary);">
                             Publication-ready report with embedded charts
+                        </p>
+                    </div>
+
+                    <!-- R Replication Script Export -->
+                    <div class="stat-card">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary-color);">R Replication Script</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
+                            Download a runnable .R script that reproduces every analysis you opened,
+                            with your selections baked in and the app's verified numbers as expected output.
+                        </p>
+                        <button id="export-r-btn" class="btn" style="width: 100%;">
+                            Download Script (.R)
+                        </button>
+                        <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            Built from the "Show the R code" panels on each tab
                         </p>
                     </div>
                 </div>
@@ -997,6 +1110,6 @@
     </div>
 
     <!-- Application JavaScript Modules -->
-    <script type="module" src="js/app.js?v=3.5.0"></script>
+    <script type="module" src="js/app.js?v=4.0.1"></script>
 </body>
 </html>

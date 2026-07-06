@@ -264,6 +264,33 @@ where:
 
         <p>This is the standard population Gini estimator; it reduces to the ordinary Gini coefficient when all weights are equal. It is verified against an independent R reference (see Section 5.3).</p>
 
+        <h4>Lorenz Curve</h4>
+        <p>The Lorenz curve is the graphical companion to the Gini coefficient. After sorting students in ascending order of score, EduStrat plots the cumulative survey-weighted share of students against the cumulative survey-weighted share of the total score they hold:</p>
+
+        <div class="formula">
+x<sub>k</sub> = ( Σ<sub>i ≤ k</sub> w<sub>i</sub> ) / W                  (cumulative share of students)
+y<sub>k</sub> = ( Σ<sub>i ≤ k</sub> w<sub>i</sub> · y<sub>i</sub> ) / ( Σ<sub>i</sub> w<sub>i</sub> · y<sub>i</sub> )   (cumulative share of total score)
+
+with students ordered so that y<sub>1</sub> ≤ y<sub>2</sub> ≤ … ≤ y<sub>n</sub>
+        </div>
+
+        <p>The 45° line y = x is perfect equality (all students identical). The further the curve bows below the diagonal, the more dispersed the distribution. The Gini coefficient equals twice the area between the curve and the diagonal, so the curve drawn from the weights above and the weighted Gini above are numerically consistent (they agree to machine precision in the application).</p>
+
+        <p><strong>Interpretive caveat.</strong> The Lorenz curve and Gini coefficient were developed for <em>ratio-scale</em> quantities such as income or wealth, which possess a meaningful zero. PISA achievement is reported on an <em>interval</em> scale whose origin is a convention (the OECD anchored the scale to a mean of 500 and a standard deviation of 100). Applying a Lorenz/Gini analysis to achievement is therefore a descriptive device for comparing the relative spread of scores across countries and cycles; the absolute magnitude of the achievement Gini is not scale-invariant and should not be interpreted like an income Gini. EduStrat reports it alongside the coefficient of variation and percentile ratios for this reason, and the interface states the caveat where the curve is shown.</p>
+
+        <h4>Theil-T Index</h4>
+        <p>The Theil-T index is a second dispersion measure with one property the Gini lacks: it decomposes <em>additively</em> into within-group and between-group components.</p>
+
+        <div class="formula">
+T = Σ w<sub>i</sub> (y<sub>i</sub>/μ) ln(y<sub>i</sub>/μ) / Σ w<sub>i</sub>
+
+T = T<sub>within</sub> + T<sub>between</sub>
+T<sub>within</sub>  = Σ<sub>g</sub> s<sub>g</sub> T<sub>g</sub>          (s<sub>g</sub> = group share of total weighted achievement)
+T<sub>between</sub> = Σ<sub>g</sub> s<sub>g</sub> ln(μ<sub>g</sub>/μ)
+        </div>
+
+        <p>The Gap Analysis tab reports the country decomposition alongside the variance-based ICC: the two answer the same question ("how much inequality lies between countries?") with different metrics. The same interval-scale caveat as for the Gini applies. Verified against a definitional R reference (Section 5.3).</p>
+
         <h4>Coefficient of Variation</h4>
         <div class="formula">
 CV = σ / μ
@@ -433,6 +460,21 @@ where:
 
         <p>Effect sizes are interpreted using Cohen's conventions: small (0.2), medium (0.5), large (0.8) (Cohen, 1988).</p>
 
+        <h4>Oaxaca&ndash;Blinder Decomposition</h4>
+        <p>The Gap Analysis tab can decompose the mean achievement gap between two countries (A and B) into composition and returns components, using B's coefficients as the reference:</p>
+
+        <div class="formula">
+gap = Ȳ<sub>A</sub> − Ȳ<sub>B</sub> = E + C + I     (threefold)
+
+E (endowments)   = (x̄<sub>A</sub> − x̄<sub>B</sub>)′ β<sub>B</sub>
+C (coefficients) = x̄<sub>B</sub>′ (β<sub>A</sub> − β<sub>B</sub>)
+I (interaction)  = (x̄<sub>A</sub> − x̄<sub>B</sub>)′ (β<sub>A</sub> − β<sub>B</sub>)
+
+twofold: explained = E,  unexplained = C + I
+        </div>
+
+        <p>A large explained share means the gap mostly reflects differences in student composition (family background); a large unexplained share means students with the same measured background fare differently — pointing at the systems rather than the students. The decomposition is descriptive accounting on observed covariates, not causal, and its split depends on the reference group; the interface states both caveats. Group regressions are the same weighted OLS as elsewhere; the algebra is verified against a base-R implementation (Section 5.3).</p>
+
         <h3>3.8 Standard Errors: model-based and BRR</h3>
         <p>PISA's two-stage stratified, clustered design means that standard errors computed under a simple-random-sampling (SRS) assumption understate the true sampling uncertainty. EduStrat reports two kinds of standard error:</p>
         <ul>
@@ -454,6 +496,8 @@ where:
 
         <p>EduStrat's BRR implementation reproduces the <code>intsvy</code> R package exactly (to machine precision) and is verified across three cycles (2015, 2018, 2022); see the repository's <code>VERIFICATION.md</code>. The design effect is substantial and stable: for the Finnish mathematics mean the BRR standard error is 1.7&ndash;2.0 times the SRS error in every cycle. Toggling the <em>Sampling Weights</em> control between the student weight and no weights lets users see this difference directly.</p>
 
+        <p><strong>Cluster-robust (school) standard errors.</strong> As a second design-aware option, every OLS and fixed-effects model also reports CR1 sandwich standard errors clustered on the school identifier: PISA samples whole classrooms within schools, so student outcomes are correlated within schools and SRS errors understate uncertainty. The estimator matches <code>sandwich::vcovCL(&hellip;, cluster = ~school_id, type = "HC1")</code> in R to near machine precision (Section 5.3). Where replicate weights are available, BRR remains the OECD-recommended method; the clustered errors are the honest fallback everywhere else and a direct way to teach design effects.</p>
+
         <div class="warning">
             <strong>Scope and a remaining limitation.</strong> Replicate weights are currently included for a documented subset of country&ndash;years (re-sourced from the OECD Public Use Files; the pipeline can be extended to others). BRR here captures <em>sampling</em> variance only: because <code>learningtower</code> supplies a single plausible value (PV1), the measurement/imputation component across plausible values is not estimated, and the resulting standard errors are therefore still slightly conservative relative to a full PV + BRR analysis. Users requiring publication-grade inference should combine all plausible values using Rubin's rules (Rubin, 1987) alongside BRR.
         </div>
@@ -466,15 +510,17 @@ where:
         </div>
 
         <h3>4.2 Missing Data</h3>
-        <p>The current implementation uses listwise deletion for missing values. Students with missing data on any variable in the analysis are excluded. This approach is appropriate when data are missing completely at random (MCAR) but may introduce bias if data are missing at random (MAR) or not at random (MNAR).</p>
+        <p>By default EduStrat uses listwise deletion for missing values: students with missing data on any variable in the analysis are excluded. This approach is appropriate when data are missing completely at random (MCAR) but may introduce bias if data are missing at random (MAR) or not at random (MNAR), which OECD notes is the relevant concern for PISA background variables (OECD, 2009).</p>
 
-        <p>OECD recommends multiple imputation for handling missing data in PISA (OECD, 2009), which is not yet implemented in this tool.</p>
+        <p>The Regression tab additionally offers a <strong>full-information maximum likelihood (FIML)</strong> estimator for the bivariate socioeconomic gradient as a principled alternative to listwise deletion. Treating the outcome and the SES predictor as jointly normal, FIML estimates the mean vector and covariance matrix by the EM algorithm using every partially-observed student, and reads the regression off the estimated moments; the gradient β = &Sigma;<sub>XX</sub><sup>&minus;1</sup>&Sigma;<sub>Xy</sub>. Standard errors are obtained from the numerical observed-information matrix and propagated to the coefficients by a delta method, with the survey weights normalised to the sample size so the errors are on the sample (not population) scale. Under MAR this recovers information that listwise deletion discards and reduces bias; the interface displays the listwise and FIML gradients side by side so the difference is visible. FIML assumes joint normality and is therefore offered for continuous predictors (ESCS, or parental education as a numeric ISCED level); categorical controls such as gender are better handled by multiple imputation, a planned extension. The estimator is verified against an independent EM in R and cross-checked against the <code>mice</code> multiple-imputation package (see Section 5.3 and <code>VERIFICATION.md</code>).</p>
 
         <h3>4.3 Sampling Design</h3>
         <p>All analyses account for sampling weights, which adjust for unequal selection probabilities and nonresponse. For country&ndash;years that include the replicate weights, EduStrat reports design-correct standard errors by balanced repeated replication (Section 3.8), which capture the stratified, clustered design. Where replicate weights are not available, the model-based standard errors assume simple random sampling and may understate uncertainty; for those cases, publication-quality inference should use BRR or cluster-robust errors in R or Stata.</p>
 
         <h3>4.4 Measurement Error</h3>
-        <p>Achievement scores are measured with error. PISA addresses this through plausible values, but the <code>learningtower</code> R package provides only the first plausible value (PV1) for each domain, and EduStrat is therefore constrained to PV1. Full uncertainty quantification requires analyzing all plausible values and combining results using Rubin's rules (Rubin, 1987). See <a href="https://www.oecd.org/en/about/programmes/pisa/how-to-prepare-and-analyse-the-pisa-database.html">OECD guidance on analysing the PISA database</a>.</p>
+        <p>Achievement scores are measured with error. PISA addresses this through plausible values, but the <code>learningtower</code> R package provides only the first plausible value (PV1) for each domain, so the shipped chunks are constrained to PV1. Full uncertainty quantification requires analyzing all plausible values and combining results using Rubin's rules (Rubin, 1987). See <a href="https://www.oecd.org/en/about/programmes/pisa/how-to-prepare-and-analyse-the-pisa-database.html">OECD guidance on analysing the PISA database</a>.</p>
+
+        <p>EduStrat now ships the machinery for exactly this: <code>js/analysis/pv-pooling.js</code> implements Rubin's rules (pooled estimate, within/between variance, total SE, Rubin degrees of freedom; verified against base R), and <code>pipeline/scripts/10-add-plausible-values.R</code> regenerates country&ndash;year chunks with all plausible values from the OECD Public Use Files, following the same limited-scope template as the replicate-weight pipeline. The pooling activates automatically when chunks carrying the pv fields are present; until then analyses remain single-PV and this limitation stands.</p>
 
         <h3>4.5 Comparability Across Cycles</h3>
         <p>While PISA attempts to maintain comparability across assessment cycles through linking procedures, changes in test design, sampling, and country participation may affect trend estimates. Caution is advised when interpreting changes over time, particularly for countries that altered their sampling procedures.</p>

@@ -231,6 +231,8 @@ export function showDataStatus(message, type = 'info') {
         statusEl.innerHTML = `<strong>✓ Ready!</strong><br>${message}`;
     } else if (type === 'error') {
         statusEl.innerHTML = `<strong>✗ Error!</strong><br>${message}`;
+    } else if (type === 'warning') {
+        statusEl.innerHTML = `<strong>Partial load</strong><br>${message}`;
     } else {
         statusEl.innerHTML = `<strong>ℹ Info</strong><br>${message}`;
     }

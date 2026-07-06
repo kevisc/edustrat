@@ -250,7 +250,7 @@ export function addDownloadButtonsToCharts() {
         const pngBtn = document.createElement('button');
         pngBtn.className = 'btn btn-secondary';
         pngBtn.style.cssText = 'padding: 4px 8px; font-size: 12px; margin-right: 4px;';
-        pngBtn.innerHTML = '📥 PNG';
+        pngBtn.innerHTML = 'PNG';
         pngBtn.title = 'Download as PNG';
         pngBtn.onclick = () => exportChartAsPNG(chartDiv.id);
 
@@ -258,7 +258,7 @@ export function addDownloadButtonsToCharts() {
         const svgBtn = document.createElement('button');
         svgBtn.className = 'btn btn-secondary';
         svgBtn.style.cssText = 'padding: 4px 8px; font-size: 12px;';
-        svgBtn.innerHTML = '📥 SVG';
+        svgBtn.innerHTML = 'SVG';
         svgBtn.title = 'Download as SVG';
         svgBtn.onclick = () => exportChartAsSVG(chartDiv.id);
 

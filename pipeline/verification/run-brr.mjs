@@ -28,6 +28,14 @@ const multiData = MULTI.flatMap(load);
 const out = { generated: new Date().toISOString(), datasets: { SINGLE, MULTI, CYCLES }, runs: [] };
 const fw = brr.finalStudentWeight;
 
+if (!brr.hasReplicateWeights(singleData)) {
+    console.error(
+        'The local chunks do not carry rep_wgts (replicate weights). Regenerate them\n' +
+        'with pipeline/scripts/05-add-replicate-weights.R (OECD PUF) before running\n' +
+        'this harness — the deployed data host serves the replicate-weighted chunks.');
+    process.exit(2);
+}
+
 function add(id, dataset, target, data, estimator) {
     const r = brr.brrStatistic(data, estimator, fw);
     out.runs.push({ id, dataset, target, estimate: r.estimate, se: r.se, variance: r.variance, nrep: r.nrep });

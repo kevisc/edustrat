@@ -333,6 +333,7 @@ function buildReportHeader(state) {
     `;
 }
 
+
 /**
  * Build data overview section
  */
@@ -841,22 +842,22 @@ function buildComparativeAnalysis(results, state) {
 
                         <div class="grid-2" style="gap: 1rem; margin-top: 1rem;">
                             <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                                <h4 style="color: white;">High Excellence, High Equity ✓✓</h4>
+                                <h4 style="color: white;">High Excellence, High Equity</h4>
                                 <p style="color: white; font-size: 0.9em;">Above average achievement, weaker intergenerational transmission</p>
                                 <p style="color: white;"><strong>${highExcellenceHighEquity.length > 0 ? highExcellenceHighEquity.map(s => s.country).join(', ') : 'None'}</strong></p>
                             </div>
                             <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                                <h4 style="color: white;">High Excellence, Low Equity ✓✗</h4>
+                                <h4 style="color: white;">High Excellence, Low Equity</h4>
                                 <p style="color: white; font-size: 0.9em;">Above average achievement, stronger intergenerational transmission</p>
                                 <p style="color: white;"><strong>${highExcellenceLowEquity.length > 0 ? highExcellenceLowEquity.map(s => s.country).join(', ') : 'None'}</strong></p>
                             </div>
                             <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-                                <h4 style="color: white;">Low Excellence, High Equity ✗✓</h4>
+                                <h4 style="color: white;">Low Excellence, High Equity</h4>
                                 <p style="color: white; font-size: 0.9em;">Below average achievement, weaker intergenerational transmission</p>
                                 <p style="color: white;"><strong>${lowExcellenceHighEquity.length > 0 ? lowExcellenceHighEquity.map(s => s.country).join(', ') : 'None'}</strong></p>
                             </div>
                             <div class="stat-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <h4 style="color: white;">Low Excellence, Low Equity ✗✗</h4>
+                                <h4 style="color: white;">Low Excellence, Low Equity</h4>
                                 <p style="color: white; font-size: 0.9em;">Below average achievement, stronger intergenerational transmission</p>
                                 <p style="color: white;"><strong>${lowExcellenceLowEquity.length > 0 ? lowExcellenceLowEquity.map(s => s.country).join(', ') : 'None'}</strong></p>
                             </div>
@@ -1037,8 +1038,8 @@ function buildMethodologySection() {
             <ul>
                 <li>Cross-sectional design precludes causal inference</li>
                 <li>Single plausible value (PV1) per domain used (a constraint of the <em>learningtower</em> R package); full analyses should use all PVs and Rubin's rules</li>
-                <li>Replicate-weight variance estimation (BRR) not implemented; standard errors may understate uncertainty</li>
-                <li>Missing data handled via listwise deletion</li>
+                <li>Standard errors are computed by balanced repeated replication (BRR, 80 Fay replicate weights) where the data carry replicate weights; otherwise model-based errors assuming simple random sampling are reported and may understate uncertainty</li>
+                <li>Missing data handled via listwise deletion by default; a full-information maximum likelihood (FIML) comparison for the bivariate gradient is available on the Regression tab</li>
                 <li>Sampling weights account for complex survey design</li>
                 <li>Results represent participating countries only</li>
                 <li>Per OECD Terms of Use, micro-level student data are not redistributed</li>

@@ -19,7 +19,7 @@ const STEPS = [
     {
         target: '.tabs',
         title: 'The tabs are the stages of analysis',
-        text: 'You move left to right: load data, then Overview, Distribution, Gap Analysis, Regression, Diagnostics, Comparative, and Export.'
+        text: 'You move left to right: load data, then Overview, Distribution, Gap Analysis, Regression, Diagnostics, Comparative, Trends (change across PISA cycles), and Export.'
     },
     {
         target: '.tab[data-tab="data-config"]',

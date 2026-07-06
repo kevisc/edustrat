@@ -98,6 +98,26 @@ export async function loadChunk(country, year, retryCount = 0) {
             console.warn(`Data mismatch: requested ${country} ${year}, got ${chunk.country} ${chunk.year}`);
         }
 
+        // Derive senate weights (W_FSENWT) when the chunk does not carry them:
+        // the final student weight rescaled so each country-cycle sums to 5,000,
+        // per OECD convention. This is a deterministic rescaling of the student
+        // weight, so senate-weighted analyses give every country equal influence
+        // regardless of population size.
+        if (chunk.students.length > 0 && chunk.students[0].w_fsenwt === undefined) {
+            let sumW = 0;
+            for (const s of chunk.students) {
+                const w = +s.stu_wgt;
+                if (isFinite(w) && w > 0) sumW += w;
+            }
+            if (sumW > 0) {
+                const f = 5000 / sumW;
+                for (const s of chunk.students) {
+                    const w = +s.stu_wgt;
+                    s.w_fsenwt = (isFinite(w) && w > 0) ? w * f : 1;
+                }
+            }
+        }
+
         // Cache the chunk
         state.loadedChunks.set(key, chunk);
 
@@ -108,8 +128,9 @@ export async function loadChunk(country, year, retryCount = 0) {
     } catch (error) {
         console.error(`Error loading ${key}:`, error.message);
 
-        // Retry logic
-        if (retryCount < MAX_RETRIES) {
+        // Retry logic — skip retries entirely when the browser knows it is offline,
+        // so a full-selection failure surfaces in seconds rather than minutes.
+        if (retryCount < MAX_RETRIES && (typeof navigator === 'undefined' || navigator.onLine !== false)) {
             console.log(`Retrying ${key} (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
 
             // Wait before retry (exponential backoff)
@@ -139,34 +160,40 @@ export async function loadMultipleChunks(countryYearPairs, onProgress = null) {
     setLoading(true);
 
     try {
-        // Load chunks sequentially to control concurrency
-        // (could be made parallel with Promise.all for better performance)
-        for (let i = 0; i < countryYearPairs.length; i++) {
-            const { country, year } = countryYearPairs[i];
-            const key = `${country}_${year}`;
+        // Bounded-concurrency pool: several chunks in flight at once, but not so
+        // many that a slow connection queues dozens of multi-MB requests.
+        const CONCURRENCY = Math.min(6, total);
+        let nextIndex = 0;
+        let completed = 0;
 
-            try {
-                // Update progress
-                if (onProgress) {
-                    onProgress({
-                        loaded: i,
-                        total: total,
-                        current: key,
-                        percentage: Math.round((i / total) * 100)
-                    });
+        async function workerLoop() {
+            while (true) {
+                const i = nextIndex++;
+                if (i >= countryYearPairs.length) return;
+                const { country, year } = countryYearPairs[i];
+                const key = `${country}_${year}`;
+                try {
+                    const chunk = await loadChunk(country, year);
+                    results.push(chunk);
+                } catch (error) {
+                    console.error(`Error loading ${key}:`, error);
+                    errors.push({ country, year, error: error.message });
+                    // Continue loading other chunks despite error (graceful degradation)
+                } finally {
+                    completed++;
+                    if (onProgress) {
+                        onProgress({
+                            loaded: completed,
+                            total: total,
+                            current: key,
+                            percentage: Math.round((completed / total) * 100)
+                        });
+                    }
                 }
-
-                const chunk = await loadChunk(country, year);
-                results.push(chunk);
-
-            } catch (error) {
-                console.error(`Error loading ${key}:`, error);
-                errors.push({ country, year, error: error.message });
-
-                // Continue loading other chunks despite error
-                // (graceful degradation)
             }
         }
+
+        await Promise.all(Array.from({ length: CONCURRENCY }, () => workerLoop()));
 
         // Final progress update
         if (onProgress) {
@@ -183,6 +210,7 @@ export async function loadMultipleChunks(countryYearPairs, onProgress = null) {
         if (errors.length > 0) {
             console.warn(`${errors.length} chunks failed to load:`, errors);
         }
+        lastLoadErrors = errors;
 
         // Clear merged data cache since new chunks were loaded
         clearMergedDataCache();
@@ -192,6 +220,18 @@ export async function loadMultipleChunks(countryYearPairs, onProgress = null) {
     } finally {
         setLoading(false);
     }
+}
+
+// Failures from the most recent loadMultipleChunks call, so the UI can report
+// partial failures (which country-years are missing) after a load completes.
+let lastLoadErrors = [];
+
+/**
+ * Get the list of chunk-load failures from the most recent load.
+ * @returns {Array<{country, year, error}>}
+ */
+export function getLastLoadErrors() {
+    return lastLoadErrors;
 }
 
 /**
@@ -352,6 +392,7 @@ export default {
     loadSelectedData,
     clearChunkCache,
     getCacheStats,
+    getLastLoadErrors,
     validateChunk,
     preloadChunks
 };
