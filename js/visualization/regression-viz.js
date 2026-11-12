@@ -6,6 +6,7 @@
  */
 
 import { CHART_COLORS, INK, baseLayout, BASE_CONFIG } from './chart-theme.js';
+import { parentalEducation } from '../core/utils.js';
 
 /**
  * Fixed model → color mapping so a model keeps its color across every chart:
@@ -40,27 +41,7 @@ function getPredictorValue(record, predictorVar) {
  * @returns {Number|null} Numeric education level
  */
 function parseParentEducation(record) {
-    const parseISCED = (val) => {
-        if (typeof val === 'number' && isFinite(val)) return val;
-        const numVal = Number(val);
-        if (isFinite(numVal)) return numVal;
-
-        if (typeof val === 'string') {
-            const upper = val.toUpperCase().trim();
-            if (upper === 'NONE' || upper === 'NA' || upper === 'N/A' || upper === '') return null;
-            const match = upper.match(/ISCED\s*(\d)/i);
-            if (match) return parseInt(match[1], 10);
-        }
-        return null;
-    };
-
-    const motherEduc = parseISCED(record.mother_educ);
-    const fatherEduc = parseISCED(record.father_educ);
-
-    if (motherEduc !== null && fatherEduc !== null) {
-        return Math.max(motherEduc, fatherEduc);
-    }
-    return motherEduc !== null ? motherEduc : fatherEduc;
+    return parentalEducation(record);
 }
 
 /**
@@ -86,7 +67,7 @@ export function createModelTable(model) {
             <div class="methodology-note" style="margin-bottom: 1rem;">
                 N = ${model.nobs.toLocaleString()}${model.ngroups ? `, Groups = ${model.ngroups}` : ''}<br>
                 ${model.seMethod ? `Standard errors: ${model.seMethod}<br>` : ''}
-                ${model.standardErrorsCluster && isFinite(model.standardErrorsCluster[1]) ? `School-clustered SE (focal predictor): ${model.standardErrorsCluster[1].toFixed(3)} across ${model.nClusters.toLocaleString()} schools — vs ${model.standardErrors[1].toFixed(3)} model-based; clustering students within schools changes the uncertainty.<br>` : ''}
+                ${model.standardErrorsCluster && isFinite(model.standardErrorsCluster[1]) ? `School-clustered SE (focal predictor): ${model.standardErrorsCluster[1].toFixed(3)} across ${model.nClusters.toLocaleString()} schools, against ${model.standardErrors[1].toFixed(3)} model-based; clustering students within schools changes the uncertainty.<br>` : ''}
                 ${useBRR ? `<span style="color: var(--text-secondary);">t, p and 95% CI use the BRR errors; the model-based column (SRS assumption) is shown for comparison.</span><br>` : ''}
                 ${model.r2Within !== undefined && !isNaN(model.r2Within) ? `R² (within) = ${model.r2Within.toFixed(3)}<br>` : ''}
                 ${model.r2Between !== undefined && !isNaN(model.r2Between) ? `R² (between) = ${model.r2Between.toFixed(3)}<br>` : ''}
@@ -684,13 +665,23 @@ export function renderHausmanTest(hausmanTest) {
         return;
     }
 
-    const hausmanDiv = document.getElementById('hausman-test');
+    // The result sits beneath the model tables. The tables are rebuilt on every
+    // run, so the container is created here when it does not exist yet.
+    let hausmanDiv = document.getElementById('hausman-test');
     if (!hausmanDiv) {
-        return;
+        const results = document.getElementById('regression-results');
+        if (!results) {
+            return;
+        }
+        hausmanDiv = document.createElement('div');
+        hausmanDiv.id = 'hausman-test';
+        hausmanDiv.style.marginTop = '1.5rem';
+        results.appendChild(hausmanDiv);
     }
 
-    const chiSq = !isNaN(hausmanTest.chiSquared) ? hausmanTest.chiSquared.toFixed(2) : 'N/A';
-    const pVal = !isNaN(hausmanTest.pValue) ? hausmanTest.pValue.toFixed(4) : 'N/A';
+    const chiSq = Number.isFinite(hausmanTest.chiSquared) ? hausmanTest.chiSquared.toFixed(2) : 'N/A';
+    const pVal = !Number.isFinite(hausmanTest.pValue) ? 'N/A'
+        : (hausmanTest.pValue < 0.0001 ? '< 0.0001' : hausmanTest.pValue.toFixed(4));
 
     hausmanDiv.innerHTML = `
         <div class="methodology-note">
@@ -698,7 +689,7 @@ export function renderHausmanTest(hausmanTest) {
             H₀: Difference in coefficients not systematic (Random Effects preferred)<br>
             H₁: Difference is systematic (Fixed Effects preferred)<br><br>
             χ²(${hausmanTest.df}) = ${chiSq}<br>
-            p-value = ${pVal}<br><br>
+            p-value ${pVal.startsWith('<') ? pVal : '= ' + pVal}<br><br>
             <strong>Conclusion:</strong> ${hausmanTest.conclusion}
         </div>
     `;

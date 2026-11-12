@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-01T22:19:13.450Z",
+  "generated": "2026-11-12T17:18:05.023Z",
   "runs": [
     {
       "id": "FIN_math_mean",
@@ -42,33 +42,33 @@
         },
         {
           "year": 2015,
-          "estimate": 510.58563008792,
-          "se": 1.0743068024294753,
-          "seMethod": "Model-based (SRS)",
+          "estimate": 510.585631330695,
+          "se": 2.045626608874517,
+          "seMethod": "BRR (80 Fay)",
           "n": 5882
         },
         {
           "year": 2018,
-          "estimate": 507.8448539409783,
-          "se": 1.105915698621733,
-          "seMethod": "Model-based (SRS)",
+          "estimate": 507.8448617642028,
+          "se": 1.8862448567878136,
+          "seMethod": "BRR (80 Fay)",
           "n": 5649
         },
         {
           "year": 2022,
-          "estimate": 484.1577995463761,
-          "se": 0.8875211760937356,
-          "seMethod": "Model-based (SRS)",
+          "estimate": 484.15780241069046,
+          "se": 1.8125533800269296,
+          "seMethod": "BRR (80 Fay)",
           "n": 10239
         }
       ],
       "trend": {
-        "slopePerDecade": -32.40345134475592,
-        "intercept": 560.2513401804833,
-        "se": 4.326526026287097,
-        "t": -7.489484900328602,
-        "p": 0.00029281329178809656,
-        "r2": 0.9033697944437258,
+        "slopePerDecade": -29.979913780164452,
+        "intercept": 558.3819933703883,
+        "se": 5.648382221072274,
+        "t": -5.307699197182365,
+        "p": 0.0018163966527786624,
+        "r2": 0.8244159639718482,
         "weighting": "inverse-variance",
         "nCycles": 8,
         "origin": 2000,
@@ -79,8 +79,8 @@
           2022
         ],
         "lineY": [
-          560.2513401804833,
-          488.9637472220203
+          558.3819933703883,
+          492.42618305402647
         ]
       }
     },
@@ -125,33 +125,33 @@
         },
         {
           "year": 2015,
-          "estimate": 38.72144115872419,
-          "se": 1.3444152596093621,
-          "seMethod": "Model-based (assumes simple random sampling)",
+          "estimate": 38.72144516802996,
+          "se": 1.86599935210754,
+          "seMethod": "BRR (80 Fay replicate weights, k=0.5)",
           "n": 5812
         },
         {
           "year": 2018,
-          "estimate": 35.8525110778115,
-          "se": 1.3124494839619545,
-          "seMethod": "Model-based (assumes simple random sampling)",
+          "estimate": 35.85250983039299,
+          "se": 1.747732961492792,
+          "seMethod": "BRR (80 Fay replicate weights, k=0.5)",
           "n": 5557
         },
         {
           "year": 2022,
-          "estimate": 38.62944398039701,
-          "se": 1.0292354739205805,
-          "seMethod": "Model-based (assumes simple random sampling)",
+          "estimate": 38.62944114988474,
+          "se": 1.3058057190008434,
+          "seMethod": "BRR (80 Fay replicate weights, k=0.5)",
           "n": 9931
         }
       ],
       "trend": {
-        "slopePerDecade": 4.238156089774407,
-        "intercept": 29.0586839682654,
-        "se": 1.429523083749646,
-        "t": 2.964734279531676,
-        "p": 0.025128309906738533,
-        "r2": 0.5943108656633795,
+        "slopePerDecade": 4.060708081613356,
+        "intercept": 29.058954428188827,
+        "se": 1.523811995292082,
+        "t": 2.664835356434509,
+        "p": 0.03728260909240322,
+        "r2": 0.542031837383372,
         "weighting": "inverse-variance",
         "nCycles": 8,
         "origin": 2000,
@@ -162,8 +162,8 @@
           2022
         ],
         "lineY": [
-          29.0586839682654,
-          38.382627365769096
+          29.058954428188827,
+          37.99251220773821
         ]
       }
     },
@@ -208,33 +208,33 @@
         },
         {
           "year": 2015,
-          "estimate": 0.09117335865020268,
-          "se": null,
-          "seMethod": "Point estimate (no analytic SE)",
+          "estimate": 0.09117335683229971,
+          "se": 0.0013397065436039264,
+          "seMethod": "BRR (80 Fay)",
           "n": 5882
         },
         {
           "year": 2018,
-          "estimate": 0.09256068434708342,
-          "se": null,
-          "seMethod": "Point estimate (no analytic SE)",
+          "estimate": 0.09256067919833794,
+          "se": 0.0011020831588373623,
+          "seMethod": "BRR (80 Fay)",
           "n": 5649
         },
         {
           "year": 2022,
-          "estimate": 0.10542379030747932,
-          "se": null,
-          "seMethod": "Point estimate (no analytic SE)",
+          "estimate": 0.10542378789417561,
+          "se": 0.0010023165309473029,
+          "seMethod": "BRR (80 Fay)",
           "n": 10239
         }
       ],
       "trend": {
-        "slopePerDecade": 0.008332022567812708,
-        "intercept": 0.08138018003013778,
-        "se": 0.001990925660307447,
-        "t": 4.184999336703533,
-        "p": 0.005781277609174573,
-        "r2": 0.744835244805828,
+        "slopePerDecade": 0.008332020732822965,
+        "intercept": 0.08138018080732035,
+        "se": 0.0019909258860485797,
+        "t": 4.18499794051081,
+        "p": 0.005781286578169675,
+        "r2": 0.7448351179936312,
         "weighting": "unweighted",
         "nCycles": 8,
         "origin": 2000,
@@ -245,8 +245,8 @@
           2022
         ],
         "lineY": [
-          0.08138018003013778,
-          0.09971062967932573
+          0.08138018080732035,
+          0.09971062641953087
         ]
       }
     },
@@ -291,33 +291,33 @@
         },
         {
           "year": 2015,
-          "estimate": 74.81952096532098,
-          "se": null,
-          "seMethod": "Point estimate (no analytic SE)",
+          "estimate": 74.8195268079208,
+          "se": 3.71713642555177,
+          "seMethod": "BRR (80 Fay)",
           "n": 5812
         },
         {
           "year": 2018,
-          "estimate": 75.99051871647549,
-          "se": null,
-          "seMethod": "Point estimate (no analytic SE)",
+          "estimate": 75.99051167088436,
+          "se": 3.5793490874117158,
+          "seMethod": "BRR (80 Fay)",
           "n": 5557
         },
         {
           "year": 2022,
-          "estimate": 83.44842492501698,
-          "se": null,
-          "seMethod": "Point estimate (no analytic SE)",
+          "estimate": 83.44841646976334,
+          "se": 2.717833477567392,
+          "seMethod": "BRR (80 Fay)",
           "n": 9931
         }
       ],
       "trend": {
-        "slopePerDecade": 7.493765785125447,
-        "intercept": 61.70867474152547,
-        "se": 3.753970214288705,
-        "t": 1.996224092722417,
-        "p": 0.09291118073869731,
-        "r2": 0.39909326727932537,
+        "slopePerDecade": 7.493762719708229,
+        "intercept": 61.70867679125061,
+        "se": 3.7539697803886574,
+        "t": 1.9962235068744698,
+        "p": 0.09291125616719831,
+        "r2": 0.399093126516776,
         "weighting": "unweighted",
         "nCycles": 8,
         "origin": 2000,
@@ -328,8 +328,8 @@
           2022
         ],
         "lineY": [
-          61.70867474152547,
-          78.19495946880146
+          61.70867679125061,
+          78.19495477460872
         ]
       }
     },
@@ -338,46 +338,46 @@
       "metric": "gradient",
       "perCountryTrend": {
         "DEU": {
-          "slopePerDecade": -5.297547252579662,
-          "se": 1.633685833334124,
-          "p": 0.01762712129550703,
+          "slopePerDecade": -5.345622240877532,
+          "se": 1.54834223637735,
+          "p": 0.01359166965485148,
           "weighting": "inverse-variance",
           "nCycles": 8
         },
         "FIN": {
-          "slopePerDecade": 4.238156089774407,
-          "se": 1.429523083749646,
-          "p": 0.025128309906738533,
+          "slopePerDecade": 4.060708081613356,
+          "se": 1.523811995292082,
+          "p": 0.03728260909240322,
           "weighting": "inverse-variance",
           "nCycles": 8
         },
         "KOR": {
-          "slopePerDecade": 4.683416913641182,
-          "se": 2.218885654272464,
-          "p": 0.07929531295596592,
+          "slopePerDecade": 5.355685810211924,
+          "se": 2.48266227147472,
+          "p": 0.07436004596585977,
           "weighting": "inverse-variance",
           "nCycles": 8
         },
         "MEX": {
-          "slopePerDecade": -6.8037347050179875,
-          "se": 1.6734800625812258,
-          "p": 0.006608414720196798,
+          "slopePerDecade": -8.992691179771498,
+          "se": 1.540577806655423,
+          "p": 0.0011137288326890094,
           "weighting": "inverse-variance",
           "nCycles": 8
         },
         "USA": {
-          "slopePerDecade": -6.363343218488922,
-          "se": 2.3292315752963546,
-          "p": 0.034097722228146665,
+          "slopePerDecade": -7.638217929797307,
+          "se": 2.2282115088663925,
+          "p": 0.014006208911760742,
           "weighting": "inverse-variance",
           "nCycles": 8
         }
       },
       "fePanel": {
-        "slopePerDecade": -4.244402188033176,
-        "se": 1.0694755963622575,
-        "t": -3.9686760525160154,
-        "p": 0.0003542095645256982,
+        "slopePerDecade": -5.519656527786983,
+        "se": 1.152562877814301,
+        "t": -4.789028550229172,
+        "p": 0.000032192748748105515,
         "weighting": "inverse-variance",
         "nCountries": 5,
         "nCells": 40,
@@ -395,16 +395,16 @@
   "crossChecks": [
     {
       "id": "FIN_mean_slope",
-      "fromModule": -32.40345134475592,
-      "manual": -32.40345186325261,
-      "relDiff": 1.6001279527368244e-8,
+      "fromModule": -29.979913780164452,
+      "manual": -29.97991419131425,
+      "relDiff": 1.3714175298424976e-8,
       "pass": true
     },
     {
       "id": "FIN_gradient_slope",
-      "fromModule": 4.238156089774407,
-      "manual": 4.238156068820529,
-      "relDiff": 4.9441024360072166e-9,
+      "fromModule": 4.060708081613356,
+      "manual": 4.060708064510581,
+      "relDiff": 4.21177167241802e-9,
       "pass": true
     }
   ]

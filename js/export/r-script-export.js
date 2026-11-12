@@ -14,14 +14,14 @@ import { getRegisteredPayloads } from '../ui/r-code-panel.js';
 export function downloadRScript(spec) {
     const payloads = getRegisteredPayloads();
     if (payloads.length === 0) {
-        alert('No analyses to export yet. Visit the analysis tabs first — every "Show the R code" panel the app generates is bundled into this script.');
+        alert('No analyses to export yet. Visit the analysis tabs first. Every "Show the R code" panel the app generates is bundled into this script.');
         return;
     }
 
     const stamp = new Date().toISOString().slice(0, 10);
     const header = [
         '# ==========================================================================',
-        '# EduStrat — analysis replication script',
+        '# EduStrat: analysis replication script',
         `# Generated ${stamp}`,
         `# Selection: ${spec.countries.join(', ')} | cycles: ${spec.years.join(', ')}`,
         `# Outcome: ${spec.outcomeVar} | predictor: ${spec.predictorVar} | weights: ${spec.weightType}`,

@@ -44,7 +44,7 @@ export function attachRCodePanel(container, payload, key) {
         <summary>Show the R code for this result</summary>
         <div class="r-code-body">
             <div class="r-code-toolbar">
-                <span class="r-code-title">${esc(payload.title)} — verified R equivalent</span>
+                <span class="r-code-title">${esc(payload.title)}: verified R equivalent</span>
                 <button type="button" class="btn btn-secondary r-code-copy">Copy code</button>
             </div>
             <pre class="r-code-block"><code>${esc(payload.code)}</code></pre>

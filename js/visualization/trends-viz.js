@@ -194,7 +194,7 @@ function renderTable(analysis, countries, d, tableId) {
         html += `
         <div style="margin-top:1.25rem;padding:1rem 1.25rem;background:var(--primary-50);
                     border-left:3px solid var(--primary-500);border-radius:4px;">
-            <div style="font-weight:600;margin-bottom:0.35rem;">Country fixed-effects panel — average within-country trend</div>
+            <div style="font-weight:600;margin-bottom:0.35rem;">Country fixed-effects panel: average within-country trend</div>
             <div style="font-size:1.05rem;">
                 β = <strong>${fmt(fePanel.slopePerDecade, d)} ${metricMeta.unit}</strong> per decade
                 &nbsp;(SE ${fmt(fePanel.se, d)}, p ${fmt(fePanel.p, 3)}${pStars(fePanel.p)})

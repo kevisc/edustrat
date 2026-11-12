@@ -48,7 +48,7 @@ export function updateOverviewStats(data, outcomeVar = 'math', predictorVar = 'e
     const labelEl = document.getElementById('gradient-label');
     if (labelEl) {
         const predLabel = getPredictorLabel(predictorVar, true);
-        labelEl.textContent = `${predLabel} Gradient (β)`;
+        labelEl.innerHTML = `${predLabel} Gradient (<span style="text-transform: none;">β</span>)`;
     }
 }
 

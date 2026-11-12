@@ -147,7 +147,7 @@
     <div class="container">
         <h1>Data Sources</h1>
         <p>Comprehensive guide to the PISA data underlying EduStrat (Educational Stratification in PISA)</p>
-        <p>EduStrat is designed to study the intergenerational transmission of educational achievement—specifically, how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
+        <p>EduStrat is designed to study the intergenerational transmission of educational achievement, specifically how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
 
         <h2>1. The PISA Programme</h2>
 
@@ -446,14 +446,14 @@ codebook <- load_codebook()</code></pre>
             </div>
             <div class="variable-card">
                 <strong>mother_educ</strong>
-                <span>Mother's education level (ISCED classification, e.g., "ISCED 2", "ISCED 3A")</span>
+                <span>Mother's highest schooling, in five categories: "less than ISCED1", "ISCED 1", "ISCED 2", "ISCED 3B, C", "ISCED 3A". The categories stop at upper secondary; tertiary degrees are not separated.</span>
             </div>
             <div class="variable-card">
                 <strong>father_educ</strong>
-                <span>Father's education level (ISCED classification)</span>
+                <span>Father's highest schooling, in the same five categories</span>
             </div>
         </div>
-        <p><em>Note: EduStrat derives a <span class="code">parent_edu</span> variable at runtime by taking the higher of <span class="code">mother_educ</span> and <span class="code">father_educ</span> (converted to years of schooling via ISCED mapping). This serves as the alternative predictor option in the application.</em></p>
+        <p><em>Note: EduStrat derives a <span class="code">parent_edu</span> variable at runtime by taking the higher of <span class="code">mother_educ</span> and <span class="code">father_educ</span> , each converted to a level: 0 below primary, 1 primary (ISCED 1), 2 lower secondary (ISCED 2), 3 upper secondary or higher (ISCED 3). This is the alternative predictor in the application. It is coarser than ESCS, because most parents in high-income countries reach level 3. For the 15 country-cycles that come from the OECD public-use files, the OECD index of parental education (MISCED, FISCED) was mapped to the same five categories.</em></p>
 
         <h3>6.3 Demographic Variables</h3>
         <div class="variable-grid">

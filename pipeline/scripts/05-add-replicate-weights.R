@@ -63,6 +63,25 @@ dat <- read_sav(sav, col_select = any_of(KEEP))
 dat <- as.data.frame(dat)
 message("Read ", nrow(dat), " rows x ", ncol(dat), " cols.")
 
+# Parental education. The OECD file holds an index code (MISCED, FISCED), not an
+# ISCED level, and the codes changed in 2022. The other chunks come from
+# learningtower and use five schooling categories. Map the codes to those
+# categories, so that every chunk uses one label set:
+#   2015, 2018: 0 None | 1 ISCED 1 | 2 ISCED 2 | 3 ISCED 3B, C | 4 ISCED 3A, ISCED 4
+#               | 5 ISCED 5B | 6 ISCED 5A, 6
+#   2022:       1 Less than ISCED 1 | 2 ISCED 1 | 3 ISCED 2 | 4 ISCED 3.3 | 5 ISCED 3.4
+#               | 6 to 10 ISCED 4 to 8
+# Levels above upper secondary collapse into "ISCED 3A", because the
+# learningtower categories stop there.
+harmonise_isced <- function(code, year) {
+  code <- suppressWarnings(as.numeric(code))
+  if (length(code) != 1 || is.na(code)) return(NULL)
+  level <- if (year >= 2022) code - 1 else code   # the 2022 codes start at 1
+  if (level < 0) return(NULL)
+  if (level >= 4) return("ISCED 3A")
+  c("less than ISCED1", "ISCED 1", "ISCED 2", "ISCED 3B, C")[level + 1]
+}
+
 # Gender label to match existing chunks: ST004D01T 1=female, 2=male
 gender_label <- function(v) ifelse(is.na(v), NA, ifelse(v == 1, "female", ifelse(v == 2, "male", NA)))
 
@@ -79,8 +98,8 @@ for (cnt in COUNTRIES) {
       school_id   = as.character(r$CNTSCHID),
       student_id  = as.character(r$CNTSTUID),
       gender      = gender_label(as.numeric(r$ST004D01T)),
-      mother_educ = if (is.na(r$MISCED)) NULL else paste("ISCED", as.numeric(r$MISCED)),
-      father_educ = if (is.na(r$FISCED)) NULL else paste("ISCED", as.numeric(r$FISCED)),
+      mother_educ = harmonise_isced(r$MISCED, YEAR),
+      father_educ = harmonise_isced(r$FISCED, YEAR),
       math        = round(as.numeric(r$PV1MATH), 3),
       reading     = round(as.numeric(r$PV1READ), 3),
       science     = round(as.numeric(r$PV1SCIE), 3),

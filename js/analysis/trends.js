@@ -39,7 +39,7 @@
 import { weightedOLS, runPooledOLS } from './regression.js';
 import { calculateInequalityMeasures } from './descriptive.js';
 import { decomposeAchievementGap } from './decomposition.js';
-import { calculateGini } from '../core/utils.js';
+import { calculateGini, parentalEducation } from '../core/utils.js';
 import { hasReplicateWeights, brrStatistic, weightedMeanEstimator,
          finalStudentWeight } from './brr.js';
 
@@ -74,21 +74,7 @@ function parsePredictorValue(record, predictorVar) {
         const v = +record[predictorVar];
         return isFinite(v) ? v : null;
     }
-    const parse = (val) => {
-        if (typeof val === 'number' && isFinite(val)) return val;
-        const n = Number(val);
-        if (isFinite(n)) return n;
-        if (typeof val === 'string') {
-            const u = val.toUpperCase().trim();
-            if (u === 'NONE' || u === 'NA' || u === 'N/A' || u === '') return null;
-            const m = u.match(/ISCED\s*(\d)/i);
-            if (m) return parseInt(m[1], 10);
-        }
-        return null;
-    };
-    const mo = parse(record.mother_educ), fa = parse(record.father_educ);
-    if (mo !== null && fa !== null) return Math.max(mo, fa);
-    return mo !== null ? mo : fa;
+    return parentalEducation(record);
 }
 
 // --- BRR estimators for the inequality metrics (mean/slope live in brr.js) ----

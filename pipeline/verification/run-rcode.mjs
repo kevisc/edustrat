@@ -106,7 +106,11 @@ check('overview expected output carries the mean', pO.expectedOutput.includes(d1
 
 console.log('== End-to-end: execute generated OLS snippet (chunk variant) in R ==');
 const chunkSpec = { ...spec, dataSource: 'chunk', chunkDir: CHUNK_DIR };
-const pChunk = gen.generateRegressionCode(ols, chunkSpec);
+// Fit without the replicate-weight refit. When the test chunks carry replicate
+// weights, the BRR variant of the snippet needs the OECD file and cannot run
+// here; the model-based variant is the one this check executes.
+const olsModelSE = reg.runPooledOLS(data, 'math', 'escs', [], 'student', { brr: false });
+const pChunk = gen.generateRegressionCode(olsModelSE, chunkSpec);
 const script = pChunk.code + `
 cat(sprintf("BETA=%.10f\\nSE=%.10f\\n", coef(m)["escs"], summary(m)$coefficients["escs", 2]))
 `;
@@ -117,11 +121,11 @@ try {
     const out = execFileSync('Rscript', [scriptFile], { encoding: 'utf8', timeout: 180000 });
     const beta = parseFloat(out.match(/BETA=([-\d.]+)/)?.[1]);
     const se = parseFloat(out.match(/SE=([-\d.]+)/)?.[1]);
-    const relB = Math.abs(beta - ols.coefficients[1]) / Math.abs(ols.coefficients[1]);
-    const relS = Math.abs(se - ols.standardErrors[1]) / Math.abs(ols.standardErrors[1]);
+    const relB = Math.abs(beta - olsModelSE.coefficients[1]) / Math.abs(olsModelSE.coefficients[1]);
+    const relS = Math.abs(se - olsModelSE.standardErrors[1]) / Math.abs(olsModelSE.standardErrors[1]);
     e2eOk = relB < 1e-6 && relS < 1e-6;
     check('generated snippet runs in R and reproduces beta+SE', e2eOk,
-        `R beta=${beta?.toFixed(6)} vs app ${ols.coefficients[1].toFixed(6)} (rel ${relB?.toExponential(1)}), SE rel ${relS?.toExponential(1)}`);
+        `R beta=${beta?.toFixed(6)} vs app ${olsModelSE.coefficients[1].toFixed(6)} (rel ${relB?.toExponential(1)}), SE rel ${relS?.toExponential(1)}`);
 } catch (e) {
     check('generated snippet runs in R and reproduces beta+SE', false, e.message.slice(0, 200));
 }

@@ -54,7 +54,6 @@ import {
 // Import export modules
 import { exportComprehensiveSummary, exportDescriptiveStats, exportAllRegressionModels } from './export/csv-export.js';
 import { exportAggregatedSummary } from './export/data-export.js';
-import { exportAllAnalysisCharts } from './export/figure-export.js';
 import { generateFullReport } from './export/report-export.js';
 
 // Application initialization
@@ -292,7 +291,12 @@ function applyUrlHash() {
     const p = params.get('p');
     if (p) { const el = document.getElementById('predictor'); if (el) { el.value = p; setCurrentPredictor(p); } }
     const w = params.get('w');
-    if (w) { const el = document.getElementById('weight-type'); if (el) el.value = w; }
+    if (w) {
+        // Ignore a weight the selector does not offer; an unknown value would
+        // leave the selector empty.
+        const el = document.getElementById('weight-type');
+        if (el && [...el.options].some(opt => opt.value === w)) el.value = w;
+    }
 
     if (c && y) {
         showDataStatus('Selection restored from the shared link. Press "Load Selected Data" to run it.', 'info');
@@ -424,8 +428,7 @@ function clearInactivePlotlyCharts(activeTab) {
         'distribution': ['distribution-chart', 'percentile-chart', 'lorenz-curve'],
         'gap-decomposition': ['gap-plot'],
         'regression': ['coefficient-plot', 'regression-scatter'],
-        'diagnostics': ['residual-plot-ols', 'residual-plot-fe', 'residual-plot-re',
-                       'qq-plot-ols', 'qq-plot-fe', 'qq-plot-re', 'decomposition-chart'],
+        'diagnostics': ['residual-plot-main', 'decomposition-chart'],
         'comparative': ['country-comparison', 'world-map', 'temporal-trends', 'gap-comparison'],
         'trends': ['trends-chart']
     };
@@ -1233,6 +1236,9 @@ async function renderTrendsTab(outcomeVar, predictorVar, weightType) {
     if (document.querySelector('.tab.active')?.getAttribute('data-tab') !== 'trends') return;
 
     const analysis = analyzeWithinCountryTrends(records, { metric, outcomeVar, predictorVar, weightType });
+    // The loading line is a plain paragraph in the chart container; Plotly draws
+    // next to it and does not remove it.
+    if (chartDiv) chartDiv.querySelectorAll(':scope > p').forEach(el => el.remove());
     renderWithinCountryTrends(analysis, { chartId: 'trends-chart', tableId: 'trends-table', caveatsId: 'trends-caveats' });
 
     try {
@@ -1760,8 +1766,7 @@ function runRegressionAnalyses(data, outcomeVar, predictorVar, weightType) {
 
         // Hausman test if both FE and RE are available
         if (models.fixedEffects && models.randomEffects) {
-            const predLabel = getPredictorLabel(predictorVar);
-            const hausman = hausmanTest(models.fixedEffects, models.randomEffects, predLabel);
+            const hausman = hausmanTest(models.fixedEffects, models.randomEffects, predictorVar);
             // Store globally for diagnostics tab
             window.lastHausmanTest = hausman;
             if (hausman) {
@@ -1897,7 +1902,7 @@ function renderDiagnostics(data, outcomeVar) {
         hausmanDiv.innerHTML = `<div style="padding: 1rem; color: var(--text-secondary);">
             The Hausman test contrasts country fixed effects with country random effects, so it needs
             several countries in one model. Load two or more countries and run it on the
-            <strong>Regression</strong> tab ("All Countries Combined") — the result appears beneath the model tables there.
+            <strong>Regression</strong> tab ("All Countries Combined"). The result appears beneath the model tables there.
             This per-country view fits OLS${years.length > 1 ? ' and a year-effects specification' : ''} instead.
         </div>`;
     }
@@ -1996,23 +2001,101 @@ function handleExportData() {
     exportAggregatedSummary(state.mergedData, state);
 }
 
+/** Analysis tabs that hold charts, in the order of the workflow. */
+const CHART_TABS = ['overview', 'distribution', 'gap-decomposition', 'regression',
+                    'diagnostics', 'comparative', 'trends'];
+
+/**
+ * Capture every chart as a PNG image.
+ *
+ * Plotly draws only into visible containers, and the charts of inactive tabs
+ * are cleared to save memory. So each analysis tab is opened in turn, its
+ * charts are captured once they are drawn, and the starting tab is restored.
+ *
+ * @param {Number} width - image width in pixels
+ * @param {Number} height - image height in pixels
+ * @returns {Promise<Object>} chart container id -> PNG data URL
+ */
+async function captureAllCharts(width = 1000, height = 600) {
+    const startTab = document.querySelector('.tab.active')?.getAttribute('data-tab') || 'export';
+    const pause = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const drawn = (panel) => [...panel.querySelectorAll('.js-plotly-plot')]
+        .filter(gd => gd.id && Array.isArray(gd.data) && gd.data.length > 0);
+    const charts = {};
+
+    try {
+        for (const tab of CHART_TABS) {
+            goToTab(tab);
+            const panel = document.getElementById(tab);
+            if (!panel) continue;
+
+            // Wait until the number of drawn charts stops changing. A tab that
+            // loads files (Trends) gets more time before it counts as empty.
+            const emptyAfter = tab === 'trends' ? 20000 : 6000;
+            let last = -1, stable = 0;
+            for (let waited = 0; waited < 45000; waited += 400) {
+                await pause(400);
+                const n = drawn(panel).length;
+                stable = (n === last) ? stable + 1 : 0;
+                last = n;
+                if (stable >= 4 && (n > 0 || waited >= emptyAfter)) break;
+            }
+
+            for (const gd of drawn(panel)) {
+                try {
+                    charts[gd.id] = await Plotly.toImage(gd, { format: 'png', width, height, scale: 2 });
+                } catch (e) {
+                    console.warn(`Could not capture chart ${gd.id}:`, e.message);
+                }
+            }
+        }
+    } finally {
+        goToTab(startTab);
+    }
+    return charts;
+}
+
+/** Disable an export button and show a working label; returns a restore function. */
+function busyButton(id, label) {
+    const btn = document.getElementById(id);
+    if (!btn) return () => {};
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = label;
+    return () => { btn.disabled = false; btn.innerHTML = original; };
+}
+
 async function handleExportCharts() {
     const state = getState();
 
     if (!state.mergedData || state.mergedData.length === 0) {
-        alert('No data loaded. Please load data and view charts before exporting.');
+        alert('No data loaded. Please load data before exporting charts.');
         return;
     }
 
-    alert('Rendering all charts before export...\n\nThis may take a few seconds.');
-
+    const restore = busyButton('export-charts-btn', 'Preparing charts…');
     try {
-        await renderAllVisualizationsForReport();
-        await new Promise(resolve => setTimeout(resolve, 750));
-        exportAllAnalysisCharts('png');
+        const charts = await captureAllCharts(1200, 700);
+        const ids = Object.keys(charts);
+        if (ids.length === 0) {
+            alert('No chart could be drawn for the current selection.');
+            return;
+        }
+        for (const id of ids) {
+            const link = document.createElement('a');
+            link.href = charts[id];
+            link.download = `edustrat_${id}.png`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        alert(`Exported ${ids.length} charts as PNG files. If the browser asks, allow it to download several files.`);
     } catch (error) {
         console.error('Error exporting charts:', error);
         alert(`Error exporting charts: ${error.message}`);
+    } finally {
+        restore();
     }
 }
 
@@ -2024,74 +2107,19 @@ async function handleExportReport() {
         return;
     }
 
-    // Show loading message
-    alert('Generating comprehensive analysis report...\n\nThis may take a few seconds as all visualizations are being rendered and captured.');
-
+    const restore = busyButton('export-report-btn', 'Preparing the report…');
     try {
-        // Force render ALL visualizations before exporting
-        console.log('Pre-rendering all visualizations for report...');
-        await renderAllVisualizationsForReport();
-
-        // Wait a bit for Plotly to finish rendering all charts
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        await generateFullReport(state);
+        // The report embeds every chart, so each tab is drawn and captured first.
+        const charts = await captureAllCharts(800, 600);
+        await generateFullReport(state, undefined, charts);
     } catch (error) {
         console.error('Error generating report:', error);
         alert(`Error generating report: ${error.message}`);
+    } finally {
+        restore();
     }
 }
 
-/**
- * Render all visualizations across all tabs for report generation
- * This ensures every chart is available for capture, regardless of which tabs/options the user selected
- */
-async function renderAllVisualizationsForReport() {
-    const state = getState();
-    const data = state.mergedData;
-    const outcomeVar = getCurrentOutcome();
-    const predictorVar = getCurrentPredictor();
-    const weightType = getWeightType();
-
-    console.log('Rendering all tabs and visualizations...');
-
-    // 1. Overview tab
-    updateOverviewStats(data, outcomeVar, predictorVar, weightType);
-    renderOverviewChart(data, outcomeVar, predictorVar, weightType);
-
-    // 2. Distribution tab
-    renderAllDistributionCharts(data, outcomeVar);
-
-    // 3. Gap decomposition tab - render all granularity levels
-    // Save current granularity
-    const gapSelect = document.getElementById('gap-granularity');
-    const originalGranularity = gapSelect ? gapSelect.value : 'overall';
-
-    // Render overall view (which includes variance decomposition)
-    if (gapSelect) gapSelect.value = 'overall';
-    renderGapDecomposition(data, outcomeVar, predictorVar, weightType);
-
-    // 4. Regression tab - run all analyses (visualizations auto-render)
-    runRegressionAnalyses(data, outcomeVar, predictorVar, weightType);
-
-    // 5. Diagnostics - render all diagnostic plots
-    renderDiagnostics(data, outcomeVar);
-
-    // 6. Comparative tab
-    const comparativeResults = state.analysisResults?.comparative;
-    const gapResults = state.analysisResults?.comparativeGap?.byCountry;
-    if (comparativeResults) {
-        renderAllComparativeCharts(data, comparativeResults, gapResults, outcomeVar, predictorVar);
-    }
-
-    // Restore original gap granularity
-    if (gapSelect) {
-        gapSelect.value = originalGranularity;
-        renderGapDecomposition(data, outcomeVar, predictorVar, weightType);
-    }
-
-    console.log('✓ All visualizations rendered for report');
-}
 
 // Initialize app when DOM is ready
 if (document.readyState === 'loading') {

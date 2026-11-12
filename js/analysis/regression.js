@@ -5,7 +5,7 @@
  * Date: 2025-12-16
  */
 
-import { weightedMean } from '../core/utils.js';
+import { weightedMean, parentalEducation } from '../core/utils.js';
 
 /**
  * Get predictor value from a record
@@ -32,32 +32,7 @@ function getPredictorValue(record, predictorVar) {
  * @returns {Number|null} Numeric education value
  */
 function parseParentEducationPredictor(record) {
-    const parseISCED = (val) => {
-        if (typeof val === 'number' && Number.isFinite(val)) return val;
-        const numVal = Number(val);
-        if (Number.isFinite(numVal)) return numVal;
-
-        if (typeof val === 'string') {
-            const upper = val.toUpperCase().trim();
-            if (upper === 'NONE' || upper === 'NA' || upper === 'N/A' || upper === '') return null;
-            const match = upper.match(/ISCED\s*(\d)/i);
-            if (match) return parseInt(match[1], 10);
-        }
-        return null;
-    };
-
-    const motherEduc = parseISCED(record.mother_educ);
-    const fatherEduc = parseISCED(record.father_educ);
-
-    if (motherEduc !== null && fatherEduc !== null) {
-        return Math.max(motherEduc, fatherEduc);
-    }
-    if (motherEduc !== null) return motherEduc;
-    if (fatherEduc !== null) return fatherEduc;
-
-    // Try alternative field names
-    const altValue = parseISCED(record.parent_edu) || parseISCED(record.PARED);
-    return altValue;
+    return parentalEducation(record);
 }
 
 /**
@@ -324,7 +299,12 @@ export function buildDesignMatrix(data, outcomeVar, predictorVar, options = {}, 
  */
 function applyBRRStandardErrors(model, dm, weightType, options = {}) {
     const recs = dm.records;
-    const hasRep = recs && recs.length && Array.isArray(recs[0].rep_wgts) && recs[0].rep_wgts.length > 0;
+    // Every record must carry the same number of replicate weights. A selection
+    // can mix country-cycles with and without them; a partial set cannot give a
+    // design-based standard error, so the model-based one is kept.
+    const G0 = recs && recs.length && Array.isArray(recs[0].rep_wgts) ? recs[0].rep_wgts.length : 0;
+    const anyRep = !!recs && recs.some(rec => Array.isArray(rec.rep_wgts) && rec.rep_wgts.length > 0);
+    const hasRep = G0 > 0 && recs.every(rec => Array.isArray(rec.rep_wgts) && rec.rep_wgts.length === G0);
 
     // Callers that only need point estimates (e.g. per-country gradients in the
     // report) can pass { brr: false } to skip the 80-replicate refit.
@@ -332,6 +312,9 @@ function applyBRRStandardErrors(model, dm, weightType, options = {}) {
         model.seMethod = (weightType === 'none')
             ? 'Model-based, unweighted'
             : 'Model-based (assumes simple random sampling)';
+        if (options.brr !== false && weightType === 'student' && anyRep && !hasRep) {
+            model.seMethod = 'Model-based (replicate weights cover only part of this selection)';
+        }
         model.seActive = 'model';
         return model;
     }
@@ -848,44 +831,6 @@ function parseGender(record) {
  * @param {String|Number} value - ISCED code or numeric value
  * @returns {Number|null} Numeric education level or null if invalid
  */
-function parseISCEDCode(value) {
-    // If already numeric, return it
-    if (typeof value === 'number' && Number.isFinite(value)) {
-        return value;
-    }
-
-    const numValue = Number(value);
-    if (Number.isFinite(numValue)) {
-        return numValue;
-    }
-
-    // Parse ISCED text codes (e.g., "ISCED 3A", "ISCED 2", "None")
-    if (typeof value === 'string') {
-        const upper = value.toUpperCase().trim();
-
-        // Handle "None" or missing
-        if (upper === 'NONE' || upper === 'NA' || upper === 'N/A' || upper === '') {
-            return null;
-        }
-
-        // Extract ISCED level number
-        const match = upper.match(/ISCED\s*(\d)/i);
-        if (match) {
-            return parseInt(match[1], 10);
-        }
-
-        // Handle other common education level strings
-        if (upper.includes('PRIMARY') || upper.includes('ELEMENTARY')) return 1;
-        if (upper.includes('LOWER SECONDARY') || upper.includes('MIDDLE')) return 2;
-        if (upper.includes('UPPER SECONDARY') || upper.includes('HIGH SCHOOL')) return 3;
-        if (upper.includes('POST-SECONDARY') || upper.includes('VOCATIONAL')) return 4;
-        if (upper.includes('BACHELOR') || upper.includes('UNDERGRADUATE')) return 6;
-        if (upper.includes('MASTER')) return 7;
-        if (upper.includes('DOCTOR') || upper.includes('PHD')) return 8;
-    }
-
-    return null;
-}
 
 /**
  * Parse parental education as a numeric value
@@ -894,26 +839,7 @@ function parseISCEDCode(value) {
  * @returns {Number|null} Numeric education value or null if missing
  */
 function parseParentEducation(record) {
-    const motherEduc = parseISCEDCode(record.mother_educ);
-    const fatherEduc = parseISCEDCode(record.father_educ);
-
-    // If both available, use the higher value (common in PISA analyses)
-    if (motherEduc !== null && fatherEduc !== null) {
-        return Math.max(motherEduc, fatherEduc);
-    }
-
-    // Return whichever is available
-    if (motherEduc !== null) return motherEduc;
-    if (fatherEduc !== null) return fatherEduc;
-
-    // Try other field names
-    const alternatives = ['parent_edu', 'PARED', 'pared', 'hisei'];
-    for (const field of alternatives) {
-        const val = parseISCEDCode(record[field]);
-        if (val !== null) return val;
-    }
-
-    return null;
+    return parentalEducation(record);
 }
 
 /**

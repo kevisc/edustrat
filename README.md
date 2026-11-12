@@ -1,6 +1,6 @@
 # EduStrat: Educational Stratification in PISA
 
-A browser-based statistical tool for exploratory analysis of how parental socioeconomic characteristics (education, occupation, wealth --- captured by the ESCS index) relate to student academic achievement in PISA data across 101 countries and 8 assessment cycles (2000--2022).
+A browser-based statistical tool for teaching and exploratory analysis. It shows how parental socioeconomic characteristics (education, occupation and wealth, captured by the ESCS index) relate to student achievement in PISA data from 101 countries and 8 assessment cycles (2000 to 2022). Every estimator is checked against R on real PISA data; see [VERIFICATION.md](VERIFICATION.md).
 
 **Live Demo:** [kevinschoenholzer.com/edustrat](https://kevinschoenholzer.com/edustrat/)
 
@@ -10,17 +10,23 @@ A browser-based statistical tool for exploratory analysis of how parental socioe
 
 ## Overview
 
-EduStrat enables students, instructors, and researchers to explore educational inequality using microdata from the OECD Programme for International Student Assessment (PISA). All statistical computations run client-side in the browser --- no software installation, no server, and no programming required.
+EduStrat enables students, instructors, and researchers to explore educational inequality using microdata from the OECD Programme for International Student Assessment (PISA). All statistical computations run client-side in the browser. It needs no software installation, no server and no programming.
 
 ### Features
 
-- **Survey-weighted analysis** --- OECD-compliant statistical methods with proper sampling weights
-- **Inequality metrics** --- Gini coefficient, Lorenz curves, percentile ratios (P90/P10), coefficient of variation
-- **Regression models** --- Pooled OLS, country fixed effects, and random effects with Hausman specification test
-- **Variance decomposition** --- Within- and between-country decomposition with intraclass correlation
-- **Achievement gap analysis** --- SES quartile comparisons with Cohen's *d* effect sizes
-- **Publication-ready exports** --- CSV tables, high-resolution figures (PNG/SVG), self-contained HTML reports
-- **Interactive interface** --- 7 analysis tabs with dark theme UI and Plotly.js visualisations
+- **Survey-weighted estimates**: means, ESCS gradients, achievement gaps and regression models with the PISA student weight, a senate weight or no weight
+- **Design-based standard errors**: Fay BRR standard errors from the 80 PISA replicate weights for the country-cycles that carry them; model-based standard errors elsewhere, labelled as such
+- **Regression models**: pooled OLS, country fixed effects and random effects, with a Hausman test, school-clustered standard errors and regression diagnostics; ESCS or parental schooling (four levels) as the predictor
+- **Inequality measures**: Gini coefficient, Lorenz curves, percentile ratios (P90/P10), SES quartile gaps with Cohen's *d*, variance decomposition and Oaxaca-Blinder decomposition
+- **Within-country trends**: one estimate per PISA cycle and country, with a precision-weighted trend and a country fixed-effects panel
+- **Missing data**: a comparison of listwise deletion with full-information maximum likelihood (FIML) for the gradient
+- **Show the R code**: each result panel shows the R code that reproduces the number on screen, and the Export tab bundles the opened panels into one R script
+- **Teaching aids**: shareable links that open a configured analysis, a guided tour, self-check questions and a lab-report export
+- **Exports**: CSV tables, every chart as a PNG file, and a self-contained HTML report with all charts
+
+### Verification
+
+The JavaScript estimators are compared with independent R implementations (`stats`, `plm`, `lmtest`, `car`, `intsvy`, `mice`, `sandwich`) on the same PISA files: 83 checks on point estimates and model statistics, 21 on BRR standard errors, 38 on the trend estimators, 18 on the FIML estimator, 23 on the inequality and clustering estimators, and 19 on the R code generator. [VERIFICATION.md](VERIFICATION.md) describes the harness and how to rerun it.
 
 ### Data Coverage
 
@@ -76,7 +82,7 @@ This produces 513 country-year JSON files in `data/country-year/` and a `data/me
 ```
 edustrat/
 ├── index.html                  # Main web application
-├── css/styles.css              # Dark theme styling
+├── css/styles.css              # Styles
 ├── js/
 │   ├── app.js                  # Application controller
 │   ├── core/                   # State management, data loading, utilities
@@ -92,9 +98,11 @@ edustrat/
 │   ├── citation.html           # How to cite this tool and PISA data
 │   └── publication-paper.html  # Academic paper (HTML version)
 ├── pipeline/
-│   └── scripts/                # R scripts to regenerate data from learningtower
-├── paper.md                    # JOSE paper source
-├── paper.bib                   # JOSE paper references
+│   ├── scripts/                # R scripts: data pipeline and R reference checks
+│   └── verification/           # Node harness that runs the app's own modules, with reports
+├── paper.md                    # Paper draft
+├── paper.bib                   # Paper references
+├── VERIFICATION.md             # How the estimators are checked against R
 ├── CITATION.cff                # Software citation metadata
 ├── CONTRIBUTING.md             # Contribution guidelines
 ├── LICENSE                     # MIT License
@@ -103,7 +111,7 @@ edustrat/
 
 ## Technology Stack
 
-- **Frontend:** Vanilla JavaScript (ES6 modules), HTML5, CSS3 --- no build step required
+- **Frontend:** Vanilla JavaScript (ES6 modules), HTML5, CSS3; no build step
 - **Visualisation:** [Plotly.js](https://plotly.com/javascript/) 2.35.2
 - **Statistics:** [simple-statistics](https://simplestatistics.org/), [jStat](https://jstat.github.io/)
 - **Data pipeline:** R with [learningtower](https://cran.r-project.org/package=learningtower) package
@@ -111,10 +119,11 @@ edustrat/
 
 ## Documentation
 
-- [Methodology](https://kevinschoenholzer.com/edustrat/docs/methodology.html) --- statistical methods, formulas, assumptions, and limitations
-- [Data Sources](https://kevinschoenholzer.com/edustrat/docs/data-sources.html) --- PISA programme overview, variable codebook, country coverage
-- [Citation Guide](https://kevinschoenholzer.com/edustrat/docs/citation.html) --- how to cite this tool and the underlying data
-- [Troubleshooting](TROUBLESHOOTING.md) --- common issues and solutions
+- [Methodology](https://kevinschoenholzer.com/edustrat/docs/methodology.html): statistical methods, formulas, assumptions and limitations
+- [Data Sources](https://kevinschoenholzer.com/edustrat/docs/data-sources.html): PISA programme overview, variable codebook, country coverage
+- [Citation Guide](https://kevinschoenholzer.com/edustrat/docs/citation.html): how to cite this tool and the underlying data
+- [Verification](VERIFICATION.md): how each estimator is checked against R
+- [Troubleshooting](TROUBLESHOOTING.md): common issues and solutions
 
 ## Contributing
 
@@ -125,20 +134,22 @@ Contributions are welcome. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 If you use EduStrat in your research or teaching, please cite:
 
 ```bibtex
-@article{schoenholzer2026edustrat,
-  title   = {{EduStrat}: A Browser-Based Tool for Teaching Quantitative Analysis of Educational Inequality with {PISA} Microdata},
-  author  = {Schoenholzer, Kevin},
-  year    = {2026},
-  journal = {Journal of Open Source Education},
-  doi     = {10.5281/zenodo.19221284},
-  url     = {https://github.com/kevisc/edustrat}
+@software{schoenholzer2026edustrat,
+  title     = {{EduStrat}: A Browser-Based Tool for Teaching Quantitative Analysis of Educational Inequality with {PISA} Microdata},
+  author    = {Schoenholzer, Kevin},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.19221283},
+  url       = {https://github.com/kevisc/edustrat}
 }
 ```
+
+The DOI above always points to the newest archived version.
 
 Please also cite the underlying data:
 
 - OECD (2024). Programme for International Student Assessment (PISA) Database. Paris: OECD. https://www.oecd.org/pisa/
-- Wang, K. et al. (2024). learningtower: OECD PISA Datasets from 2000--2022 in an Easy-to-Use Format. R package version 1.1.0. https://doi.org/10.32614/CRAN.package.learningtower
+- Wang, K. et al. (2024). learningtower: OECD PISA Datasets from 2000-2022 in an Easy-to-Use Format. R package version 1.1.0. https://doi.org/10.32614/CRAN.package.learningtower
 
 ## License
 
@@ -146,4 +157,4 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgements
 
-This work uses data from the OECD Programme for International Student Assessment, accessed via the `learningtower` R package. The author acknowledges support from the Universita della Svizzera italiana.
+This work uses data from the OECD Programme for International Student Assessment, accessed via the `learningtower` R package. The author acknowledges support from the Università della Svizzera italiana.

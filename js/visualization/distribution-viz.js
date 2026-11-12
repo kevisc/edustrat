@@ -227,7 +227,7 @@ export function renderLorenzCurve(data, outcomeVar = 'math', weightType = 'stude
             x, y,
             type: 'scatter',
             mode: 'lines',
-            name: `${country} — Gini ${gini.toFixed(3)}`,
+            name: `${country}, Gini ${gini.toFixed(3)}`,
             line: { width: 2 },
             hovertemplate: `${country}<br>the lowest-scoring %{x:.0%} of students<br>hold %{y:.0%} of the total score<extra></extra>`
         });

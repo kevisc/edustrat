@@ -214,7 +214,10 @@ against `stats::lm` on the same chunks by `pipeline/scripts/07-verify-trends.R`:
 - **Per-cycle estimates** — the weighted mean reproduces `lm(y ~ 1, weights = w)`
   and the ESCS gradient reproduces `lm(y ~ escs, weights = w)`, both point estimate
   and standard error, to between ten and fifteen significant figures across all
-  eight Finnish cycles.
+  eight Finnish cycles. Where a chunk carries the PISA replicate weights (Finland
+  from 2015 on), the app reports the Fay BRR standard error instead. The reference
+  then computes the same BRR error in R, by refitting on each of the 80 replicate
+  weights, and the two agree to the same tolerance.
 - **Per-country trend** — a precision-weighted regression of the per-cycle estimate
   on time in decades, `lm(theta ~ I((year-2000)/10), weights = 1/se^2)`, matched on
   slope and standard error.
@@ -333,3 +336,38 @@ learningtower cannot supply the inputs (replicate weights).
 The verification harness is committed to the repository so that reviewers and
 adopters can re-run it, extend it to further country–year combinations, and confirm
 these results independently.
+
+## Revision note, November 2026
+
+The harness was rerun on the published data files, which carry replicate weights
+for 15 country-cycles. Three things changed.
+
+- **Missing parental education.** In those 15 files a missing parental education
+  is stored as JSON `null`. The parser read `null` as the number 0, so a missing
+  value entered the analyses as ISCED 0. The FIML check exposed it: the slope on
+  parental education differed from the R reference by 17 to 26 percent. The
+  parser now keeps a missing value missing, and all 18 FIML checks pass. Analyses
+  with ESCS as the predictor were not affected.
+- **Parental education on one scale.** The 15 files with replicate weights stored
+  the raw OECD index code of parental education (0 to 6 in 2015 and 2018, 1 to 10
+  in 2022) under an "ISCED" label. The other 498 files, built from learningtower,
+  use five schooling categories that stop at upper secondary. The two codings were
+  not comparable, and the parser read "ISCED 10" as 1. The 15 files now use the
+  learningtower categories; the mapping follows the value labels of the OECD files
+  and is written down in `05-add-replicate-weights.R`. One shared parser turns the
+  categories into four levels (0 below primary, 1 primary, 2 lower secondary,
+  3 upper secondary or higher). "less than ISCED1" is now 0; it was 1 before.
+- **Mixed selections.** A selection can combine country-cycles with and without
+  replicate weights. The regression code tested only the first record and then
+  failed on the records without replicate weights. BRR standard errors are now
+  reported only when every record carries them; otherwise the model-based error
+  is shown and labelled.
+- **Exports.** The HTML report and the chart export drew all charts at once, into
+  tabs that were not visible. A safeguard skips such draws, so the report held no
+  chart and the chart export found none. Both now open each tab in turn and
+  capture its charts. The country table of the report read a field that does not
+  exist and stayed empty; it is filled now.
+- **Reference scripts.** `07-verify-trends.R` now computes BRR standard errors
+  where the data carry replicate weights, `09-verify-rigor.R` drops the
+  replicate-weight column before it builds the panel, and `run-rcode.mjs` executes
+  the model-based variant of the generated R code.

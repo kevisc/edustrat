@@ -133,9 +133,9 @@
 <body>
     <div class="container">
         <h1>Methodology</h1>
-        <p><strong>EduStrat — Educational Stratification in PISA</strong><br>
+        <p><strong>EduStrat: Educational Stratification in PISA</strong><br>
         Statistical Methods and Technical Documentation</p>
-        <p>This documentation describes the statistical methods used in EduStrat to study the intergenerational transmission of educational achievement—specifically, how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
+        <p>This documentation describes the statistical methods used in EduStrat to study the intergenerational transmission of educational achievement, specifically how parental characteristics (education, occupational status, and household wealth, captured through the ESCS index) relate to children's academic performance at age 15 in mathematics, reading, and science across more than 100 countries worldwide.</p>
 
         <h2>1. Data Sources</h2>
 
@@ -174,14 +174,14 @@
         <p>Achievement scores are scaled to have an international mean of 500 and standard deviation of 100 in the first assessment cycle when a domain was the major focus.</p>
 
         <h3>2.2 Economic, Social and Cultural Status (ESCS): Measuring Family Background</h3>
-        <p>The ESCS index is PISA's composite measure of family socioeconomic status—the primary variable for studying intergenerational transmission of educational achievement. It captures how parental characteristics relate to children's outcomes through three components:</p>
+        <p>The ESCS index is PISA's composite measure of family socioeconomic status. It is the primary variable for studying intergenerational transmission of educational achievement. It captures how parental characteristics relate to children's outcomes through three components:</p>
         <ol>
             <li><strong>Highest parental occupation (HISEI):</strong> International Socio-Economic Index of Occupational Status, measuring the occupational prestige and economic rewards associated with parents' jobs. Based on the International Standard Classification of Occupations (ISCO).</li>
             <li><strong>Highest parental education (PARED):</strong> Years of schooling completed by the most educated parent, coded using ISCED (International Standard Classification of Education) levels.</li>
             <li><strong>Home possessions (HOMEPOS):</strong> An index of household wealth, cultural possessions (books, art), and home educational resources (desk, computer, internet access). This captures both material resources and cultural capital available to the student.</li>
         </ol>
 
-        <p>These components are combined using principal components analysis and standardized to have an OECD mean of 0 and standard deviation of 1 (Avvisati &amp; Wuyts, 2024). When analyzing ESCS gradients or quartile gaps, researchers are directly measuring the strength of intergenerational transmission—how strongly these parental characteristics predict their children's academic performance at age 15.</p>
+        <p>These components are combined using principal components analysis and standardized to have an OECD mean of 0 and standard deviation of 1 (Avvisati &amp; Wuyts, 2024). When analyzing ESCS gradients or quartile gaps, researchers are directly measuring the strength of intergenerational transmission: how strongly these parental characteristics predict their children's academic performance at age 15.</p>
 
         <div class="formula">
 ESCS<sub>i</sub> = PCA(HISEI<sub>i</sub>, PARED<sub>i</sub>, HOMEPOS<sub>i</sub>)
@@ -305,7 +305,7 @@ P90/P10 = Q<sub>0.90</sub> / Q<sub>0.10</sub>
         </div>
 
         <h3>3.3 ESCS Gradient: The Core Measure of Intergenerational Transmission</h3>
-        <p>The ESCS gradient (β) is the central statistic for quantifying intergenerational transmission of educational achievement. It measures how many score points of achievement are associated with a one-unit increase in family socioeconomic status—directly capturing how strongly parental education, occupation, and wealth predict children's academic outcomes. It is the slope from a weighted bivariate regression:</p>
+        <p>The ESCS gradient (β) is the central statistic for quantifying intergenerational transmission of educational achievement. It measures how many score points of achievement are associated with a one-unit increase in family socioeconomic status. It captures how strongly parental education, occupation, and wealth predict children's academic outcomes. It is the slope from a weighted bivariate regression:</p>
 
         <div class="formula">
 Y<sub>i</sub> = α + β · ESCS<sub>i</sub> + ε<sub>i</sub>
@@ -316,7 +316,7 @@ where:
   β = ESCS gradient (intergenerational transmission coefficient)
   ε<sub>i</sub> = residual error
 
-A larger β indicates stronger intergenerational transmission—children's
+A larger β indicates stronger intergenerational transmission: children's
 achievement is more strongly predicted by their parents' characteristics.
         </div>
 
@@ -473,7 +473,7 @@ I (interaction)  = (x̄<sub>A</sub> − x̄<sub>B</sub>)′ (β<sub>A</sub> − 
 twofold: explained = E,  unexplained = C + I
         </div>
 
-        <p>A large explained share means the gap mostly reflects differences in student composition (family background); a large unexplained share means students with the same measured background fare differently — pointing at the systems rather than the students. The decomposition is descriptive accounting on observed covariates, not causal, and its split depends on the reference group; the interface states both caveats. Group regressions are the same weighted OLS as elsewhere; the algebra is verified against a base-R implementation (Section 5.3).</p>
+        <p>A large explained share means the gap mostly reflects differences in student composition (family background); a large unexplained share means students with the same measured background fare differently, which points at the systems rather than the students. The decomposition is descriptive accounting on observed covariates, not causal, and its split depends on the reference group; the interface states both caveats. Group regressions are the same weighted OLS as elsewhere; the algebra is verified against a base-R implementation (Section 5.3).</p>
 
         <h3>3.8 Standard Errors: model-based and BRR</h3>
         <p>PISA's two-stage stratified, clustered design means that standard errors computed under a simple-random-sampling (SRS) assumption understate the true sampling uncertainty. EduStrat reports two kinds of standard error:</p>

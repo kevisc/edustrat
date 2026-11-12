@@ -555,7 +555,7 @@ export function createAssumptionCheckSummary(models, hausmanResult) {
     const nWarn = checks.filter(c => c.status === 'warning').length;
     const nFail = checks.filter(c => c.status === 'fail').length;
     const verdict = nFail > 0
-        ? `${nFail} assumption${nFail > 1 ? 's' : ''} of concern — read the details below before trusting the estimates.`
+        ? `${nFail} assumption${nFail > 1 ? 's' : ''} of concern. Read the details below before trusting the estimates.`
         : nWarn > 0
             ? `${nPass} of ${checks.length} assumptions pass; ${nWarn} warrant${nWarn === 1 ? 's' : ''} a closer look.`
             : `All ${checks.length} assumptions pass.`;

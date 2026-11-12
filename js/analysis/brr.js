@@ -26,12 +26,16 @@ export const FAY_FACTOR = 0.5;
 /**
  * Does this dataset carry PISA replicate weights?
  * @param {Array} data - Array of student records
- * @returns {Boolean} true if records expose a rep_wgts array
+ * @returns {Boolean} true if every record exposes a rep_wgts array of the same length
  */
 export function hasReplicateWeights(data) {
     if (!data || data.length === 0) return false;
     const r = data[0].rep_wgts;
-    return Array.isArray(r) && r.length > 0;
+    if (!Array.isArray(r) || r.length === 0) return false;
+    // All records must carry the same number of replicate weights; a selection
+    // that mixes country-cycles with and without them has no BRR variance.
+    const G = r.length;
+    return data.every(rec => Array.isArray(rec.rep_wgts) && rec.rep_wgts.length === G);
 }
 
 /**

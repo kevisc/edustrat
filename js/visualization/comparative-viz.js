@@ -236,7 +236,7 @@ export function renderWorldMap(data, outcomeVar = 'math', predictorVar = 'escs')
         if (countryData.length < 100) return; // Skip small samples
 
         try {
-            const model = runPooledOLS(countryData, outcomeVar, predictorVar, [], 'student');
+            const model = runPooledOLS(countryData, outcomeVar, predictorVar, [], 'student', { brr: false });
             if (model && model.coefficients && model.coefficients[1]) {
                 countries.push(country);
                 // Gradient is the coefficient on the predictor (index 1, after intercept)
@@ -361,7 +361,7 @@ export function renderTemporalTrends(data, outcomeVar = 'math', predictorVar = '
         if (countryYearData.length < 100) return; // Skip small samples
 
         try {
-            const model = runPooledOLS(countryYearData, outcomeVar, predictorVar, [], 'student');
+            const model = runPooledOLS(countryYearData, outcomeVar, predictorVar, [], 'student', { brr: false });
             if (model && model.coefficients && model.coefficients[1]) {
                 if (!countryGradients[country]) {
                     countryGradients[country] = [];

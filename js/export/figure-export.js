@@ -160,17 +160,13 @@ export function exportAllAnalysisCharts(format = 'png') {
         'gap-plot',
         'regression-scatter',
         'coefficient-plot',
-        'residual-plot-ols',
-        'residual-plot-fe',
-        'residual-plot-re',
-        'qq-plot-ols',
-        'qq-plot-fe',
-        'qq-plot-re',
+        'residual-plot-main',
         'decomposition-chart',
         'world-map',
         'temporal-trends',
         'country-comparison',
-        'gap-comparison'
+        'gap-comparison',
+        'trends-chart'
     ];
 
     // Filter to only charts that exist and have data

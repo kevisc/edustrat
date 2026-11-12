@@ -24,7 +24,7 @@ const STEPS = [
     {
         target: '.tab[data-tab="data-config"]',
         title: 'Start with the data',
-        text: 'Open the Data tab to choose countries and years — or use the one-click replicate-weight comparison set — then press Load Data.'
+        text: 'Open the Data tab to choose countries and years, or use the one-click replicate-weight comparison set. Then press Load Data.'
     },
     {
         target: null,

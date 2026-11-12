@@ -12,7 +12,7 @@ import { getChartAsBase64PNG } from './figure-export.js';
  * @param {Object} state - Application state with all results
  * @param {String} filename - Optional filename
  */
-export async function generateFullReport(state, filename = 'pisa_analysis_report.html') {
+export async function generateFullReport(state, filename = 'pisa_analysis_report.html', capturedCharts = null) {
     if (!state || !state.mergedData) {
         alert('No data loaded. Please load data before generating a report.');
         return;
@@ -22,7 +22,9 @@ export async function generateFullReport(state, filename = 'pisa_analysis_report
 
     try {
         // Collect all chart images as base64
-        const charts = await collectChartImages();
+        // The caller passes the charts it captured tab by tab. Without them, only
+        // the charts that are drawn at this moment can be collected.
+        const charts = capturedCharts || await collectChartImages();
 
         // Build HTML report
         const html = await buildReportHTML(state, charts);
@@ -56,18 +58,15 @@ async function collectChartImages() {
         'regression-scatter',
         'coefficient-plot',
         // Diagnostics
-        'residual-plot-ols',
-        'residual-plot-fe',
-        'residual-plot-re',
-        'qq-plot-ols',
-        'qq-plot-fe',
-        'qq-plot-re',
+        'residual-plot-main',
         'decomposition-chart',
         // Comparative
         'world-map',
         'temporal-trends',
         'country-comparison',
-        'gap-comparison'
+        'gap-comparison',
+        // Trends
+        'trends-chart'
     ];
 
     const charts = {};
@@ -759,8 +758,8 @@ function buildComparativeAnalysis(results, state) {
                             n: countryData.length,
                             mean: desc.mean,
                             sd: desc.sd,
-                            p10: desc.percentiles['10'],
-                            p90: desc.percentiles['90'],
+                            p10: desc.p10,
+                            p90: desc.p90,
                             gap: gap.gap_q4_q1,
                             effectSize: gap.effect_size,
                             gradient: model.coefficients[1],
@@ -925,35 +924,10 @@ function buildChartsSection(charts) {
             purpose: 'Compares the estimated SES effect (coefficient) across different regression model specifications (OLS, Fixed Effects, Random Effects).',
             interpretation: 'Error bars show 95% confidence intervals. Overlapping bars suggest similar estimates across models. If Fixed Effects estimates differ substantially from OLS, this indicates important between-country heterogeneity that biases pooled estimates. The zero line (red) helps assess statistical significance.'
         },
-        'residual-plot-ols': {
+        'residual-plot-main': {
             title: 'Residual Plot (OLS Model)',
-            purpose: 'Diagnostic plot showing residuals (prediction errors) versus fitted values to assess model assumptions.',
-            interpretation: 'Residuals should scatter randomly around zero with no patterns. Funnel shapes indicate heteroscedasticity (non-constant variance). Curved patterns suggest non-linearity. Outliers appear as extreme points far from zero. Systematic patterns indicate model misspecification.'
-        },
-        'residual-plot-fe': {
-            title: 'Residual Plot (Fixed Effects Model)',
-            purpose: 'Diagnostic plot for the Fixed Effects model, checking whether country-specific intercepts adequately capture between-country differences.',
-            interpretation: 'Similar to OLS residual plot, but after accounting for country fixed effects. Remaining patterns suggest within-country non-linearity or other model violations. Compare to OLS plot - better behavior suggests fixed effects improved the model.'
-        },
-        'residual-plot-re': {
-            title: 'Residual Plot (Random Effects Model)',
-            purpose: 'Diagnostic plot for the Random Effects model, assessing model fit after partial pooling of country effects.',
-            interpretation: 'Residuals should be randomly scattered. This model assumes country effects are random draws from a distribution. Patterns here suggest violations of the random effects assumptions or remaining misspecification.'
-        },
-        'qq-plot-ols': {
-            title: 'Q-Q Plot: Normality of Residuals (OLS)',
-            purpose: 'Tests whether regression residuals follow a normal distribution, an assumption of OLS inference.',
-            interpretation: 'Points should fall along the diagonal line if residuals are normally distributed. Deviations at the tails indicate heavier or lighter tails than normal. S-shapes suggest skewness. With large samples, minor deviations are acceptable due to Central Limit Theorem, but major departures warrant concern for inference.'
-        },
-        'qq-plot-fe': {
-            title: 'Q-Q Plot: Normality of Residuals (Fixed Effects)',
-            purpose: 'Assesses normality of Fixed Effects model residuals for valid statistical inference.',
-            interpretation: 'Similar interpretation to OLS Q-Q plot. Deviations from the line indicate non-normal residuals, which may affect confidence intervals and p-values, though estimates remain unbiased.'
-        },
-        'qq-plot-re': {
-            title: 'Q-Q Plot: Normality of Residuals (Random Effects)',
-            purpose: 'Tests normality assumption for Random Effects model residuals.',
-            interpretation: 'The Random Effects model assumes both within-group errors and random effects are normally distributed. Departures from linearity suggest violations of these distributional assumptions.'
+            purpose: 'Diagnostic plot of the residuals (prediction errors) against the fitted values, for one country.',
+            interpretation: 'Residuals should scatter around zero without a pattern. A funnel shape indicates non-constant variance. A curve indicates a non-linear relationship that the model does not capture.'
         },
         'decomposition-chart': {
             title: 'Variance Decomposition (Within vs. Between Countries)',
@@ -979,6 +953,11 @@ function buildChartsSection(charts) {
             title: 'Cross-National Gap Comparison (Q4-Q1 Quartiles)',
             purpose: 'Compares achievement gaps between top and bottom SES quartiles across countries, with both raw gaps and standardized effect sizes.',
             interpretation: 'Blue bars show the raw score gap (points). Red line shows effect sizes (Cohen\'s d). Larger values indicate greater ESCS-based stratification. Compare gaps across countries to identify which have the most and least equitable outcomes. Effect sizes above 0.8 are considered large in educational research.'
+        },
+        'trends-chart': {
+            title: 'Within-Country Trend Over PISA Cycles',
+            purpose: 'Shows the chosen statistic once per PISA cycle for each country, with its fitted trend.',
+            interpretation: 'Vertical bars are 95% confidence intervals where a standard error is available. The dotted line is the fitted trend of each country. Read the direction and size of change, and keep in mind the comparability breaks between cycles (2015 computer-based delivery, 2022 pandemic cycle).'
         }
     };
 

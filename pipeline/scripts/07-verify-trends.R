@@ -7,6 +7,10 @@
 # SAME chunks and entirely in R:
 #   (1) the per-cycle weighted mean and its SE        -> lm(y ~ 1, weights = w)
 #   (2) the per-cycle ESCS gradient and its SE        -> lm(y ~ escs, weights = w)
+#       Where a chunk carries the 80 PISA replicate weights, the app reports the
+#       Fay BRR standard error. The reference then computes that BRR error too,
+#       by refitting on every replicate weight (06-verify-brr.R checks the same
+#       BRR errors against intsvy).
 #   (3) the per-country trend (precision-weighted)    -> lm(theta ~ time, weights = 1/se^2)
 #   (4) the country fixed-effects panel trend         -> lm(theta ~ time + factor(country),
 #                                                            weights = 1/se^2)
@@ -45,22 +49,42 @@ load_cell <- function(country, year) {
   f <- file.path(CHUNK_DIR, paste0(country, "_", year, ".json"))
   if (!file.exists(f)) return(NULL)
   s <- fromJSON(f)$students
-  data.frame(country = country, year = year,
-             math = suppressWarnings(as.numeric(s$math)),
-             escs = suppressWarnings(as.numeric(s$escs)),
-             w    = suppressWarnings(as.numeric(s$stu_wgt)))
+  df <- data.frame(country = country, year = year,
+                   math = suppressWarnings(as.numeric(s$math)),
+                   escs = suppressWarnings(as.numeric(s$escs)),
+                   w    = suppressWarnings(as.numeric(s$stu_wgt)))
+  rw <- s$rep_wgts
+  if (!is.null(rw)) {                       # replicate weights, one row per student
+    if (is.list(rw)) rw <- do.call(rbind, rw)
+    df$rw <- rw
+  }
+  df
+}
+
+# Fay BRR standard error (k = 0.5), from the estimate on each replicate weight.
+brr_se <- function(theta0, theta_r, fay = 0.5) {
+  sqrt(sum((theta_r - theta0)^2) / (length(theta_r) * (1 - fay)^2))
 }
 
 # ---- Per-cycle reference estimates (mean / gradient) ------------------------
 ref_mean <- function(df) {
   d <- df[is.finite(df$math) & is.finite(df$w) & df$w > 0, ]
   m <- lm(math ~ 1, weights = w, data = d)
-  c(estimate = unname(coef(m)[1]), se = summary(m)$coefficients[1, 2], n = nrow(d))
+  est <- unname(coef(m)[1]); se <- summary(m)$coefficients[1, 2]
+  if (!is.null(d$rw)) {
+    se <- brr_se(est, apply(d$rw, 2, function(r) weighted.mean(d$math, r)))
+  }
+  c(estimate = est, se = se, n = nrow(d))
 }
 ref_gradient <- function(df) {
   d <- df[is.finite(df$math) & is.finite(df$escs) & is.finite(df$w) & df$w > 0, ]
   m <- lm(math ~ escs, weights = w, data = d)
-  c(estimate = unname(coef(m)[2]), se = summary(m)$coefficients[2, 2], n = nrow(d))
+  est <- unname(coef(m)[2]); se <- summary(m)$coefficients[2, 2]
+  if (!is.null(d$rw)) {
+    X <- cbind(1, d$escs)
+    se <- brr_se(est, apply(d$rw, 2, function(r) lm.wfit(X, d$math, r)$coefficients[2]))
+  }
+  c(estimate = est, se = se, n = nrow(d))
 }
 
 # ---- Per-country series, then the precision-weighted trend ------------------

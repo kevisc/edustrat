@@ -78,16 +78,20 @@ export function buildDataPreamble(spec) {
             'library(dplyr)',
             '',
             `codes <- expand.grid(country = ${rVec(spec.countries)}, year = ${rVec(spec.years, false)})`,
-            'student <- do.call(rbind, lapply(seq_len(nrow(codes)), function(i) {',
+            '# bind_rows() accepts files with different columns; the replicate weights',
+            '# are dropped because the point estimates do not use them.',
+            'student <- bind_rows(lapply(seq_len(nrow(codes)), function(i) {',
             `  ch <- fromJSON(file.path(${JSON.stringify(spec.chunkDir || 'data/country-year')},`,
             '    paste0(codes$country[i], "_", codes$year[i], ".json")))',
-            '  ch$students',
+            '  s <- ch$students',
+            '  s$rep_wgts <- NULL',
+            '  s',
             '}))',
             `student$read <- student$reading  # chunks use the app's field name`
         );
     } else {
         lines.push(
-            '# Data: the public learningtower package — the same source the app\'s',
+            '# Data: the public learningtower package, the same source the app\'s',
             '# chunks are generated from (pipeline/scripts/01-generate-chunks.R).',
             'library(learningtower)',
             'library(dplyr)',
@@ -120,12 +124,15 @@ export function buildDataPreamble(spec) {
     if (spec.predictorVar === 'parent_edu' || (spec.controls || []).includes('parent_edu')) {
         lines.push(
             '',
-            '# Parental education: highest ISCED level of either parent, parsed the',
-            '# same way as the app (numeric, or the digit in "ISCED 3A" etc.).',
+            '# Parental education: the higher level of either parent, parsed the same',
+            '# way as the app: "less than ISCED1" is 0, otherwise the number in the',
+            '# label ("ISCED 2" is 2, "ISCED 3A" and "ISCED 3B, C" are 3).',
             'parse_isced <- function(v) {',
-            '  n <- suppressWarnings(as.numeric(v))',
+            '  u <- toupper(as.character(v))',
+            '  n <- suppressWarnings(as.numeric(u))',
             '  ifelse(is.finite(n), n,',
-            '    suppressWarnings(as.numeric(sub(".*ISCED\\\\s*([0-9]).*", "\\\\1", toupper(v)))))',
+            '    ifelse(grepl("LESS THAN", u), 0,',
+            '      suppressWarnings(as.numeric(sub(".*ISCED\\\\s*([0-9]+).*", "\\\\1", u)))))',
             '}',
             'student <- student |>',
             '  mutate(parent_edu = pmax(parse_isced(mother_educ), parse_isced(father_educ), na.rm = TRUE))'
@@ -220,7 +227,7 @@ export function generateRegressionCode(model, spec) {
             '# This model\'s displayed standard errors are BRR (80 Fay replicate',
             '# weights). learningtower ships only the final weight, so replicate-',
             '# weight inference needs the OECD Public Use File (SPSS student file,',
-            '# W_FSTURWT1..80) — see pipeline/scripts/05-add-replicate-weights.R.',
+            '# W_FSTURWT1..80); see pipeline/scripts/05-add-replicate-weights.R.',
             'library(intsvy)',
             `# point estimate + BRR SE with intsvy on the PUF data frame \`puf\`:`,
             `pisa.reg(y = "PV1${spec.outcomeVar.toUpperCase()}", x = ${rVec([spec.predictorVar === 'reading' ? 'read' : spec.predictorVar])}, data = puf)`,
@@ -233,7 +240,7 @@ export function generateRegressionCode(model, spec) {
         note = 'BRR standard errors require the OECD PUF replicate weights; the app computes them with the verified Fay formula (pipeline/scripts/06-verify-brr.R).';
     } else {
         code += [
-            `# ${model.modelName} — the verified R equivalent (VERIFICATION.md).`,
+            `# ${model.modelName}: the verified R equivalent (VERIFICATION.md).`,
             `m <- lm(${outcomeR} ~ ${rhsTerms(spec, { countryFE: isFE })}, data = student${weightsArg(spec)})`,
             'summary(m)'
         ].join('\n');
@@ -250,17 +257,17 @@ export function generateRegressionCode(model, spec) {
 
     const seLabel = usesBRR ? ' (BRR, as displayed)' : '';
     const expectedOutput = [
-        `## Expected output${seLabel} — these are the app's verified numbers:`,
+        `## Expected output${seLabel}. These are the app's verified numbers:`,
         coefficientBlock(model, spec, { brr: usesBRR }),
         `## R-squared: ${fmt(model.r2)}   Adj. R-squared: ${fmt(model.adjR2)}   N: ${model.nobs.toLocaleString()}`
     ].join('\n');
 
     const beta = model.coefficients[1], se = (usesBRR && model.standardErrorsBRR ? model.standardErrorsBRR : model.standardErrors)[1];
     const notation = isRE
-        ? `y<sub>ic</sub> = (α + u<sub>c</sub>) + β·x<sub>ic</sub> + ε<sub>ic</sub>, GLS with Swamy–Arora variance components — β̂ = <strong>${fmt(beta, 2)}</strong> (SE ${fmt(se, 2)})`
+        ? `y<sub>ic</sub> = (α + u<sub>c</sub>) + β·x<sub>ic</sub> + ε<sub>ic</sub>, GLS with Swamy–Arora variance components; β̂ = <strong>${fmt(beta, 2)}</strong> (SE ${fmt(se, 2)})`
         : isFE
-            ? `y<sub>ic</sub> = α<sub>c</sub> + β·x<sub>ic</sub> + ε<sub>ic</sub>, country intercepts α<sub>c</sub> — β̂ = <strong>${fmt(beta, 2)}</strong> (SE ${fmt(se, 2)})`
-            : `y<sub>i</sub> = α + β·x<sub>i</sub> + ε<sub>i</sub>, weighted least squares — β̂ = <strong>${fmt(beta, 2)}</strong> (SE ${fmt(se, 2)})`;
+            ? `y<sub>ic</sub> = α<sub>c</sub> + β·x<sub>ic</sub> + ε<sub>ic</sub>, country intercepts α<sub>c</sub>; β̂ = <strong>${fmt(beta, 2)}</strong> (SE ${fmt(se, 2)})`
+            : `y<sub>i</sub> = α + β·x<sub>i</sub> + ε<sub>i</sub>, weighted least squares; β̂ = <strong>${fmt(beta, 2)}</strong> (SE ${fmt(se, 2)})`;
 
     return { title: model.modelName, code, notation, expectedOutput, note };
 }
@@ -295,7 +302,7 @@ export function generateFimlCode(ccModel, fimlModel, spec) {
     ].join('\n');
 
     const expectedOutput = [
-        '## Expected output — the app\'s verified numbers:',
+        '## Expected output, the app\'s verified numbers:',
         `## Listwise:  beta = ${fmt(ccModel.coefficients[1])}  (SE ${fmt(ccModel.standardErrors[1])}, n = ${ccModel.nobs.toLocaleString()})`,
         `## FIML:      beta = ${fmt(fimlModel.coefficients[1])}  (SE ${fmt(fimlModel.standardErrors[1])}, n = ${fimlModel.nUsed.toLocaleString()} incl. ${(fimlModel.nUsed - fimlModel.nComplete).toLocaleString()} partial)`,
         '## mice pooling agrees with the FIML slope to well under 1% on the verified datasets.'
@@ -347,7 +354,7 @@ export function generateTrendsCode(analysis, spec) {
 
     const code = [
         '# Within-country trend over PISA cycles (Trends tab). The app loads every',
-        '# available cycle for the focal countries — do the same here.',
+        '# available cycle for the focal countries; do the same here.',
         'library(learningtower)',
         'library(dplyr)',
         '',
@@ -364,7 +371,7 @@ export function generateTrendsCode(analysis, spec) {
         '',
         ...(metric === 'mean' || metric === 'gradient'
             ? ['# Precision-weighted within-country trend (slope per DECADE), then the',
-               '# country fixed-effects panel — exactly the verified calls',
+               '# country fixed-effects panel, exactly the verified calls',
                '# (pipeline/scripts/07-verify-trends.R):',
                'cells$time <- (cells$year - 2000) / 10',
                'by(cells, cells$country, function(d) summary(lm(est ~ time, data = d, weights = 1/se^2)))',
@@ -376,7 +383,7 @@ export function generateTrendsCode(analysis, spec) {
                'summary(lm(est ~ time + factor(country), data = cells))'])
     ].join('\n');
 
-    const lines = ['## Expected output — the app\'s verified numbers:'];
+    const lines = ['## Expected output, the app\'s verified numbers:'];
     countries.forEach(c => {
         const tr = analysis.byCountry[c].trend;
         if (tr) lines.push(`## ${c}: slope = ${fmt(tr.slopePerDecade)} per decade  (SE ${fmt(tr.se)}, ${tr.nCycles} cycles, ${tr.weighting})`);
@@ -386,7 +393,7 @@ export function generateTrendsCode(analysis, spec) {
         lines.push(`## FE panel: slope = ${fmt(f.slopePerDecade)} per decade  (SE ${fmt(f.se)}, p ${fmt(f.p, 3)}, ${f.nCountries} countries, ${f.nCells} cells)`);
     }
 
-    const notation = `θ̂<sub>ct</sub> per cycle, then θ̂<sub>ct</sub> = α<sub>c</sub> + β·(year−2000)/10 + ε, weights 1/SE² — β̂ = <strong>${analysis.fePanel ? fmt(analysis.fePanel.slopePerDecade, 2) : '—'}</strong> per decade`;
+    const notation = `θ̂<sub>ct</sub> per cycle, then θ̂<sub>ct</sub> = α<sub>c</sub> + β·(year−2000)/10 + ε, weights 1/SE²; β̂ = <strong>${analysis.fePanel ? fmt(analysis.fePanel.slopePerDecade, 2) : '—'}</strong> per decade`;
 
     return { title: 'Within-country trends', code, notation, expectedOutput: lines.join('\n'), note: '' };
 }
@@ -419,7 +426,7 @@ export function generateGapCode(gap, spec) {
     ].join('\n');
 
     const expectedOutput = [
-        '## Expected output — the app\'s numbers:',
+        '## Expected output, the app\'s numbers:',
         `## Q1 mean = ${fmt(gap.q1.mean, 1)}   Q4 mean = ${fmt(gap.q4.mean, 1)}`,
         `## gap (Q4-Q1) = ${fmt(gap.gap_q4_q1, 1)} score points   Cohen's d = ${fmt(gap.effect_size, 2)}`
     ].join('\n');
@@ -446,7 +453,7 @@ export function generateOverviewCode(stats, spec) {
         '# Weighted mean (the intercept of a weighted regression on a constant):',
         `weighted.mean(student$${outcomeR}, w)`,
         '',
-        '# Weighted Gini — covariance form on weighted fractional ranks, the exact',
+        '# Weighted Gini: covariance form on weighted fractional ranks, the exact',
         '# estimator the app uses (verified; see VERIFICATION.md):',
         'gini_w <- function(y, w) {',
         '  o <- order(y); y <- y[o]; w <- w[o]',
@@ -456,12 +463,12 @@ export function generateOverviewCode(stats, spec) {
         '}',
         `gini_w(student$${outcomeR}, w)`,
         '',
-        '# SES gradient — weighted bivariate regression slope:',
+        '# SES gradient: weighted bivariate regression slope:',
         `coef(lm(${outcomeR} ~ ${x}, data = student, weights = w))[2]`
     ].join('\n');
 
     const expectedOutput = [
-        '## Expected output — the app\'s numbers:',
+        '## Expected output, the app\'s numbers:',
         `## weighted mean  = ${fmt(stats.mean, 2)}`,
         `## weighted Gini  = ${fmt(stats.gini, 4)}`,
         `## SES gradient   = ${fmt(stats.gradient, 2)} points per unit of ${spec.predictorVar}`

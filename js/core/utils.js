@@ -511,6 +511,61 @@ export function tTestPValue(t, df) {
 }
 
 // Export all functions as default object
+/**
+ * Turn an education label or code into a numeric level. Returns null for a
+ * missing value.
+ *
+ * The data files label parental schooling as "less than ISCED1", "ISCED 1",
+ * "ISCED 2", "ISCED 3B, C" and "ISCED 3A". These become 0, 1, 2, 3 and 3:
+ * below primary, primary, lower secondary, and upper secondary or higher.
+ *
+ * @param {String|Number|null} value - label, numeric string or number
+ * @returns {Number|null} numeric level, or null when missing
+ */
+export function parseEducationLevel(value) {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+    // null, undefined and other types are missing. Number(null) and Number('')
+    // are 0 in JavaScript, so they must not reach a numeric conversion.
+    if (typeof value !== 'string') return null;
+    const upper = value.toUpperCase().trim();
+    if (upper === '' || upper === 'NONE' || upper === 'NA' || upper === 'N/A') return null;
+    if (/^-?\d+(\.\d+)?$/.test(upper)) return Number(upper);
+    if (upper.includes('LESS THAN')) return 0;
+    const match = upper.match(/ISCED\s*(\d+)/);
+    if (match) return parseInt(match[1], 10);
+
+    // Other common wordings
+    if (upper.includes('PRIMARY') || upper.includes('ELEMENTARY')) return 1;
+    if (upper.includes('LOWER SECONDARY') || upper.includes('MIDDLE')) return 2;
+    if (upper.includes('UPPER SECONDARY') || upper.includes('HIGH SCHOOL')) return 3;
+    if (upper.includes('POST-SECONDARY') || upper.includes('VOCATIONAL')) return 4;
+    if (upper.includes('BACHELOR') || upper.includes('UNDERGRADUATE')) return 6;
+    if (upper.includes('MASTER')) return 7;
+    if (upper.includes('DOCTOR') || upper.includes('PHD')) return 8;
+    return null;
+}
+
+/**
+ * Parental education of one student: the higher of the mother's and the
+ * father's level, or the one that is present. Returns null when both are
+ * missing and the record has no combined field.
+ *
+ * @param {Object} record - student record
+ * @returns {Number|null} numeric level, or null when missing
+ */
+export function parentalEducation(record) {
+    const mother = parseEducationLevel(record.mother_educ);
+    const father = parseEducationLevel(record.father_educ);
+    if (mother !== null && father !== null) return Math.max(mother, father);
+    if (mother !== null) return mother;
+    if (father !== null) return father;
+    for (const field of ['parent_edu', 'PARED', 'pared']) {
+        const level = parseEducationLevel(record[field]);
+        if (level !== null) return level;
+    }
+    return null;
+}
+
 export default {
     weightedMean,
     weightedVariance,
@@ -530,5 +585,7 @@ export default {
     groupBy,
     formatNumber,
     formatPValue,
-    tTestPValue
+    tTestPValue,
+    parseEducationLevel,
+    parentalEducation
 };

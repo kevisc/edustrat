@@ -37,6 +37,9 @@ load_chunk <- function(code) {
   s$escs <- suppressWarnings(as.numeric(s$escs))
   s$stu_wgt <- suppressWarnings(as.numeric(s$stu_wgt))
   s$stu_wgt[!is.finite(s$stu_wgt) | s$stu_wgt <= 0] <- 1
+  # These checks use the final weight only. Drop the replicate weights: they
+  # load as a list column, which plm cannot turn into a panel data frame.
+  s$rep_wgts <- NULL
   s
 }
 fin <- load_chunk("FIN_2018"); mex <- load_chunk("MEX_2018"); deu <- load_chunk("DEU_2018")
